@@ -1,0 +1,18 @@
+
+Openstack Apply patch script will apply patches related to RPCore
+to Openstack
+
+Script will check the version of installed openstack over the machine
+and then check if it has the patches for currently installed version.
+
+If not, the script will exit.
+
+Otherwise, it will apply the patch for provided argument.
+
+e.g :
+Following will apply the patches for controller
+	bash ./Openstack_applyPatches.sh --controller
+
+Following will apply the patches for compute node
+	bash ./Openstack_applyPatches.sh --compute
+
