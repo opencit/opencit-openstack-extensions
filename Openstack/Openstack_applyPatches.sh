@@ -81,7 +81,7 @@ function patchOpenstackComputePkgs()
 
 function patchOpenStackControllerPkgs()
 {
-        for component in $COMPUTE_COMPONENTS ; do
+        for component in $CONTROLLER_COMPONENTS ; do
                 ver=$(getOpenstackVersion $component)
                 applyPatches $component $ver
         done
