@@ -672,9 +672,13 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
     #Abhay Dandekar
     #DCG : fetch image with info    
     # MH start of mhagent hook for image download and decryption
-    if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args: 
+	instance_dir = get_instance_path(instance)
+    LOG.info(_("==========Instance Dir Loc===========" + instance_dir))
+    if 'manifest_uuid' in extra_args: 
         LOG.info(_("IntelDCG : launching decrypted the image"))
-        subprocess.call(['/usr/local/bin/mhagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url']])
+        subprocess.check_call(['/usr/local/bin/mhagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url']],'--manifest_uuid='+extra_args['manifest_uuid'],'--instance_dir='+instance_dir])
+    else:
+        subprocess.call(['/usr/local/bin/mhagent','log','utils fetch_image 2 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image)
     else:
         subprocess.call(['/usr/local/bin/mhagent','log','utils fetch_image 2 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])
     # MH end of mhagent hook for image download and decryption
