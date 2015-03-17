@@ -324,7 +324,7 @@ class VMOps(object):
         if bad_volumes_callback and bad_devices:
             bad_volumes_callback(bad_devices)
         # jbuhacoff log statement
-        LOG.debug(_("mhagent hook: vmops.py _create_disks"))
+        LOG.debug(_("policyagent hook: vmops.py _create_disks"))
         """MH start of check "RPCORE_DENIED" in response string"""
         if "RPCORE_DENIED" in resp:
             return True
@@ -336,7 +336,7 @@ class VMOps(object):
               name_label=None, rescue=False):
         
         # jbuhacoff log statement
-        LOG.debug(_("mhagent hook: vmops.py spawn"), instance=instance)
+        LOG.debug(_("policyagent hook: vmops.py spawn"), instance=instance)
 
         if block_device_info:
             LOG.debug(_("Block device information present: %s"),
@@ -351,7 +351,7 @@ class VMOps(object):
         def create_disks_step(undo_mgr, disk_image_type, image_meta,
                               name_label):
             # jbuhacoff log statement
-            LOG.debug(_("mhagent hook: vmops.py spawn create_disks_step"))
+            LOG.debug(_("policyagent hook: vmops.py spawn create_disks_step"))
             
             vdis = vm_utils.get_vdis_for_instance(context, self._session,
                         instance, name_label, image_meta.get('id'),
