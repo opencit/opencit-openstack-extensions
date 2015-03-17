@@ -4,7 +4,7 @@ INSTALL_DIR=${INSTALL_DIR:-"../"}
 OPENSTACK_DIR=Openstack
 PATCH_DIR=patch
 
-DIST_LOCATION=`/usr/bin/python -c "import site; print ( site.getsitepackages()[1] )" `
+DIST_LOCATION=`/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"`
 
 COMPUTE_COMPONENTS="python-nova"
 CONTROLLER_COMPONENTS="python-nova python-novaclient openstack-dashboard"
