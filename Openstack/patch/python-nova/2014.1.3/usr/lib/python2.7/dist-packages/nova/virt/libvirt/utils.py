@@ -663,7 +663,7 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
         LOG.info(_("IntelDCG : decrypting the image"))
         subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 with info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url']])
     else:
-        subprocess.check_call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--manifest_uuid='+extra_args['manifest_uuid']])        
+        subprocess.check_call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])        
     #subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])
     # MH start of policyagent hook for logging
 
@@ -676,16 +676,18 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
     # MH start of policyagent hook for image download and decryption
     instance_dir = get_instance_path(instance)
     LOG.info(_("==========Instance Dir Loc===========" + instance_dir))
-    if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args:
+    #if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args:
+    if 'mtwilson_trustpolicy_location' in extra_args:
         LOG.info(_("IntelDCG : launching policy agent decrypted the image"))
-        subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url'],'--manifest_uuid='+extra_args['manifest_uuid'],'--instance_dir='+instance_dir])
-    elif 'manifest_uuid' in extra_args:
-        LOG.info(_("IntelDCG : launching non-encrypted image"))
-        subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--manifest_uuid='+extra_args['manifest_uuid'],'--instance_dir='+instance_dir])
-        LOG.info(_("IntelDCG : launching non-encrypted image"))
+        subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_id='+instance['uuid'],'--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location']])
+    #elif 'manifest_uuid' in extra_args:
+    #    LOG.info(_("IntelDCG : launching non-encrypted image"))
+    #    subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_dir='+instance_dir])
+    #    LOG.info(_("IntelDCG : launching non-encrypted image"))
     else:
         LOG.info(_("IntelDCG : No Launch"))
-        subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 2 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])
+        LOG.info(_("Get the INSTANCE ID" + instance['uuid']))
+        subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 2 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_dir='+instance['uuid']])
     # MH end of policyagent hook for image download and decryption
 
 

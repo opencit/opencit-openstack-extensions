@@ -2681,17 +2681,22 @@ class LibvirtDriver(driver.ComputeDriver):
             (image_service, image_id) = glance.get_remote_image_service(context, instance['image_ref'])
             image_meta = compute_utils.get_image_metadata(context, image_service, image_id, instance)
 
-            # MH start of policagent hook for disk download and decryption
-            if 'properties' in image_meta and 'mh_encrypted' in image_meta['properties']:
-                instance1['mh_encrypted'] = image_meta['properties']['mh_encrypted']
-                instance1['mh_checksum'] = image_meta['properties']['mh_checksum']
-                instance1['mh_dek_url'] = image_meta['properties']['mh_dek_url']
-                instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
-            else:
-                instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
-
             for prop in image_meta['properties']:
-                LOG.info(_("#####Image prop" + prop + "::" + image_meta['properties'][prop]))
+                LOG.info(_("#####Image prop####################" + prop + "::" + image_meta['properties'][prop]))            
+            
+            instance_dir = libvirt_utils.get_instance_path(instance)
+            LOG.info(_("#####Image prop####################" + instance_dir))
+            # MH start of policagent hook for disk download and decryption
+            if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
+                instance1['mtwilson_trustpolicy_location'] = image_meta['properties']['mtwilson_trustpolicy_location']
+                #instance1['mh_checksum'] = image_meta['properties']['mh_checksum']
+                #instance1['mh_dek_url'] = image_meta['properties']['mh_dek_url']
+                #instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
+            #else:
+            #    instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
+
+            #for prop in image_meta['properties']:
+            #    LOG.info(_("#####Image prop" + prop + "::" + image_meta['properties'][prop]))
 
             image_target=os.path.join(CONF.instances_path, "_base", root_fname)
             LOG.info(_("&&&&&&&&&&Image Target Loca is:" + image_target))
