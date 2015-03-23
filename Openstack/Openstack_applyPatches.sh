@@ -26,6 +26,10 @@ function getFlavour()
         if [ $? -eq 0 ] ; then
                 flavour="fedora"
         fi
+        grep -c -i suse /etc/*-release > /dev/null
+        if [ $? -eq 0 ] ; then
+                flavour="suse"
+        fi
         if [ "$flavour" == "" ] ; then
                 echo "Unsupported linux flavor, Supported versions are ubuntu, rhel, fedora"
                 exit
@@ -43,6 +47,8 @@ function getOpenstackVersion()
 			version=`dpkg -l python-novaclient | tail -1 | awk '{print $3}' | cut -c-8 | awk -F ":" '{print $2}'`
 		elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" ] ; then
 			version=`rpm -qi python-novaclient | grep -i Version | awk  -F ":" '{print $2}'`
+		elif [ "$FLAVOUR" == "suse" ]
+			version=`zypper info python-novaclient | grep -i version | awk  -F ":" '{print $2}' | awk -F "-" '{print $1}'`
 		else
 			echo "Unsupported linux flavour : $FLAVOUR found for patching, exiting"
 			exit
@@ -158,13 +164,13 @@ function patchOpenstackComputePkgs()
 
 	if [ "$FLAVOUR" == "ubuntu" ] ; then
 		service nova-compute restart
-	elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" ] ; then
+	elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
 		service openstack-nova-compute restart
 	fi
 
-	if [ ! -x  /usr/local/bin/mhagent ]
+	if [ ! -x  /usr/local/bin/policyagent ]
 	then
-		echo "WARN : Could not find mhagent, kindly install the same"
+		echo "WARN : Could not find policyagent, kindly install the same"
 	fi
 
 }
@@ -197,7 +203,7 @@ function patchOpenStackControllerPkgs()
 		service nova-conductor restart
 		service nova-novncproxy restart
 		service nova-network restart
-	elif [ "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "rhel" ] ; then
+	elif [ "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "suse" ] ; then
 		service openstack-nova-compute restart
                 service openstack-nova-api restart
                 service openstack-nova-cert restart
