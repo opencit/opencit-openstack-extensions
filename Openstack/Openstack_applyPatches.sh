@@ -47,7 +47,7 @@ function getOpenstackVersion()
 			version=`dpkg -l python-novaclient | tail -1 | awk '{print $3}' | cut -c-8 | awk -F ":" '{print $2}'`
 		elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" ] ; then
 			version=`rpm -qi python-novaclient | grep -i Version | awk  -F ":" '{print $2}'`
-		elif [ "$FLAVOUR" == "suse" ]
+		elif [ "$FLAVOUR" == "suse" ] ; then
 			version=`zypper info python-novaclient | grep -i version | awk  -F ":" '{print $2}' | awk -F "-" '{print $1}'`
 		else
 			echo "Unsupported linux flavour : $FLAVOUR found for patching, exiting"
