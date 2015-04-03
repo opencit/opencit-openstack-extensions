@@ -655,15 +655,17 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
     
     #Abhay Dandekar
     #DCG : fetch image with info    
-    # MH start of mhagent hook for logging
-    LOG.info("IntelDCG : %s " %(str(extra_args)))
+    # MH start of policyagent hook for logging
+    LOG.info("IntelDCG Extra Args : %s " %(str(extra_args)))
+    
 
     if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args: 
         LOG.info(_("IntelDCG : decrypting the image"))
-        subprocess.call(['/usr/local/bin/mhagent','log','utils fetch_image 1 with info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url']])
+        subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 with info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url']])
     else:
-        subprocess.call(['/usr/local/bin/mhagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])
-    # MH start of mhagent hook for logging
+        subprocess.check_call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])        
+    #subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])
+    # MH start of policyagent hook for logging
 
     
     images.fetch_to_raw(context, image_id, target, user_id, project_id,
@@ -671,13 +673,22 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
     
     #Abhay Dandekar
     #DCG : fetch image with info    
-    # MH start of mhagent hook for image download and decryption
-    if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args: 
-        LOG.info(_("IntelDCG : launching decrypted the image"))
-        subprocess.call(['/usr/local/bin/mhagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url']])
+    # MH start of policyagent hook for image download and decryption
+    instance_dir = get_instance_path(instance)
+    LOG.info(_("==========Instance Dir Loc===========" + instance_dir))
+    #if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args:
+    if 'mtwilson_trustpolicy_location' in extra_args:
+        LOG.info(_("IntelDCG : launching policy agent decrypted the image"))
+        subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_id='+instance['uuid'],'--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location']])
+    #elif 'manifest_uuid' in extra_args:
+    #    LOG.info(_("IntelDCG : launching non-encrypted image"))
+    #    subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_dir='+instance_dir])
+    #    LOG.info(_("IntelDCG : launching non-encrypted image"))
     else:
-        subprocess.call(['/usr/local/bin/mhagent','log','utils fetch_image 2 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])
-    # MH end of mhagent hook for image download and decryption
+        LOG.info(_("IntelDCG : No Launch"))
+        LOG.info(_("Get the INSTANCE ID" + instance['uuid']))
+        subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 2 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_dir='+instance['uuid']])
+    # MH end of policyagent hook for image download and decryption
 
 
 def get_instance_path(instance, forceold=False, relative=False):

@@ -2681,13 +2681,27 @@ class LibvirtDriver(driver.ComputeDriver):
             (image_service, image_id) = glance.get_remote_image_service(context, instance['image_ref'])
             image_meta = compute_utils.get_image_metadata(context, image_service, image_id, instance)
 
-            # MH start of mhagent hook for disk download and decryption
-            if 'properties' in image_meta and 'mh_encrypted' in image_meta['properties']:
-                instance1['mh_encrypted'] = image_meta['properties']['mh_encrypted']
-                instance1['mh_checksum'] = image_meta['properties']['mh_checksum']
-                instance1['mh_dek_url'] = image_meta['properties']['mh_dek_url']
-                instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
+            for prop in image_meta['properties']:
+                LOG.info(_("#####Image prop####################" + prop + "::" + image_meta['properties'][prop]))            
+            
+            instance_dir = libvirt_utils.get_instance_path(instance)
+            LOG.info(_("#####Image prop####################" + instance_dir))
+            # MH start of policagent hook for disk download and decryption
+            if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
+                instance1['mtwilson_trustpolicy_location'] = image_meta['properties']['mtwilson_trustpolicy_location']
+                #instance1['mh_checksum'] = image_meta['properties']['mh_checksum']
+                #instance1['mh_dek_url'] = image_meta['properties']['mh_dek_url']
+                #instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
+            #else:
+            #    instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
 
+            #for prop in image_meta['properties']:
+            #    LOG.info(_("#####Image prop" + prop + "::" + image_meta['properties'][prop]))
+
+            image_target=os.path.join(CONF.instances_path, "_base", root_fname)
+            LOG.info(_("&&&&&&&&&&Image Target Loca is:" + image_target))
+            if os.path.exists(image_target):
+                os.remove(image_target)
             image('disk').cache(fetch_func=libvirt_utils.fetch_image,
                                 context=context,
                                 filename=root_fname,
@@ -2699,22 +2713,22 @@ class LibvirtDriver(driver.ComputeDriver):
 				extra_args=instance1)
 
             # MH start of image manifest download
-            if 'properties' in image_meta and 'manifest_uuid' in image_meta['properties']:
-                manifest_uuid = image_meta['properties']['manifest_uuid']
-                manifest_filename = 'manifest.xml'
-                LOG.info(_("manifest uuid=" + str(manifest_uuid) + " for image " + disk_images['image_id']))
-		LOG.info("IntelDCG : %s %s" %(CONF.instances_path, root_fname) )
+            #if 'properties' in image_meta and 'manifest_uuid' in image_meta['properties']:
+                #manifest_uuid = image_meta['properties']['manifest_uuid']
+                #manifest_filename = 'manifest.xml'
+                #LOG.info(_("manifest uuid=" + str(manifest_uuid) + " for image " + disk_images['image_id']))
+		#LOG.info("IntelDCG : %s %s" %(CONF.instances_path, root_fname) )
                 # manifest_target = os.path.join(CONF.instances_path, CONF.base_dir_name, root_fname + ".xml")
 		# Abhay : See if we can take _base from the configuraiton 
-                manifest_target = os.path.join(CONF.instances_path, "_base", root_fname + ".xml")
-		LOG.info("IntelDCG : Manifest tgt : %s " %(manifest_target))
-                if os.path.exists(manifest_target):
-                    os.remove(manifest_target)
-                images.fetch(context, manifest_uuid, manifest_target, instance['user_id'], instance['project_id'], max_size=None)
-                instance_dir = libvirt_utils.get_instance_path(instance)
-                manifest_dest = os.path.join(instance_dir, manifest_filename)
-                LOG.info(_("copying manifest from " + manifest_target + " to " + manifest_dest))
-                libvirt_utils.execute('cp', manifest_target, manifest_dest)
+                #manifest_target = os.path.join(CONF.instances_path, "_base", root_fname + ".xml")
+		#LOG.info("IntelDCG : Manifest tgt : %s " %(manifest_target))
+                #if os.path.exists(manifest_target):
+                    #os.remove(manifest_target)
+                #images.fetch(context, manifest_uuid, manifest_target, instance['user_id'], instance['project_id'], max_size=None)
+                #instance_dir = libvirt_utils.get_instance_path(instance)
+                #manifest_dest = os.path.join(instance_dir, manifest_filename)
+                #LOG.info(_("copying manifest from " + manifest_target + " to " + manifest_dest))
+                #libvirt_utils.execute('cp', manifest_target, manifest_dest)
                 # MH end of image manifest download
                 
         # Lookup the filesystem type if required
