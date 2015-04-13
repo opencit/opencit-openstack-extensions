@@ -158,7 +158,9 @@ function patchOpenstackComputePkgs()
 #        touch /var/log/mhagent.log
 #        chown nova:nova  /var/log/mhagent.log
         rm /var/lib/nova/instances/_base/*
-
+	if [ -d /var/log/nova ] ; then
+                chown -R nova:nova /var/log/nova
+        fi
 	echo "Syncing nova database"
 	su -s /bin/sh -c "nova-manage db sync" nova
 
@@ -191,7 +193,10 @@ function patchOpenStackControllerPkgs()
 	find $DIST_LOCATION/novaclient -name "*.pyc" -delete
 	find $DIST_LOCATION/nova -name "*.pyc" -delete
 
-	echo "Syncing nova database"	
+	echo "Syncing nova database"
+	if [ -d /var/log/nova ]	; then
+		chown -R nova:nova /var/log/nova
+	fi
 	su -s /bin/sh -c "nova-manage db sync" nova
 
 	if [ "$FLAVOUR" == "ubuntu" ] ; then
