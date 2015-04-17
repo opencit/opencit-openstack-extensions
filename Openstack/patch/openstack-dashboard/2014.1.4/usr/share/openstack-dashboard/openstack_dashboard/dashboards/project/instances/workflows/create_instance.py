@@ -427,7 +427,7 @@ class SetInstanceDetails(workflows.Step):
 
     action_class = SetInstanceDetailsAction
     depends_on = ("project_id", "user_id")
-    contributes = ("source_type", "source_id", "is_measured"
+    contributes = ("source_type", "source_id", "is_measured",
                    "availability_zone", "name", "count", "flavor",
                    "device_name",  # Can be None for an image.
                    "delete_on_terminate")
