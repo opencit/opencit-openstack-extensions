@@ -3,18 +3,18 @@
 How to create a patch for new version
 ************
 
-The script gains information the realease version of Openstack and the structure of files in patch dir.
+The script gains information the release version of Openstack and the structure of files in patch dir.
 
 For e.g: 
 
-Suppose we need to add a patch for /ust/lib/python2.7/dist-packages/nova/exception.py, for version Icehouse ( 1:2014 )
+Suppose we need to add a patch for /usr/lib/python2.7/dist-packages/nova/exception.py, for version Icehouse ( 2014.1.4 )
 
 create the dir with same structure under "patch" for version 
 
-mkdir 1:2014
-cd 1:2014
-mkdir -p usr/lib/python2.7/dist-packages/nova/
-cp <your_code_location>/exception.py usr/lib/python2.7/dist-packages/nova/. 
+mkdir 2014.1.4
+cd 2014.1.4
+mkdir -p nova/
+cp <your_code_location>/exception.py nova/. 
 
 Once the file is copied, the script picks up the files and replaces it over the patched system
 It removes all the corresponding *.pyc files
