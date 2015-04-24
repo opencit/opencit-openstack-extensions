@@ -7,7 +7,8 @@ PATCH_DIR=patch
 DIST_LOCATION=`/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"`
 
 COMPUTE_COMPONENTS="python-nova"
-CONTROLLER_COMPONENTS="python-nova python-novaclient openstack-dashboard"
+#CONTROLLER_COMPONENTS="python-nova python-novaclient openstack-dashboard"
+CONTROLLER_COMPONENTS=""
 
 # This function returns either rhel, fedora or ubuntu
 # TODO : This function can be moved out to some common file
@@ -157,12 +158,11 @@ function patchOpenstackComputePkgs()
 #        rm -f /var/log/mhagent.log
 #        touch /var/log/mhagent.log
 #        chown nova:nova  /var/log/mhagent.log
-        rm /var/lib/nova/instances/_base/*
 	if [ -d /var/log/nova ] ; then
                 chown -R nova:nova /var/log/nova
         fi
-	echo "Syncing nova database"
-	su -s /bin/sh -c "nova-manage db sync" nova
+	#echo "Syncing nova database"
+	#su -s /bin/sh -c "nova-manage db sync" nova
 
 	if [ "$FLAVOUR" == "ubuntu" ] ; then
 		service nova-compute restart
@@ -223,7 +223,7 @@ function patchOpenStackControllerPkgs()
 
 function usage()
 {
-	echo "Usage : $0 [--controller|--compute] [--revert]"
+	echo "Usage : $0 [--revert]"
 	echo " Note : Any option other than --revert will be ignored"
 }
 
@@ -251,26 +251,19 @@ function validate()
 	
 }
 
-if [ $# -ne 1 -a $# -ne 2 ] ; then 
+if [ $# -ne 0 -a $# -ne 1 ] ; then 
  usage 
  exit
 fi
 
 FLAVOUR=`getFlavour`
 
-if [ "$1" == "--revert" -o "$2" == "--revert" ]; then
+if [ "$1" == "--revert" ]; then
 	export REVERT="true"
 else
 	export REVERT="false"
 fi
 
-if [ $1 == "--controller" ]; then
-	validate
-	patchOpenStackControllerPkgs
-elif [ $1 == "--compute" ]; then
-	validate
-	patchOpenstackComputePkgs
-else
-	usage
-fi
+validate
+patchOpenstackComputePkgs
 
