@@ -156,4 +156,4 @@ if [ ! -x  /usr/local/bin/policyagent ]; then
   exit -1
 fi
 
-echo_success "Installation complete"
+echo_success "OpenStack Compute Node Extensions Installation complete"
