@@ -1,0 +1,10 @@
+ASSET_TAG_SERVICE = {
+    'IP': 'CIT_IP',
+    'port': 'CIT_PORT',
+    'certificate_url': '/certificate-requests',
+    'auth_blob': 'admin:password',
+    'api_url': '/mtwilson/v2/host-attestations',
+    'host_url': '/mtwilson/v2/hosts',
+    'tags_url': '/mtwilson/v2/tag-kv-attributes.json?filter=false'
+}
+

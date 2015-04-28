@@ -1,0 +1,12 @@
+[trusted_computing]
+attestation_server = CIT_IP
+attestation_port = CIT_PORT
+attestation_auth_blob = admin:password
+attestation_api_url=/mtwilson/v2/host-attestations
+attestation_host_url=/mtwilson/v2/hosts
+attestation_server_ca_file = /etc/nova/ssl.crt
+
+[DEFAULT]
+#scheduler_driver=nova.scheduler.filter_scheduler.FilterScheduler
+#scheduler_default_filters = RamFilter,ComputeFilter,TrustAssertionFilter
+
