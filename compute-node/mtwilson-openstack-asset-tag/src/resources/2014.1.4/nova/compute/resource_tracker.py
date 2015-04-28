@@ -41,6 +41,12 @@ from nova.pci import pci_manager
 from nova import rpc
 from nova import utils
 
+import httplib
+import urllib
+from base64 import b64encode
+import random
+from lxml import etree
+
 resource_tracker_opts = [
     cfg.IntOpt('reserved_host_disk_mb', default=0,
                help='Amount of disk in MB to reserve for the host'),
@@ -619,6 +625,7 @@ class ResourceTracker(object):
             if instance['vm_state'] == vm_states.DELETED:
                 continue
             else:
+		#continue
                 if(instance['vm_state'] != vm_states.ACTIVE):
                     continue
 
@@ -627,7 +634,6 @@ class ResourceTracker(object):
                         ('measurement_status' not in instance['metadata']) or 
                         (('measurement_status' in instance['metadata']) and instance['metadata']['measurement_status'] == 'na')):
                     self.set_instance_attestation_status(instance)
-
                 self._update_usage_from_instance(resources, instance)
 
     # Call the Intel(R) Cloud Integrity Technology server to retrieve the Trust status of the VM
