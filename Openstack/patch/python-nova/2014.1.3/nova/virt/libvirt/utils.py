@@ -203,6 +203,7 @@ def create_cow_image(backing_file, path, size=None):
         csv_opts = ",".join(cow_opts)
         cow_opts = ['-o', csv_opts]
     cmd = base_cmd + cow_opts + [path]
+    LOG.info("CMD : %s " %(cmd))
     execute(*cmd)
 
 
@@ -657,6 +658,14 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
     # MH start of policyagent hook for logging
     LOG.info("IntelDCG Extra Args : %s " %(str(extra_args)))
 
+    arg_pa='version'
+    cmd=('policyagent',arg_pa)
+    out,err=execute(*cmd,run_as_root=True, attempts=1)
+    if err:
+        LOG.error("IntelDCG :Could execute teh policyagent rootwrap cmd not crypt format the loop device %s ,  %s " % (out, err) )
+    else:
+	LOG.info("IntelDCG : Executed policyagent version successfully")
+
     if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args:
         LOG.info(_("IntelDCG : decrypting the image"))
 	subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 with info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url']])
@@ -676,7 +685,20 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
     #if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args:
     if 'mtwilson_trustpolicy_location' in extra_args:
         LOG.info(_("IntelDCG : launching policy agent decrypted the image"))
-        subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_id='+instance['uuid'],'--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location']])
+        #subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_id='+instance['uuid'],'--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location']])
+        #policy_agent=('policyagent')
+        #arg_pa=('launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_id='+instance['uuid'],'--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location'])
+        # cmd=('policyagent',arg_pa)
+	# arg_pa='launch --project-id='+project_id+' --instance-name='+instance['name']+' --base-image='+image_id+' --image-id='+image_id+' --target='+target+' --instance_id='+instance['uuid']+' --mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location']
+	# LOG.info("Policyagent args : %s " %(arg_pa))
+        # cmd=('policyagent',arg_pa)
+	cmd=('policyagent', 'launch', '--project-id='+project_id, '--instance-name='+instance['name'], '--base-image='+image_id, '--image-id='+image_id, '--target='+target, '--instance_id='+instance['uuid'], '--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location'] )
+	# LOG.info("Policyagent cmd : %s " %(cmd))
+        out,err=execute(*cmd,run_as_root=True, attempts=1)
+        if err:
+               LOG.error("IntelDCG :Could execute teh policyagent rootwrap cmd not crypt format the loop device %s ,  %s " % (out, err) )
+	else:
+	       LOG.info("IntelDCG: policyagent executed successfully")
     #elif 'manifest_uuid' in extra_args:
     #    LOG.info(_("IntelDCG : launching non-encrypted image"))
     #    subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_dir='+instance_dir])
