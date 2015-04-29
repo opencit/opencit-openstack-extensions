@@ -77,8 +77,12 @@ function getFlavour() {
 }
 function openstackRestart() {
   if [ "$FLAVOUR" == "ubuntu" ]; then
+    service nova-api-metadata restart
+    service nova-network restart
     service nova-compute restart
   elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
+    service openstack-nova-api-metadata restart
+    service openstack-nova-network restart
     service openstack-nova-compute restart
   else
     echo_failure "Cannot determine nova compute restart command based on linux flavor"
@@ -148,12 +152,58 @@ find $DISTRIBUTION_LOCATION/nova -name "*.pyc" -delete
 if [ -d /var/log/nova ] ; then
   chown -R nova:nova /var/log/nova
 fi
-openstackRestart
 
 # Check for policyagent
 if [ ! -x  /usr/local/bin/policyagent ]; then
   echo_failure "Could not find policyagent"
   exit -1
 fi
+
+# rootwrap compute.filters
+computeFiltersFile="/etc/nova/rootwrap.d/compute.filters"
+if [ ! -f "$computeFiltersFile" ]; then
+  echo_failure "Could not find $computeFiltersFile"
+  exit -1
+fi
+computeFiltersPolicyagentExists=$(grep '^policyagent:' "$computeFiltersFile")
+if [ -n "$computeFiltersPolicyagentExists" ]; then
+  sed -i 's/^policyagent:.*/policyagent: CommandFilter, \/usr\/local\/bin\/policyagent, root/g' "$computeFiltersFile"
+else
+  echo "policyagent: CommandFilter, /usr/local/bin/policyagent, root" >> "$computeFiltersFile"
+fi
+
+# rootwrap.conf
+rootwrapConfFile="/etc/nova/rootwrap.conf"
+if [ ! -f "$rootwrapConfFile" ]; then
+  echo_failure "Could not find $rootwrapConfFile"
+  exit -1
+fi
+rootwrapConfExecDirsExists=$(grep '^exec_dirs=' "$rootwrapConfFile")
+if [ -n "$rootwrapConfExecDirsExists" ]; then
+  rootwrapConfAlreadyHasLocalBin=$(echo "$rootwrapConfExecDirsExists" | grep '/usr/local/bin')
+  if [ -z "$rootwrapConfAlreadyHasLocalBin" ]; then
+    sed -i '/^exec_dirs=/ s/$/,\/usr\/local\/bin/g' "$rootwrapConfFile"
+  fi
+else
+  echo "exec_dirs=/usr/local/bin" >> "$rootwrapConfFile"
+fi
+
+# add nova to sudoers
+etcSudoersFile="/etc/sudoers"
+if [ ! -f "$etcSudoersFile" ]; then
+  echo_failure "Could not find $etcSudoersFile"
+  exit -1
+fi
+etcSudoersNovaExists=$(grep $'^nova\s' "$etcSudoersFile")
+if [ -n "$etcSudoersNovaExists" ]; then
+  sed -i 's/^nova\s.*/nova ALL = (root) NOPASSWD: \/usr\/bin\/nova-rootwrap '$(sed_escape "$rootwrapConfFile")' \*/g' "$etcSudoersFile"
+else
+  echo "nova ALL = (root) NOPASSWD: /usr/bin/nova-rootwrap /etc/nova/rootwrap.conf *" >> "$etcSudoersFile"
+fi
+
+#chown -R nova:nova /var/run/libvirt/
+#chmod 777 /var/run/libvirt/libvirt-sock
+
+openstackRestart
 
 echo_success "OpenStack Compute Node Extensions Installation complete"
