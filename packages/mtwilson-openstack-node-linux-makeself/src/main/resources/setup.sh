@@ -2,11 +2,17 @@
 
 # Mtwilson OpenStack Node Extensions install script
 # Outline:
-# 1.  source the "functions.sh" file:  mtwilson-linux-util-*.sh
-# 2.  force root user installation
-# 3.  install prerequisites
-# 4. unzip mtwilson-openstack-node archive mtwilson-openstack-node-zip-*.zip
-# 5. apply openstack extension patches
+# 1. source the "functions.sh" file:  mtwilson-linux-util-*.sh
+# 2. force root user installation
+# 3. read variables from trustagent configuration to input to nova.conf
+# 4. update nova.conf
+# 5. install prerequisites
+# 6. unzip mtwilson-openstack-node archive mtwilson-openstack-node-zip-*.zip
+# 7. apply openstack extension patches
+# 8. check for policyagent
+# 9. rootwrap: add policyagent to compute.filters
+# 10. rootwrap: ensure /usr/local/bin is defined in exec_dirs variable in rootwrap.conf
+# 11. rootwrap: add nova to sudoers list
 
 #####
 
@@ -34,6 +40,61 @@ fi
 if [ "$(whoami)" != "root" ]; then
   echo_failure "Running as $(whoami); must install as root"
   exit -1
+fi
+
+# read variables from trustagent configuration to input to nova.conf
+trustagentHomeDir="/opt/trustagent"
+trustagentConfDir="$trustagentHomeDir/configuration"
+trustagentPropertiesFile="$trustagentConfDir/trustagent.properties"
+if [ ! -f "$trustagentPropertiesFile" ]; then
+  echo_failure "Could not find $trustagentPropertiesFile"
+  echo_failure "Mtwilson Trust Agent must be installed first"
+  exit -1
+fi
+mtwilsonServer=$(read_property_from_file "mtwilson.api.url" "$trustagentPropertiesFile" | awk -F'/' '{print $3}' | awk -F':' '{print $1}' | tr -d '\\')
+if [ -z "$mtwilsonServer" ]; then
+  echo_failure "Error reading Mtwilson server from configuration"
+  exit -1
+fi
+mtwilsonServerPort=$(read_property_from_file "mtwilson.api.url" "$trustagentPropertiesFile" | awk -F'/' '{print $3}' | awk -F':' '{print $2}')
+if [ -z "$mtwilsonServer" ]; then
+  echo_failure "Error reading Mtwilson server port from configuration"
+  exit -1
+fi
+mtwilsonVmAttestationApiUsername=$(read_property_from_file "mtwilson.api.username" "$trustagentPropertiesFile")
+if [ -z "$mtwilsonServer" ]; then
+  echo_failure "Error reading Mtwilson VM attestation API username from configuration"
+  exit -1
+fi
+mtwilsonVmAttestationApiPassword=$(read_property_from_file "mtwilson.api.password" "$trustagentPropertiesFile")
+if [ -z "$mtwilsonServer" ]; then
+  echo_failure "Error reading Mtwilson VM attestation API password from configuration"
+  exit -1
+fi
+mtwilsonVmAttestationApiUrlPath="/mtwilson/v2/vm-attestations"
+mtwilsonVmAttestationAuthBlob="'$mtwilsonVmAttestationApiUsername:$mtwilsonVmAttestationApiPassword'"
+
+# update nova.conf
+novaConfFile="/etc/nova/nova.conf"
+if [ ! -f "$novaConfFile" ]; then
+  echo_failure "Could not find $novaConfFile"
+  echo_failure "OpenStack compute node must be installed first"
+  exit -1
+fi
+novaConfTrustedComputingExists=$(grep '^\[trusted_computing\]$' "$novaConfFile")
+if [ -n "$novaConfTrustedComputingExists" ]; then
+  update_property_in_file "attestation_server_ip" "$novaConfFile" "$mtwilsonServer"
+  update_property_in_file "attestation_server_port" "$novaConfFile" "$mtwilsonServerPort"
+  update_property_in_file "attestation_api_url" "$novaConfFile" "$mtwilsonVmAttestationApiUrlPath"
+  update_property_in_file "attestation_auth_blob" "$novaConfFile" "$mtwilsonVmAttestationAuthBlob"
+else
+  echo -e "\n" >> "$novaConfFile"
+  echo "# Intel(R) Cloud Integrity Technology" >> "$novaConfFile"
+  echo "[trusted_computing]" >> "$novaConfFile"
+  echo "attestation_server_ip=$mtwilsonServer" >> "$novaConfFile"
+  echo "attestation_server_port=$mtwilsonServerPort" >> "$novaConfFile"
+  echo "attestation_api_url=$mtwilsonVmAttestationApiUrlPath" >> "$novaConfFile"
+  echo "attestation_auth_blob=$mtwilsonVmAttestationAuthBlob" >> "$novaConfFile"
 fi
 
 # make sure unzip and authbind are installed
@@ -140,7 +201,7 @@ function applyPatches() {
 }
 
 ### Apply patches
-COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks"
+COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-asset-tag"
 FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
 for component in $COMPUTE_COMPONENTS; do
