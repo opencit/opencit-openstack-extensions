@@ -223,6 +223,9 @@ fi
 # rootwrap compute.filters
 computeFiltersFile="/etc/nova/rootwrap.d/compute.filters"
 if [ ! -f "$computeFiltersFile" ]; then
+  computeFiltersFile="/usr/share/nova/rootwrap/compute.filters"
+fi
+if [ ! -f "$computeFiltersFile" ]; then
   echo_failure "Could not find $computeFiltersFile"
   exit -1
 fi
