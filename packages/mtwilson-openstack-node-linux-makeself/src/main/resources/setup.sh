@@ -142,7 +142,7 @@ function openstackRestart() {
     service nova-network restart
     service nova-compute restart
   elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
-    service openstack-nova-api-metadata restart
+    service openstack-nova-metadata-api restart
     service openstack-nova-network restart
     service openstack-nova-compute restart
   else
