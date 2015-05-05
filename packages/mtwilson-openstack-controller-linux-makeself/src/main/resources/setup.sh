@@ -109,24 +109,24 @@ else
 fi
 novaConfDefaultExists=$(grep '^\[DEFAULT\]$' "$novaConfFile")
 if [ -n "$novaConfDefaultExists" ]; then
-  schedulerDriverExists=$(grep '^#scheduler_driver=' "$novaConfFile")
+  schedulerDriverExists=$(grep '^scheduler_driver=' "$novaConfFile")
   if [ -n "$schedulerDriverExists" ]; then
-    update_property_in_file "#scheduler_driver" "$novaConfFile" "nova.scheduler.filter_scheduler.FilterScheduler"
+    update_property_in_file "scheduler_driver" "$novaConfFile" "nova.scheduler.filter_scheduler.FilterScheduler"
   else
-    sed -e '/^\[DEFAULT\]/{:a;n;/^$/!ba;i\#scheduler_driver=nova.scheduler.filter_scheduler.FilterScheduler' -e '}' -i "$novaConfFile"
+    sed -e '/^\[DEFAULT\]/{:a;n;/^$/!ba;i\scheduler_driver=nova.scheduler.filter_scheduler.FilterScheduler' -e '}' -i "$novaConfFile"
   fi
-  schedulerDefaultFiltersExists=$(grep '^#scheduler_default_filters=' "$novaConfFile")
+  schedulerDefaultFiltersExists=$(grep '^scheduler_default_filters=' "$novaConfFile")
   if [ -n "$schedulerDefaultFiltersExists" ]; then
-    update_property_in_file "#scheduler_default_filters" "$novaConfFile" "RamFilter,ComputeFilter,TrustAssertionFilter"
+    update_property_in_file "scheduler_default_filters" "$novaConfFile" "RamFilter,ComputeFilter,TrustAssertionFilter"
   else
-    sed -e '/^\[DEFAULT\]/{:a;n;/^$/!ba;i\#scheduler_default_filters=RamFilter,ComputeFilter,TrustAssertionFilter' -e '}' -i "$novaConfFile"
+    sed -e '/^\[DEFAULT\]/{:a;n;/^$/!ba;i\scheduler_default_filters=RamFilter,ComputeFilter,TrustAssertionFilter' -e '}' -i "$novaConfFile"
   fi
 else
   sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' -i "$novaConfFile" #remove empty lines at EOF
   echo -e "\n" >> "$novaConfFile"
   echo "[DEFAULT]" >> "$novaConfFile"
-  echo "#scheduler_driver=nova.scheduler.filter_scheduler.FilterScheduler" >> "$novaConfFile"
-  echo "#scheduler_default_filters=RamFilter,ComputeFilter,TrustAssertionFilter" >> "$novaConfFile"
+  echo "scheduler_driver=nova.scheduler.filter_scheduler.FilterScheduler" >> "$novaConfFile"
+  echo "scheduler_default_filters=RamFilter,ComputeFilter,TrustAssertionFilter" >> "$novaConfFile"
 fi
 
 # make sure unzip and authbind are installed
