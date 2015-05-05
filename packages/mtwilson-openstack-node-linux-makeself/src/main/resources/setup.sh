@@ -57,17 +57,17 @@ if [ -z "$mtwilsonServer" ]; then
   exit -1
 fi
 mtwilsonServerPort=$(read_property_from_file "mtwilson.api.url" "$trustagentPropertiesFile" | awk -F'/' '{print $3}' | awk -F':' '{print $2}')
-if [ -z "$mtwilsonServer" ]; then
+if [ -z "$mtwilsonServerPort" ]; then
   echo_failure "Error reading Mtwilson server port from configuration"
   exit -1
 fi
 mtwilsonVmAttestationApiUsername=$(read_property_from_file "mtwilson.api.username" "$trustagentPropertiesFile")
-if [ -z "$mtwilsonServer" ]; then
+if [ -z "$mtwilsonVmAttestationApiUsername" ]; then
   echo_failure "Error reading Mtwilson VM attestation API username from configuration"
   exit -1
 fi
 mtwilsonVmAttestationApiPassword=$(read_property_from_file "mtwilson.api.password" "$trustagentPropertiesFile")
-if [ -z "$mtwilsonServer" ]; then
+if [ -z "$mtwilsonVmAttestationApiPassword" ]; then
   echo_failure "Error reading Mtwilson VM attestation API password from configuration"
   exit -1
 fi
