@@ -47,6 +47,9 @@
                                 <copy todir="${project.build.directory}/application/mtwilson-openstack-policyagent-hooks">
                                     <fileset dir="../../compute-node/mtwilson-openstack-policyagent-hooks/src/resources"/>
                                 </copy>
+                                <copy todir="${project.build.directory}/application/mtwilson-openstack-asset-tag">
+                                    <fileset dir="../../compute-node/mtwilson-openstack-asset-tag/src/resources"/>
+                                </copy>
                             </target>
                         </configuration>
                     </execution>
