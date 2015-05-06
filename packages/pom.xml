@@ -8,14 +8,10 @@
     <packaging>pom</packaging>
     
     <modules>
-<!--        <module>mtwilson-openstack-controller-host-trust-linux-makeself</module>
-        <module>mtwilson-openstack-controller-host-trust-zip</module>
-        <module>mtwilson-openstack-controller-vm-trust-linux-makeself</module>
-        <module>mtwilson-openstack-controller-vm-trust-zip</module>-->
+        <module>mtwilson-openstack-controller-linux-makeself</module>
+        <module>mtwilson-openstack-controller-zip</module>
         <module>mtwilson-openstack-node-linux-makeself</module>
         <module>mtwilson-openstack-node-zip</module>
-<!--        <module>mtwilson-openstack-trusted-controller-linux-makeself</module>
-        <module>mtwilson-openstack-trusted-controller-zip</module>-->
         <module>mtwilson-openstack-trusted-node-linux-makeself</module>
         <!--<module>policyagent-javadoc</module>-->
         <!--commenting out policyagent-javadoc due to this error:

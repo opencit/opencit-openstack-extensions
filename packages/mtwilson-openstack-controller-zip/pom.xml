@@ -2,10 +2,10 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.intel.mtwilson.openstack.packages</groupId>
-    <artifactId>mtwilson-openstack-controller-host-trust-zip</artifactId>
+    <artifactId>mtwilson-openstack-controller-zip</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <description>Mtwilson OpenStack Controller Extensions for Host Trust Zip</description>
+    <description>Mtwilson OpenStack Controller Comprehensive Extensions Zip</description>
 	
     <parent>
         <groupId>com.intel.mtwilson.maven</groupId>
@@ -29,8 +29,42 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
-                  
         </resources>
+        
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-compiled-binaries</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <copy todir="${project.build.directory}/application/mtwilson-openstack-asset-tag">
+                                    <fileset dir="../../controller/mtwilson-openstack-asset-tag/src/resources"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant</artifactId>
+                        <version>1.8.4</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>ant-contrib</groupId>
+                        <artifactId>ant-contrib</artifactId>
+                        <version>1.0b3</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
     </build>
 
 

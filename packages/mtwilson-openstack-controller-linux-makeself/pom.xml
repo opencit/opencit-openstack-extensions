@@ -2,10 +2,10 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.intel.mtwilson.openstack.packages</groupId>
-    <artifactId>mtwilson-openstack-controller-host-trust-linux-makeself</artifactId>
+    <artifactId>mtwilson-openstack-controller-linux-makeself</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <description>Self-extracting executable that installs the mtwilson OpenStack host trust extensions for the controller</description>
+    <description>Self-extracting executable that installs the comprehensive mtwilson OpenStack extensions for the controller</description>
 
     <parent>
         <groupId>com.intel.mtwilson.maven</groupId>
@@ -16,17 +16,21 @@
   
     <properties>
         <!-- this becomes the installer filename, like ${makeself.name}.bin -->
-        <makeself.name>mtwilson-openstack-controller-host-trust-${project.version}</makeself.name>
+        <makeself.name>mtwilson-openstack-controller-${project.version}</makeself.name>
     </properties>
   
     <dependencies>
         <dependency>
             <groupId>com.intel.mtwilson.openstack.packages</groupId>
-            <artifactId>mtwilson-openstack-controller-host-trust-zip</artifactId>
+            <artifactId>mtwilson-openstack-controller-zip</artifactId>
             <version>0.1-SNAPSHOT</version>
             <type>zip</type>
         </dependency>
+        <dependency>
+            <groupId>com.intel.mtwilson.linux</groupId>
+            <artifactId>mtwilson-linux-util</artifactId>
+            <version>${mtwilson.version}</version>
+            <type>sh</type>
+        </dependency>
     </dependencies>
-
-
 </project>
