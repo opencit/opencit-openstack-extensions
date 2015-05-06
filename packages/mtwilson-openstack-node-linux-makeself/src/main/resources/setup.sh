@@ -88,6 +88,7 @@ if [ -n "$novaConfTrustedComputingExists" ]; then
   update_property_in_file "attestation_api_url" "$novaConfFile" "$mtwilsonVmAttestationApiUrlPath"
   update_property_in_file "attestation_auth_blob" "$novaConfFile" "$mtwilsonVmAttestationAuthBlob"
 else
+  sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' -i "$novaConfFile" #remove empty lines at EOF
   echo -e "\n" >> "$novaConfFile"
   echo "# Intel(R) Cloud Integrity Technology" >> "$novaConfFile"
   echo "[trusted_computing]" >> "$novaConfFile"
