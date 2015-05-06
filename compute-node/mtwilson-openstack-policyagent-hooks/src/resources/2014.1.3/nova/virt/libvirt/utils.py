@@ -651,60 +651,45 @@ def get_fs_info(path):
 
 def fetch_image(context, target, image_id, instance, user_id, project_id, max_size=0, extra_args={}):
     """Grab image."""
-    LOG.info("IntelDCG : Fetching the image from glance " )
+    LOG.info("IntelCIT : Fetching the image from glance " )
 
     #Abhay Dandekar
     #DCG : fetch image with info    
     # MH start of policyagent hook for logging
-    LOG.info("IntelDCG Extra Args : %s " %(str(extra_args)))
+    LOG.info("IntelCIT Extra Args : %s " %(str(extra_args)))
 
     arg_pa='version'
     cmd=('policyagent',arg_pa)
     out,err=execute(*cmd,run_as_root=True, attempts=1)
     if err:
-        LOG.error("IntelDCG :Could execute teh policyagent rootwrap cmd not crypt format the loop device %s ,  %s " % (out, err) )
+        LOG.error("IntelCIT :Could execute the policy agent root wrap cmd not crypt format the loop device %s ,  %s " % (out, err) )
     else:
-	LOG.info("IntelDCG : Executed policyagent version successfully")
+	    LOG.info("IntelCIT : Executed policy agent version successfully")
 
-    if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args:
-        LOG.info(_("IntelDCG : decrypting the image"))
-	subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 with info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--checksum='+extra_args['mh_checksum'],'--dek-url='+extra_args['mh_dek_url']])
+    if 'mtwilson_trustpolicy_location' in extra_args:
+            LOG.info(_("IntelCIT : decrypting the image"))
+	    subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 with info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id, '--target='+target, '--mtwilson-trustpolicy-location='+extra_args['mtwilson_trustpolicy_location']])
     else:
-	subprocess.check_call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])        
-     #subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])
-     # MH start of policyagent hook for logging
+	    subprocess.check_call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])        
+    # MH start of policyagent hook for logging
 
     images.fetch_to_raw(context, image_id, target, user_id, project_id,
                         max_size=max_size)
 
     #Abhay Dandekar
-    #DCG : fetch image with info    
+    #DCG : fetch image with info 
+    #TODO: LOG prefix to be IntelCIT instead of IntelCIT	
     # MH start of policyagent hook for image download and decryption
-    instance_dir = get_instance_path(instance)
-    LOG.info(_("==========Instance Dir Loc===========" + instance_dir))
-    #if 'mh_encrypted' in extra_args and 'mh_checksum' in extra_args and 'mh_dek_url' in extra_args:
     if 'mtwilson_trustpolicy_location' in extra_args:
-        LOG.info(_("IntelDCG : launching policy agent decrypted the image"))
-        #subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_id='+instance['uuid'],'--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location']])
-        #policy_agent=('policyagent')
-        #arg_pa=('launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_id='+instance['uuid'],'--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location'])
-        # cmd=('policyagent',arg_pa)
-	# arg_pa='launch --project-id='+project_id+' --instance-name='+instance['name']+' --base-image='+image_id+' --image-id='+image_id+' --target='+target+' --instance_id='+instance['uuid']+' --mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location']
-	# LOG.info("Policyagent args : %s " %(arg_pa))
-        # cmd=('policyagent',arg_pa)
-	cmd=('policyagent', 'launch', '--project-id='+project_id, '--instance-name='+instance['name'], '--base-image='+image_id, '--image-id='+image_id, '--target='+target, '--instance_id='+instance['uuid'], '--mtwilson_trust_policy='+extra_args['mtwilson_trustpolicy_location'] )
-	# LOG.info("Policyagent cmd : %s " %(cmd))
-        out,err=execute(*cmd,run_as_root=True, attempts=1)
+        LOG.info(_("IntelCIT : launching policy agent decrypted the image"))
+        cmd=('policyagent', 'launch', '--project-id='+project_id, '--instance-name='+instance['name'], '--base-image='+image_id, '--image-id='+image_id, '--target='+target, '--instance_id='+instance['uuid'], '--mtwilson-trustpolicy-location='+extra_args['mtwilson_trustpolicy_location'] )
+	out,err=execute(*cmd,run_as_root=True, attempts=1)
         if err:
-               LOG.error("IntelDCG :Could execute teh policyagent rootwrap cmd not crypt format the loop device %s ,  %s " % (out, err) )
+               LOG.error("IntelCIT :Could execute the policy agent root wrap cmd not crypt format the loop device %s ,  %s " % (out, err) )
 	else:
-	       LOG.info("IntelDCG: policyagent executed successfully")
-    #elif 'manifest_uuid' in extra_args:
-    #    LOG.info(_("IntelDCG : launching non-encrypted image"))
-    #    subprocess.check_call(['/usr/local/bin/policyagent','launch','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_dir='+instance_dir])
-    #    LOG.info(_("IntelDCG : launching non-encrypted image"))
+	       LOG.info("IntelCIT: policy agent executed successfully")
     else:
-	LOG.info(_("IntelDCG : No Launch"))
+        LOG.info(_("IntelCIT : No Launch"))
         LOG.info(_("Get the INSTANCE ID" + instance['uuid']))
         subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 2 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target,'--instance_dir='+instance['uuid']])
     # MH end of policyagent hook for image download and decryption
