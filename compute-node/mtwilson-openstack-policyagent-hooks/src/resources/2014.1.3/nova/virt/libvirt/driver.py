@@ -51,6 +51,7 @@ import tempfile
 import threading
 import time
 import uuid
+import subprocess
 
 from eventlet import greenio
 from eventlet import greenthread
@@ -2586,7 +2587,7 @@ class LibvirtDriver(driver.ComputeDriver):
                       block_device_info=None, files=None,
                       admin_pass=None, inject_files=True):
 
-	LOG.info("IntelDCG : inside _create_image %s " %(instance) )
+	LOG.info("IntelCIT : inside _create_image %s " %(instance) )
 
         if not suffix:
             suffix = ''
@@ -2681,38 +2682,35 @@ class LibvirtDriver(driver.ComputeDriver):
             (image_service, image_id) = glance.get_remote_image_service(context, instance['image_ref'])
             image_meta = compute_utils.get_image_metadata(context, image_service, image_id, instance)
 
-            for prop in image_meta['properties']:
-                LOG.info(_("#####Image prop####################" + prop + "::" + image_meta['properties'][prop]))
- 
-            instance_dir = libvirt_utils.get_instance_path(instance)
-            LOG.info(_("#####Image prop####################" + instance_dir))
+                        
             # MH start of policagent hook for disk download and decryption
+			#TODO: Check for all the mtwilson_ property and copy them all
             if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
                 instance1['mtwilson_trustpolicy_location'] = image_meta['properties']['mtwilson_trustpolicy_location']
-                #instance1['mh_checksum'] = image_meta['properties']['mh_checksum']
-                #instance1['mh_dek_url'] = image_meta['properties']['mh_dek_url']
-                #instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
-            #else:
-            #    instance1['manifest_uuid'] = image_meta['properties']['manifest_uuid']
 
             #for prop in image_meta['properties']:
             #    LOG.info(_("#####Image prop" + prop + "::" + image_meta['properties'][prop]))
-
+                        
+            #Temporary: Delete this later 
+            #TODO: Create a separate command to create the symbolic link for Instance dir
             image_target=os.path.join(CONF.instances_path, "_base", root_fname)
-            LOG.info(_("&&&&&&&&&&Image Target Loca is:" + image_target))
             if os.path.exists(image_target):
                 os.remove(image_target)
-
 
             image('disk').cache(fetch_func=libvirt_utils.fetch_image,
                                 context=context,
                                 filename=root_fname,
                                 size=size,
                                 image_id=disk_images['image_id'],
-				instance=instance,
+                                instance=instance,
                                 user_id=instance['user_id'],
                                 project_id=instance['project_id'],
-				extra_args=instance1)
+                                extra_args=instance1)
+
+
+            #trustpolicy_loc = os.path.join(CONF.instances_path, CONF.base_dir_name, root_fname + ".xml")
+            #if os.path.exists(trustpolicy_loc):
+            #      subprocess.check_call(['/usr/local/bin/policyagent','pa_verify_trustpolicy_signature','--target='+trustpolicy_loc])
 
 	    # Abhay Dandekar : Update for downloading the manifest file
             # MH start of image manifest download
@@ -2720,11 +2718,11 @@ class LibvirtDriver(driver.ComputeDriver):
                 #manifest_uuid = image_meta['properties']['manifest_uuid']
                 #manifest_filename = 'manifest.xml'
                 #LOG.info(_("manifest uuid=" + str(manifest_uuid) + " for image " + disk_images['image_id']))
-                #LOG.info("IntelDCG : %s %s" %(CONF.instances_path, root_fname) )
+                #LOG.info("IntelCIT : %s %s" %(CONF.instances_path, root_fname) )
                 # manifest_target = os.path.join(CONF.instances_path, CONF.base_dir_name, root_fname + ".xml")
                 # Abhay : See if we can take _base from the configuraiton 
                 #manifest_target = os.path.join(CONF.instances_path, "_base", root_fname + ".xml")
-                #LOG.info("IntelDCG : Manifest tgt : %s " %(manifest_target))
+                #LOG.info("IntelCIT : Manifest tgt : %s " %(manifest_target))
                 #if os.path.exists(manifest_target):
                 #    os.remove(manifest_target)
                 #images.fetch(context, manifest_uuid, manifest_target, instance['user_id'], instance['project_id'], max_size=None)
