@@ -64,10 +64,15 @@ def generate_attestation_status_str(policy, policy_status, asset_tag):
     if(policy == 'none'):
         launch_image_tooltip = ''
 
-    if(asset_tag != '-'):
+    if(asset_tag != '-' and asset_tag is not None):
         tag_dictionary = asset_tag
-        if(type(asset_tag) is str):
-            tag_dictionary = json.loads(asset_tag)
+
+        if(type(tag_dictionary) is unicode):
+            tag_dictionary = (tag_dictionary.encode('utf8'))
+
+        if(type(tag_dictionary) is str):
+            tag_dictionary = json.loads(tag_dictionary)
+
         if('trust' in tag_dictionary and tag_dictionary['trust'] == 'true'):
             trust_type = 'trust_only'
             tags = tag_dictionary['tags']
@@ -93,6 +98,8 @@ def generate_attestation_status_str(policy, policy_status, asset_tag):
 # BEGIN: Changes to add the Geo Tag column in the Instances table view
 def get_instance_attestation_status(instance):
     instance_metadata = getattr(instance, "metadata", None)
+
+    LOG.error(instance_metadata)
 
     instance_tags = '{}'
     if(instance.tag_properties != '-'):
