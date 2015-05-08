@@ -162,8 +162,23 @@ updateNovaConf "attestation_api_url" "/mtwilson/v2/host-attestations" "trusted_c
 updateNovaConf "attestation_host_url" "/mtwilson/v2/hosts" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_server_ca_file" "/etc/nova/ssl.crt" "trusted_computing" "$novaConfFile"
 updateNovaConf "scheduler_driver" "nova.scheduler.filter_scheduler.FilterScheduler" "DEFAULT" "$novaConfFile"
-
-updateNovaConf "scheduler_default_filters" "RamFilter,ComputeFilter,TrustAssertionFilter" "DEFAULT" "$novaConfFile"
+schedulerDefaultFiltersExists=$(grep '^scheduler_default_filters=' "$novaConfFile")
+if [ -n "$schedulerDefaultFiltersExists" ]; then
+  alreadyIncludesRamFilter=$(echo "$schedulerDefaultFiltersExists" | grep 'RamFilter')
+  if [ -z "$alreadyIncludesRamFilter" ]; then
+    sed -i '/^scheduler_default_filters=/ s/$/,RamFilter/g' "$novaConfFile"
+  fi
+  alreadyIncludesComputeFilter=$(echo "$schedulerDefaultFiltersExists" | grep 'ComputeFilter')
+  if [ -z "$alreadyIncludesComputeFilter" ]; then
+    sed -i '/^scheduler_default_filters=/ s/$/,ComputeFilter/g' "$novaConfFile"
+  fi
+  alreadyIncludesTrustAssertionFilter=$(echo "$schedulerDefaultFiltersExists" | grep 'TrustAssertionFilter')
+  if [ -z "$alreadyIncludesTrustAssertionFilter" ]; then
+    sed -i '/^scheduler_default_filters=/ s/$/,TrustAssertionFilter/g' "$novaConfFile"
+  fi
+else
+  updateNovaConf "scheduler_default_filters" "RamFilter,ComputeFilter,TrustAssertionFilter" "DEFAULT" "$novaConfFile"
+fi
 
 # make sure unzip and authbind are installed
 MTWILSON_OPENSTACK_YUM_PACKAGES="zip unzip"
