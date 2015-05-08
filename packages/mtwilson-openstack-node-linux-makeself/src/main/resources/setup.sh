@@ -74,6 +74,73 @@ fi
 mtwilsonVmAttestationApiUrlPath="/mtwilson/v2/vm-attestations"
 mtwilsonVmAttestationAuthBlob="'$mtwilsonVmAttestationApiUsername:$mtwilsonVmAttestationApiPassword'"
 
+function openstack_update_property_in_file() {
+  local property="${1}"
+  local filename="${2}"
+  local value="${3}"
+
+  if [ -f "$filename" ]; then
+    local ispresent=$(grep "^${property}" "$filename")
+    if [ -n "$ispresent" ]; then
+      # first escape the pipes new value so we can use it with replacement command, which uses pipe | as the separator
+      local escaped_value=$(echo "${value}" | sed 's/|/\\|/g')
+      local sed_escaped_value=$(sed_escape "$escaped_value")
+      # replace just that line in the file and save the file
+      updatedcontent=`sed -re "s|^(${property})\s*=\s*(.*)|\1=${sed_escaped_value}|" "${filename}"`
+      # protect against an error
+      if [ -n "$updatedcontent" ]; then
+        echo "$updatedcontent" > "${filename}"
+      else
+        echo_warning "Cannot write $property to $filename with value: $value"
+        echo -n 'sed -re "s|^('
+        echo -n "${property}"
+        echo -n ')=(.*)|\1='
+        echo -n "${escaped_value}"
+        echo -n '|" "'
+        echo -n "${filename}"
+        echo -n '"'
+        echo
+      fi
+    else
+      # property is not already in file so add it. extra newline in case the last line in the file does not have a newline
+      echo "" >> "${filename}"
+      echo "${property}=${value}" >> "${filename}"
+    fi
+  else
+    # file does not exist so create it
+    echo "${property}=${value}" > "${filename}"
+  fi
+}
+
+function updateNovaConf() {
+  local property="$1"
+  local value="$2"
+  local header="$3"
+  local novaConfFile="$4"
+
+  if [ "$#" -ne 4 ]; then
+    echo_failure "Usage: updateNovaConf [PROPERTY] [VALUE] [HEADER] [NOVA_CONF_FILE_PATH]"
+    return -1
+  fi
+
+  local headerExists=$(grep '^\['${header}'\]$' "$novaConfFile")
+  if [ -z "$headerExists" ]; then
+    sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' -i "$novaConfFile" #remove empty lines at EOF
+    echo -e "\n" >> "$novaConfFile"
+    echo "# Intel(R) Cloud Integrity Technology" >> "$novaConfFile"
+    echo "[${header}]" >> "$novaConfFile"
+  fi
+
+  sed -i 's/^[#]*\('"$property"'=.*\)$/\1/' "$novaConfFile"   # remove comment '#'
+  local propertyExists=$(grep '^'"$property"'=.*$' "$novaConfFile")
+  if [ -n "$propertyExists" ]; then
+    openstack_update_property_in_file "$property" "$novaConfFile" "$value"
+  else
+    # insert at end of header block
+    sed -e '/^\['${header}'\]/{:a;n;/^$/!ba;i\'${property}'='${value} -e '}' -i "$novaConfFile"
+  fi
+}
+
 # update nova.conf
 novaConfFile="/etc/nova/nova.conf"
 if [ ! -f "$novaConfFile" ]; then
@@ -81,22 +148,10 @@ if [ ! -f "$novaConfFile" ]; then
   echo_failure "OpenStack compute node must be installed first"
   exit -1
 fi
-novaConfTrustedComputingExists=$(grep '^\[trusted_computing\]$' "$novaConfFile")
-if [ -n "$novaConfTrustedComputingExists" ]; then
-  update_property_in_file "attestation_server_ip" "$novaConfFile" "$mtwilsonServer"
-  update_property_in_file "attestation_server_port" "$novaConfFile" "$mtwilsonServerPort"
-  update_property_in_file "attestation_api_url" "$novaConfFile" "$mtwilsonVmAttestationApiUrlPath"
-  update_property_in_file "attestation_auth_blob" "$novaConfFile" "$mtwilsonVmAttestationAuthBlob"
-else
-  sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' -i "$novaConfFile" #remove empty lines at EOF
-  echo -e "\n" >> "$novaConfFile"
-  echo "# Intel(R) Cloud Integrity Technology" >> "$novaConfFile"
-  echo "[trusted_computing]" >> "$novaConfFile"
-  echo "attestation_server_ip=$mtwilsonServer" >> "$novaConfFile"
-  echo "attestation_server_port=$mtwilsonServerPort" >> "$novaConfFile"
-  echo "attestation_api_url=$mtwilsonVmAttestationApiUrlPath" >> "$novaConfFile"
-  echo "attestation_auth_blob=$mtwilsonVmAttestationAuthBlob" >> "$novaConfFile"
-fi
+updateNovaConf "attestation_server_ip" "$mtwilsonServer" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_server_port" "$mtwilsonServerPort" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_api_url" "$mtwilsonVmAttestationApiUrlPath" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_auth_blob" "$mtwilsonVmAttestationAuthBlob" "trusted_computing" "$novaConfFile"
 
 # make sure unzip and authbind are installed
 MTWILSON_OPENSTACK_YUM_PACKAGES="zip unzip"
