@@ -168,7 +168,6 @@ class AttestationService(object):
     def _request(self, cmd, subcmd, host_uuid):
         # Setup the header & body for the request
         params = {"host_uuid": host_uuid}
-        LOG.error(params)
 
         headers = {}
         auth = base64.encodestring(self.auth_blob).replace('\n', '')
@@ -178,7 +177,6 @@ class AttestationService(object):
             headers['Accept'] = 'application/samlassertion+xml'
             headers['Content-Type'] = 'application/json'
         status, res = self._do_request(cmd, subcmd, params, headers)
-        LOG.error(status)
         if status == httplib.OK:
             data = res.read()
             return status, data
@@ -222,10 +220,11 @@ class TrustAssertionFilter(filters.BaseHostFilter):
 	# Get the Tag verification flag from the image properties 
         tag_selections = image_props.get('tags') # comma seperated values
         trust_verify = image_props.get('trust') # comma seperated values
+        
         #if tag_selections is None or tag_selections == 'Trust':
         if trust_verify == 'true':
             verify_trust_status = True
-            if tag_selections != None and tag_selections != {}:
+            if tag_selections != None and tag_selections != {} and  tag_selections != 'None':
                 verify_asset_tag = True
 
         
@@ -243,7 +242,6 @@ class TrustAssertionFilter(filters.BaseHostFilter):
             return False
 
         host_data = self.attestservice.do_attestation(host_uuid)
-        LOG.error(host_data)
         trust, asset_tag = self.verify_and_parse_saml(host_data)
         if not trust:
             return False
