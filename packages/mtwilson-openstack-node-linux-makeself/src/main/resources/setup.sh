@@ -129,6 +129,7 @@ function updateNovaConf() {
     echo -e "\n" >> "$novaConfFile"
     echo "# Intel(R) Cloud Integrity Technology" >> "$novaConfFile"
     echo "[${header}]" >> "$novaConfFile"
+    echo -e "\n" >> "$novaConfFile"
   fi
 
   sed -i 's/^[#]*\('"$property"'=.*\)$/\1/' "$novaConfFile"   # remove comment '#'
