@@ -11,8 +11,9 @@
 # 7. install prerequisites
 # 8. unzip mtwilson-openstack-controller archive mtwilson-openstack-controller-zip-*.zip
 # 9. apply openstack extension patches
-# 10. sync nova database
-# 11. restart openstack services
+# 10. remove trusted_filter.py if exists
+# 11. sync nova database
+# 12. restart openstack services
 
 #####
 
@@ -81,6 +82,74 @@ echo "    'host_url': '/mtwilson/v2/hosts'," >> "$openstackDashboardSettingsFile
 echo "    'tags_url': '/mtwilson/v2/tag-kv-attributes.json?filter=false'" >> "$openstackDashboardSettingsFile"
 echo "}" >> "$openstackDashboardSettingsFile"
 
+function openstack_update_property_in_file() {
+  local property="${1}"
+  local filename="${2}"
+  local value="${3}"
+
+  if [ -f "$filename" ]; then
+    local ispresent=$(grep "^${property}" "$filename")
+    if [ -n "$ispresent" ]; then
+      # first escape the pipes new value so we can use it with replacement command, which uses pipe | as the separator
+      local escaped_value=$(echo "${value}" | sed 's/|/\\|/g')
+      local sed_escaped_value=$(sed_escape "$escaped_value")
+      # replace just that line in the file and save the file
+      updatedcontent=`sed -re "s|^(${property})\s*=\s*(.*)|\1=${sed_escaped_value}|" "${filename}"`
+      # protect against an error
+      if [ -n "$updatedcontent" ]; then
+        echo "$updatedcontent" > "${filename}"
+      else
+        echo_warning "Cannot write $property to $filename with value: $value"
+        echo -n 'sed -re "s|^('
+        echo -n "${property}"
+        echo -n ')=(.*)|\1='
+        echo -n "${escaped_value}"
+        echo -n '|" "'
+        echo -n "${filename}"
+        echo -n '"'
+        echo
+      fi
+    else
+      # property is not already in file so add it. extra newline in case the last line in the file does not have a newline
+      echo "" >> "${filename}"
+      echo "${property}=${value}" >> "${filename}"
+    fi
+  else
+    # file does not exist so create it
+    echo "${property}=${value}" > "${filename}"
+  fi
+}
+
+function updateNovaConf() {
+  local property="$1"
+  local value="$2"
+  local header="$3"
+  local novaConfFile="$4"
+
+  if [ "$#" -ne 4 ]; then
+    echo_failure "Usage: updateNovaConf [PROPERTY] [VALUE] [HEADER] [NOVA_CONF_FILE_PATH]"
+    return -1
+  fi
+
+  local headerExists=$(grep '^\['${header}'\]$' "$novaConfFile")
+  if [ -z "$headerExists" ]; then
+    sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' -i "$novaConfFile" #remove empty lines at EOF
+    echo -e "\n" >> "$novaConfFile"
+    echo "# Intel(R) Cloud Integrity Technology" >> "$novaConfFile"
+    echo "[${header}]" >> "$novaConfFile"
+    echo -e "\n" >> "$novaConfFile"
+  fi
+
+  sed -i 's/^[#]*\('"$property"'=.*\)$/\1/' "$novaConfFile"   # remove comment '#'
+  local propertyExists=$(grep '^'"$property"'=.*$' "$novaConfFile")
+  if [ -n "$propertyExists" ]; then
+    openstack_update_property_in_file "$property" "$novaConfFile" "$value"
+  else
+    # insert at end of header block
+    sed -e '/^\['${header}'\]/{:a;n;/^$/!ba;i\'${property}'='${value} -e '}' -i "$novaConfFile"
+  fi
+}
+
 # update nova.conf
 novaConfFile="/etc/nova/nova.conf"
 if [ ! -f "$novaConfFile" ]; then
@@ -88,45 +157,29 @@ if [ ! -f "$novaConfFile" ]; then
   echo_failure "OpenStack controller must be installed first"
   exit -1
 fi
-novaConfTrustedComputingExists=$(grep '^\[trusted_computing\]$' "$novaConfFile")
-if [ -n "$novaConfTrustedComputingExists" ]; then
-  update_property_in_file "attestation_server" "$novaConfFile" "$MTWILSON_SERVER"
-  update_property_in_file "attestation_port" "$novaConfFile" "$MTWILSON_SERVER_PORT"
-  update_property_in_file "attestation_auth_blob" "$novaConfFile" "$mtwilsonAssetTagAuthBlob"
-  update_property_in_file "attestation_api_url" "$novaConfFile" "/mtwilson/v2/host-attestations"
-  update_property_in_file "attestation_host_url" "$novaConfFile" "/mtwilson/v2/hosts"
-  update_property_in_file "attestation_server_ca_file" "$novaConfFile" "/etc/nova/ssl.crt"
-else
-  sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' -i "$novaConfFile" #remove empty lines at EOF
-  echo -e "\n" >> "$novaConfFile"
-  echo "[trusted_computing]" >> "$novaConfFile"
-  echo "attestation_server=$MTWILSON_SERVER" >> "$novaConfFile"
-  echo "attestation_port=$MTWILSON_SERVER_PORT" >> "$novaConfFile"
-  echo "attestation_auth_blob=$mtwilsonAssetTagAuthBlob" >> "$novaConfFile"
-  echo "attestation_api_url=/mtwilson/v2/host-attestations" >> "$novaConfFile"
-  echo "attestation_host_url=/mtwilson/v2/hosts" >> "$novaConfFile"
-  echo "attestation_server_ca_file=/etc/nova/ssl.crt" >> "$novaConfFile"
-fi
-novaConfDefaultExists=$(grep '^\[DEFAULT\]$' "$novaConfFile")
-if [ -n "$novaConfDefaultExists" ]; then
-  schedulerDriverExists=$(grep '^scheduler_driver=' "$novaConfFile")
-  if [ -n "$schedulerDriverExists" ]; then
-    update_property_in_file "scheduler_driver" "$novaConfFile" "nova.scheduler.filter_scheduler.FilterScheduler"
-  else
-    sed -e '/^\[DEFAULT\]/{:a;n;/^$/!ba;i\scheduler_driver=nova.scheduler.filter_scheduler.FilterScheduler' -e '}' -i "$novaConfFile"
+updateNovaConf "attestation_server" "$MTWILSON_SERVER" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_port" "$MTWILSON_SERVER_PORT" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_auth_blob" "$mtwilsonAssetTagAuthBlob" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_api_url" "/mtwilson/v2/host-attestations" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_host_url" "/mtwilson/v2/hosts" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_server_ca_file" "/etc/nova/ssl.crt" "trusted_computing" "$novaConfFile"
+updateNovaConf "scheduler_driver" "nova.scheduler.filter_scheduler.FilterScheduler" "DEFAULT" "$novaConfFile"
+schedulerDefaultFiltersExists=$(grep '^scheduler_default_filters=' "$novaConfFile")
+if [ -n "$schedulerDefaultFiltersExists" ]; then
+  alreadyIncludesRamFilter=$(echo "$schedulerDefaultFiltersExists" | grep 'RamFilter')
+  if [ -z "$alreadyIncludesRamFilter" ]; then
+    sed -i '/^scheduler_default_filters=/ s/$/,RamFilter/g' "$novaConfFile"
   fi
-  schedulerDefaultFiltersExists=$(grep '^scheduler_default_filters=' "$novaConfFile")
-  if [ -n "$schedulerDefaultFiltersExists" ]; then
-    update_property_in_file "scheduler_default_filters" "$novaConfFile" "RamFilter,ComputeFilter,TrustAssertionFilter"
-  else
-    sed -e '/^\[DEFAULT\]/{:a;n;/^$/!ba;i\scheduler_default_filters=RamFilter,ComputeFilter,TrustAssertionFilter' -e '}' -i "$novaConfFile"
+  alreadyIncludesComputeFilter=$(echo "$schedulerDefaultFiltersExists" | grep 'ComputeFilter')
+  if [ -z "$alreadyIncludesComputeFilter" ]; then
+    sed -i '/^scheduler_default_filters=/ s/$/,ComputeFilter/g' "$novaConfFile"
+  fi
+  alreadyIncludesTrustAssertionFilter=$(echo "$schedulerDefaultFiltersExists" | grep 'TrustAssertionFilter')
+  if [ -z "$alreadyIncludesTrustAssertionFilter" ]; then
+    sed -i '/^scheduler_default_filters=/ s/$/,TrustAssertionFilter/g' "$novaConfFile"
   fi
 else
-  sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' -i "$novaConfFile" #remove empty lines at EOF
-  echo -e "\n" >> "$novaConfFile"
-  echo "[DEFAULT]" >> "$novaConfFile"
-  echo "scheduler_driver=nova.scheduler.filter_scheduler.FilterScheduler" >> "$novaConfFile"
-  echo "scheduler_default_filters=RamFilter,ComputeFilter,TrustAssertionFilter" >> "$novaConfFile"
+  updateNovaConf "scheduler_default_filters" "RamFilter,ComputeFilter,TrustAssertionFilter" "DEFAULT" "$novaConfFile"
 fi
 
 # make sure unzip and authbind are installed
@@ -266,6 +319,12 @@ done
 find /usr/share/openstack-dashboard/ -name "*.pyc" -delete
 find $DISTRIBUTION_LOCATION/novaclient -name "*.pyc" -delete
 find $DISTRIBUTION_LOCATION/nova -name "*.pyc" -delete
+
+# remove trusted_filter.py if exists
+trustedFilterFile=$(find "$DISTRIBUTION_LOCATION" -name "trusted_filter.py")
+if [ -f "$trustedFilterFile" ]; then
+  rm -f "$trustedFilterFile"
+fi
 
 echo "Syncing nova database"
 if [ -d /var/log/nova ]	; then
