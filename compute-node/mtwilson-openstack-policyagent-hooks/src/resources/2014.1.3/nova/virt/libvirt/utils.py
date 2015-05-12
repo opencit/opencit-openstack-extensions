@@ -670,7 +670,7 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
             LOG.info(_("IntelCIT : decrypting the image"))
 	    subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 with info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id, '--target='+target, '--mtwilson-trustpolicy-location='+extra_args['mtwilson_trustpolicy_location']])
     else:
-	    subprocess.check_call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])        
+	    subprocess.call(['/usr/local/bin/policyagent','log','utils fetch_image 1 without info','--project-id='+project_id,'--instance-name='+instance['name'],'--base-image='+image_id,'--image-id='+image_id,'--target='+target])        
     # MH start of policyagent hook for logging
 
     images.fetch_to_raw(context, image_id, target, user_id, project_id,
