@@ -11,8 +11,9 @@
 # 7. install prerequisites
 # 8. unzip mtwilson-openstack-controller archive mtwilson-openstack-controller-zip-*.zip
 # 9. apply openstack extension patches
-# 10. sync nova database
-# 11. restart openstack services
+# 10. remove trusted_filter.py if exists
+# 11. sync nova database
+# 12. restart openstack services
 
 #####
 
@@ -136,6 +137,7 @@ function updateNovaConf() {
     echo -e "\n" >> "$novaConfFile"
     echo "# Intel(R) Cloud Integrity Technology" >> "$novaConfFile"
     echo "[${header}]" >> "$novaConfFile"
+    echo -e "\n" >> "$novaConfFile"
   fi
 
   sed -i 's/^[#]*\('"$property"'=.*\)$/\1/' "$novaConfFile"   # remove comment '#'
@@ -305,9 +307,6 @@ function applyPatches() {
   fi
 }
 
-# remove trusted_filter.py if exists
-trusted_filter.py
-
 ### Apply patches
 COMPUTE_COMPONENTS="mtwilson-openstack-asset-tag"
 FLAVOUR=$(getFlavour)
@@ -320,6 +319,12 @@ done
 find /usr/share/openstack-dashboard/ -name "*.pyc" -delete
 find $DISTRIBUTION_LOCATION/novaclient -name "*.pyc" -delete
 find $DISTRIBUTION_LOCATION/nova -name "*.pyc" -delete
+
+# remove trusted_filter.py if exists
+trustedFilterFile=$(find "$DISTRIBUTION_LOCATION" -name "trusted_filter.py")
+if [ -f "$trustedFilterFile" ]; then
+  rm -f "$trustedFilterFile"
+fi
 
 echo "Syncing nova database"
 if [ -d /var/log/nova ]	; then
