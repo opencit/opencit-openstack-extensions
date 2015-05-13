@@ -248,6 +248,8 @@ class TrustAssertionFilter(filters.BaseHostFilter):
 
         if verify_asset_tag:
             # Verify the asset tag restriction
+            LOG.error(asset_tag)
+            LOG.error(tag_selections)
             return self.verify_asset_tag(asset_tag, tag_selections)
 
 
@@ -282,7 +284,7 @@ class TrustAssertionFilter(filters.BaseHostFilter):
                     if el.find(xp_attributevalue).text == 'true':
                         trust = True
                 elif el.attrib['Name'].lower().startswith("tag"):
-                    asset_tag[el.attrib['Name'].lower().split('[')[1].split(']')[0]] = el.find(xp_attributevalue).text
+                    asset_tag[el.attrib['Name'].lower().split('[')[1].split(']')[0].lower()] = el.find(xp_attributevalue).text.lower()
 
             return trust, asset_tag
         except:
@@ -294,12 +296,14 @@ class TrustAssertionFilter(filters.BaseHostFilter):
         # tag_selections is the list of tags set as the policy of the image
         ret_status = False
         selection_details = {}
+
         try: 
-            sel_tags = ast.literal_eval(tag_selections)
+            sel_tags = ast.literal_eval(tag_selections.lower())
 
             iteration_status = True
             for tag in list(sel_tags.keys()):
                 if tag not in list(host_tags.keys()) or host_tags[tag] not in sel_tags[tag]:
+                #if tag not in dict((k.lower(),v) for k,v in host_tags.items()).keys() or host_tags[tag.lower()].lower() not in (val.upper() for val in sel_tags[tag]:
                     iteration_status = False
             if(iteration_status):
                 ret_status = True
