@@ -277,11 +277,23 @@ if [ ! -x  /usr/local/bin/policyagent ]; then
   exit -1
 fi
 
-# rootwrap compute.filters
-computeFiltersFile="/etc/nova/rootwrap.d/compute.filters"
-if [ ! -f "$computeFiltersFile" ]; then
-  computeFiltersFile="/usr/share/nova/rootwrap/compute.filters"
+# rootwrap.conf
+rootwrapConfFile="/etc/nova/rootwrap.conf"
+if [ ! -f "$rootwrapConfFile" ]; then
+  echo_failure "Could not find $rootwrapConfFile"
+  exit -1
 fi
+
+# rootwrap compute.filters
+for computeFiltersDir in `grep filters_path $rootwrapConfFile | awk 'BEGIN{FS="="}{print $2}' | sed 's/,/ /g'`
+do
+       if [ -f "$computeFiltersDir"/compute.filters ] ; then
+               export computeFiltersFile="$computeFiltersDir"/compute.filters
+               echo "Using compute.filters at $computeFiltersFile"
+               break
+       fi
+done
+
 if [ ! -f "$computeFiltersFile" ]; then
   echo_failure "Could not find $computeFiltersFile"
   exit -1
@@ -293,12 +305,6 @@ else
   echo "policyagent: CommandFilter, /usr/local/bin/policyagent, root" >> "$computeFiltersFile"
 fi
 
-# rootwrap.conf
-rootwrapConfFile="/etc/nova/rootwrap.conf"
-if [ ! -f "$rootwrapConfFile" ]; then
-  echo_failure "Could not find $rootwrapConfFile"
-  exit -1
-fi
 rootwrapConfExecDirsExists=$(grep '^exec_dirs=' "$rootwrapConfFile")
 if [ -n "$rootwrapConfExecDirsExists" ]; then
   rootwrapConfAlreadyHasLocalBin=$(echo "$rootwrapConfExecDirsExists" | grep '/usr/local/bin')
