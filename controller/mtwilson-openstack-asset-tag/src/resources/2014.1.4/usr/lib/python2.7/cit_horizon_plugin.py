@@ -87,7 +87,7 @@ def generate_attestation_status_str(policy, policy_status, asset_tag):
                 tags = json.loads(tags)
 
             #if ('tags' in tag_dictionary.keys() and tag_dictionary['tags'] != 'None' and len(tags.keys()) != 0):
-            if (tags != None or tags != {}):
+            if (tags != None and tags != {}):
                 tag_image_tooltip = 'Trust: Yes; Asset tags: ' + json.dumps(tags)
                 trust_type = 'trust_and_geo'
         
