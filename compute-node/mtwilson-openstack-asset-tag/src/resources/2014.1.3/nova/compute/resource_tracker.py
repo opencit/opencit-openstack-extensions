@@ -41,6 +41,12 @@ from nova.pci import pci_manager
 from nova import rpc
 from nova import utils
 
+import httplib
+import urllib
+from base64 import b64encode
+import random
+from lxml import etree
+
 resource_tracker_opts = [
     cfg.IntOpt('reserved_host_disk_mb', default=0,
                help='Amount of disk in MB to reserve for the host'),
@@ -619,6 +625,7 @@ class ResourceTracker(object):
             if instance['vm_state'] == vm_states.DELETED:
                 continue
             else:
+		#continue
                 if(instance['vm_state'] != vm_states.ACTIVE):
                     continue
 
@@ -627,7 +634,6 @@ class ResourceTracker(object):
                         ('measurement_status' not in instance['metadata']) or 
                         (('measurement_status' in instance['metadata']) and instance['metadata']['measurement_status'] == 'na')):
                     self.set_instance_attestation_status(instance)
-
                 self._update_usage_from_instance(resources, instance)
 
     # Call the Intel(R) Cloud Integrity Technology server to retrieve the Trust status of the VM
@@ -660,13 +666,22 @@ class ResourceTracker(object):
 
             # Setup the header & body for the request
             headers = { 'Authorization' : 'Basic %s' %  userAndPass, 'Accept': 'application/samlassertion+xml', 'Content-Type': 'application/json' }
-            params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.uuid} 
+
+            params = {'host_name': instance.host, 'vm_instance_id': instance.uuid} 
             c.request('POST', attestation_url, jsonutils.dumps(params), headers)
             res = c.getresponse()
             res_data = res.read()
 
             # Parse the SAML assertion to get the relevant details
             policy_name, policy_status = self.verify_and_parse_saml(res_data)
+
+            if policy_name == 'na':
+                params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.uuid} 
+                c.request('POST', attestation_url, jsonutils.dumps(params), headers)
+                res = c.getresponse()
+                res_data = res.read()
+                policy_name, policy_status = self.verify_and_parse_saml(res_data)
+            
             instance['metadata']['measurement_policy'] = policy_name
             instance['metadata']['measurement_status'] = policy_status
             instance.save()
