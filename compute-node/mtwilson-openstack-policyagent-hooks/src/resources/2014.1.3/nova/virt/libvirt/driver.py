@@ -5289,7 +5289,27 @@ class LibvirtDriver(driver.ComputeDriver):
             LOG.info(_('Deleting instance files %s'), target,
                      instance=instance)
             try:
-                shutil.rmtree(target)
+                #arg_pa='version'
+                #cmd=('policyagent',arg_pa)
+                #out,err=execute(*cmd,run_as_root=True, attempts=1)
+                #if err:
+                #    LOG.error(_("IntelCIT :Could execute the policy agent root wrap cmd not crypt format the loop device %s ,  %s " % (out, err) ))
+                #else:
+                #    LOG.info(_("IntelCIT : Executed policy agent version successfully"))
+
+                if os.path.islink(target):
+                           cmd=('policyagent', 'delete', target)
+                           out,err=utils.execute(*cmd,run_as_root=True, attempts=1)
+                           if err:
+                               LOG.error(_("IntelCIT :Check delete instance") )
+                           else:
+                               LOG.info(_("IntelCIT : deleted the instance" + target))
+                else:
+                             #os.unlink(sympath)
+                             #testpath=os.path.realpath(ins_path)
+                             #LOG.info(_("TESTPATH:" + testpath))
+                             #shutil.rmtree(sympath)
+                             shutil.rmtree(target)
             except OSError as e:
                 LOG.error(_('Failed to cleanup directory %(target)s: '
                             '%(e)s'), {'target': target, 'e': e},
