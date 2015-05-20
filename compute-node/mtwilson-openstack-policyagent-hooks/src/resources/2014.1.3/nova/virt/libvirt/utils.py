@@ -682,7 +682,7 @@ def fetch_image(context, target, image_id, instance, user_id, project_id, max_si
     # MH start of policyagent hook for image download and decryption
     if 'mtwilson_trustpolicy_location' in extra_args:
         LOG.info(_("IntelCIT : launching policy agent decrypted the image"))
-        cmd=('policyagent', 'launch', '--project-id='+project_id, '--instance-name='+instance['name'], '--base-image='+image_id, '--image-id='+image_id, '--target='+target, '--instance_id='+instance['uuid'], '--mtwilson-trustpolicy-location='+extra_args['mtwilson_trustpolicy_location'] )
+        cmd=('policyagent', 'launch', '--project-id='+project_id, '--instance-name='+instance['name'], '--base-image='+image_id, '--image-id='+image_id, '--target='+target, '--instance_id='+instance['uuid'], '--mtwilson-trustpolicy-location='+extra_args['mtwilson_trustpolicy_location'],'--instance_type_root_gb='+extra_args['instance_type_root_gb'])
 	out,err=execute(*cmd,run_as_root=True, attempts=1)
         if err:
                LOG.error("IntelCIT :Could execute the policy agent root wrap cmd not crypt format the loop device %s ,  %s " % (out, err) )
