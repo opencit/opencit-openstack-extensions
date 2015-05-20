@@ -2687,10 +2687,12 @@ class LibvirtDriver(driver.ComputeDriver):
 			#TODO: Check for all the mtwilson_ property and copy them all
             if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
                 instance1['mtwilson_trustpolicy_location'] = image_meta['properties']['mtwilson_trustpolicy_location']
+                instance1['instance_type_root_gb']=image_meta['properties']['instance_type_root_gb']
 
-            #for prop in image_meta['properties']:
-            #    LOG.info(_("#####Image prop" + prop + "::" + image_meta['properties'][prop]))
-                        
+            for prop in image_meta['properties']:
+                LOG.info(_("#####Image prop" + prop + "::" + image_meta['properties'][prop]))
+            
+            LOG.info(_("Instance root_gb" + instance1['instance_type_root_gb']))            
             #Temporary: Delete this later 
             #TODO: Create a separate command to create the symbolic link for Instance dir
             image_target=os.path.join(CONF.instances_path, "_base", root_fname)
