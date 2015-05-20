@@ -666,13 +666,22 @@ class ResourceTracker(object):
 
             # Setup the header & body for the request
             headers = { 'Authorization' : 'Basic %s' %  userAndPass, 'Accept': 'application/samlassertion+xml', 'Content-Type': 'application/json' }
-            params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.uuid} 
+
+            params = {'host_name': instance.host, 'vm_instance_id': instance.uuid} 
             c.request('POST', attestation_url, jsonutils.dumps(params), headers)
             res = c.getresponse()
             res_data = res.read()
 
             # Parse the SAML assertion to get the relevant details
             policy_name, policy_status = self.verify_and_parse_saml(res_data)
+
+            if policy_name == 'na':
+                params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.uuid} 
+                c.request('POST', attestation_url, jsonutils.dumps(params), headers)
+                res = c.getresponse()
+                res_data = res.read()
+                policy_name, policy_status = self.verify_and_parse_saml(res_data)
+            
             instance['metadata']['measurement_policy'] = policy_name
             instance['metadata']['measurement_status'] = policy_status
             instance.save()
