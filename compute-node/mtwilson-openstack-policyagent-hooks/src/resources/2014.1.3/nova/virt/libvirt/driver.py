@@ -2692,7 +2692,7 @@ class LibvirtDriver(driver.ComputeDriver):
             for prop in image_meta['properties']:
                 LOG.info(_("#####Image prop" + prop + "::" + image_meta['properties'][prop]))
             
-            LOG.info(_("Instance root_gb" + instance1['instance_type_root_gb']))            
+            #LOG.info(_("Instance root_gb" + instance1['instance_type_root_gb']))            
             #Temporary: Delete this later 
             #TODO: Create a separate command to create the symbolic link for Instance dir
             image_target=os.path.join(CONF.instances_path, "_base", root_fname)
