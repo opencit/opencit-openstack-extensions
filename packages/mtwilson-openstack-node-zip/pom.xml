@@ -32,7 +32,7 @@
         </resources>
         
         <plugins>
-            <plugin>
+<!--            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
@@ -66,7 +66,47 @@
                         <version>1.0b3</version>
                     </dependency>
                 </dependencies>
+            </plugin> -->
+
+<!-- Generate patches for Policy Agent hooks & Asset Tag -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.4.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-patches-policy-agent</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>../../patch_util.sh</executable>
+                            <arguments>
+                                <argument>create_patch</argument>
+                                <argument>../../compute-node/mtwilson-openstack-policyagent-hooks/src</argument>
+                                <argument>${project.build.directory}/application/mtwilson-openstack-policyagent-hooks</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-patches-asset-tag</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>../../patch_util.sh</executable>
+                            <arguments>
+                                <argument>create_patch</argument>
+                                <argument>../../compute-node/mtwilson-openstack-asset-tag/src</argument>
+                                <argument>${project.build.directory}/application/mtwilson-openstack-asset-tag</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
+
         </plugins>
     </build>
 
