@@ -1,16 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
-  <artifactId>mtwilson-linux-util</artifactId>
+  <groupId>com.intel.mtwilson.openstack.util</groupId>
+  <artifactId>mtwilson-linux-patch-util</artifactId>
 
   <packaging>pom</packaging>
-  <name>mtwilson-util-linux</name>
-  <description>Self-extracting executable that installs Linux utility functions for Mt Wilson control scripts.</description>
+  <name>mtwilson-linux-patch-util</name>
+  <description>Self-extracting executable that installs Linux patch utility functions.</description>
 
     <parent>
 	<groupId>com.intel.mtwilson.linux</groupId>
 	<artifactId>mtwilson-linux</artifactId>
 	<version>3.0-SNAPSHOT</version>
+        <relativePath/>
     </parent>
   
   <properties>
@@ -71,13 +72,6 @@
               <outputDirectory>${makeself.directory}</outputDirectory>
 		<resources>
 		    <resource>
-			<directory>src/etc</directory>
-			<includes>
-			    <include>version</include>
-			</includes>
-			<filtering>true</filtering>
-		    </resource>
-		    <resource>
 			<directory>src/files</directory>
 			<includes>
 			    <include>**/*</include>
@@ -107,18 +101,14 @@
             <executions>                      
                 <execution>
                     <id>attach-artifacts</id>
-                    <phase>package</phase>
+                    <phase>generate-sources</phase>
                     <goals>
                         <goal>attach-artifact</goal>
                     </goals>
                     <configuration>
                         <artifacts>
                             <artifact>
-                                <file>${project.build.directory}/${project.artifactId}-${project.version}.bin</file>
-                                <type>bin</type>
-                            </artifact>
-                            <artifact>
-                                <file>${makeself.directory}/functions.sh</file>
+                                <file>${project.build.directory}/${project.artifactId}-${project.version}/patch_util.sh</file>
                                 <type>sh</type>
                             </artifact>
                         </artifacts>
@@ -129,8 +119,8 @@
     </plugins>
 </pluginManagement>
   
-  
-  </build>
+
+</build>
   
   <!-- commenting out this dependency 2014-01-09, it doesn't make sense and doesn't appear to be used here anyway; the java setup code uses it for its jdbc driver and postgres sql scripts -->
   <!--

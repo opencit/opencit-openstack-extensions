@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
-    <groupId>com.intel.mtwilson.openstack.packages</groupId>
-    <artifactId>mtwilson-openstack-node-zip</artifactId>
+    <groupId>com.intel.mtwilson.openstack.computenode</groupId>
+    <artifactId>mtwilson-openstack-node-asset-tag</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <description>Mtwilson OpenStack Compute Node Extensions Zip</description>
+    <description>Mtwilson OpenStack Compute Node Extensions Zip For Asset Tag</description>
 	
     <parent>
         <groupId>com.intel.mtwilson.maven</groupId>
@@ -75,21 +75,6 @@
                 <version>1.4.0</version>
                 <executions>
                     <execution>
-                        <id>generate-patches-policy-agent</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>../../patch_util.sh</executable>
-                            <arguments>
-                                <argument>create_patch</argument>
-                                <argument>../../compute-node/mtwilson-openstack-policyagent-hooks/src</argument>
-                                <argument>${project.build.directory}/application/mtwilson-openstack-policyagent-hooks</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>generate-patches-asset-tag</id>
                         <phase>generate-resources</phase>
                         <goals>
@@ -112,6 +97,12 @@
 
 
     <dependencies>
+        <dependency>
+            <groupId>com.intel.mtwilson.linux</groupId>
+            <artifactId>mtwilson-linux-patch-util</artifactId>
+            <version>${mtwilson.version}</version>
+            <type>sh</type>
+        </dependency>
         
         <!--<dependency>
             <groupId>com.intel.mtwilson.integration</groupId>

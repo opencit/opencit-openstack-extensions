@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
-    <groupId>com.intel.mtwilson.openstack.packages</groupId>
-    <artifactId>mtwilson-openstack-controller-zip</artifactId>
+    <groupId>com.intel.mtwilson.openstack.controller</groupId>
+    <artifactId>mtwilson-openstack-controller-asset-tag</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <description>Mtwilson OpenStack Controller Comprehensive Extensions Zip</description>
+    <description>Mtwilson OpenStack Controller Comprehensive Extensions Zip for Asset Tag</description>
 	
     <parent>
         <groupId>com.intel.mtwilson.maven</groupId>
