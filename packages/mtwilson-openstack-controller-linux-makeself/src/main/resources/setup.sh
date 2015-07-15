@@ -240,7 +240,7 @@ done
 
 # copy utilities script file to application folder
 cp $UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/functions.sh
-cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch_util.sh
+cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch-util.sh
 
 
 # set permissions
@@ -367,7 +367,7 @@ DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion).patch
 for component in $COMPUTE_COMPONENTS; do
   #applyPatches $component $version
-  apply_patch $DISTRIBUTION_LOCATION $OPENSTACK_EXT_REPOSITORY/$component/$version 1
+  apply_patch "/" $OPENSTACK_EXT_REPOSITORY/$component/$version 1
 done
 
 find /usr/share/openstack-dashboard/ -name "*.pyc" -delete

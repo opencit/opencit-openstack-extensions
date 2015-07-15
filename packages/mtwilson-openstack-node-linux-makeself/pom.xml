@@ -41,7 +41,7 @@
          <dependency>
             <groupId>com.intel.mtwilson.openstack.util</groupId>
             <artifactId>mtwilson-linux-patch-util</artifactId>
-            <version>${mtwilson.version}</version>
+            <version>${project.version}</version>
             <type>sh</type>
         </dependency>
     </dependencies>
