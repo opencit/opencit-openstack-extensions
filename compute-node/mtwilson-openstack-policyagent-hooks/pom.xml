@@ -32,24 +32,52 @@
         </resources>
         
         <plugins>
-<!--            <plugin>
+
+<!-- Add pathc-util.sh to target directory to generate patches -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                             <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                             <artifactItems>
+                                 <artifactItem>
+                                     <groupId>com.intel.mtwilson.openstack.util</groupId>
+                                     <artifactId>mtwilson-linux-patch-util</artifactId>
+                                     <version>${project.version}</version>
+                                     <type>sh</type>
+                                     <outputDirectory>${project.build.directory}</outputDirectory>
+                                     <destFileName>patch-util.sh</destFileName>
+                                 </artifactItem>
+                             </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+<!-- Generate patches for Policy Agent hooks -->
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>add-compiled-binaries</id>
+                        <id>generate-patches-policy-agent</id>
                         <phase>generate-resources</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
                             <target>
-                                <copy todir="${project.build.directory}/application/mtwilson-openstack-policyagent-hooks">
-                                    <fileset dir="../../compute-node/mtwilson-openstack-policyagent-hooks/src/resources"/>
-                                </copy>
-                                <copy todir="${project.build.directory}/application/mtwilson-openstack-asset-tag">
-                                    <fileset dir="../../compute-node/mtwilson-openstack-asset-tag/src/resources"/>
-                                </copy>
+                                <exec executable="/bin/bash" >
+                                    <arg value="${project.build.directory}/patch-util.sh" />
+                                    <arg value="create_patch" />
+                                    <arg value="${project.basedir}/src" />
+                                    <arg value="${project.build.directory}/application/mtwilson-openstack-policyagent-hooks" />
+                                </exec>
                             </target>
                         </configuration>
                     </execution>
@@ -66,30 +94,6 @@
                         <version>1.0b3</version>
                     </dependency>
                 </dependencies>
-            </plugin> -->
-
-<!-- Generate patches for Policy Agent hooks & Asset Tag -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.4.0</version>
-                <executions>
-                    <execution>
-                        <id>generate-patches-policy-agent</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>../../patch_util.sh</executable>
-                            <arguments>
-                                <argument>create_patch</argument>
-                                <argument>../../compute-node/mtwilson-openstack-policyagent-hooks/src</argument>
-                                <argument>${project.build.directory}/application/mtwilson-openstack-policyagent-hooks</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
         </plugins>
@@ -97,14 +101,14 @@
 
 
     <dependencies>
-    <!--   
+       
         <dependency>
-            <groupId>com.intel.mtwilson.linux</groupId>
+            <groupId>com.intel.mtwilson.openstack.util</groupId>
             <artifactId>mtwilson-linux-patch-util</artifactId>
-            <version>${mtwilson.version}</version>
+            <version>${project.version}</version>
             <type>sh</type>
         </dependency>
- -->
+
         <!-- <dependency>
             <groupId>com.intel.mtwilson.services</groupId>
             <artifactId>mtwilson-extensions-cache</artifactId>
