@@ -12,5 +12,8 @@
 	
     <modules>
         <module>mtwilson-openstack-maven-root</module>
+        <module>mtwilson-linux-patch-util</module>
+        <module>compute-node</module>
+        <module>controller</module>
     </modules>
 </project>
