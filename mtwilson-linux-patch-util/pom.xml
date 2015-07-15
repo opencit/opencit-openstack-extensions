@@ -2,6 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.intel.mtwilson.openstack.util</groupId>
   <artifactId>mtwilson-linux-patch-util</artifactId>
+  <version>0.1-SNAPSHOT</version>
 
   <packaging>pom</packaging>
   <name>mtwilson-linux-patch-util</name>
@@ -55,7 +56,7 @@
                     </configuration>
                 </execution>
             </executions>
-        </plugin>
+        </plugin> 
         
       <!-- begin copy other resources plugin -->
       <plugin>
@@ -108,7 +109,7 @@
                     <configuration>
                         <artifacts>
                             <artifact>
-                                <file>${project.build.directory}/${project.artifactId}-${project.version}/patch_util.sh</file>
+                                <file>${makeself.directory}/patch-util.sh</file>
                                 <type>sh</type>
                             </artifact>
                         </artifacts>
