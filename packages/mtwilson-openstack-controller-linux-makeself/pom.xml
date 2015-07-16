@@ -21,8 +21,8 @@
   
     <dependencies>
         <dependency>
-            <groupId>com.intel.mtwilson.openstack.packages</groupId>
-            <artifactId>mtwilson-openstack-controller-zip</artifactId>
+            <groupId>com.intel.mtwilson.openstack.controller</groupId>
+            <artifactId>mtwilson-openstack-controller-asset-tag</artifactId>
             <version>0.1-SNAPSHOT</version>
             <type>zip</type>
         </dependency>
@@ -30,6 +30,12 @@
             <groupId>com.intel.mtwilson.linux</groupId>
             <artifactId>mtwilson-linux-util</artifactId>
             <version>${mtwilson.version}</version>
+            <type>sh</type>
+        </dependency>
+         <dependency>
+            <groupId>com.intel.mtwilson.openstack.util</groupId>
+            <artifactId>mtwilson-linux-patch-util</artifactId>
+            <version>${project.version}</version>
             <type>sh</type>
         </dependency>
     </dependencies>

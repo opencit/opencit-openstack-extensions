@@ -9,9 +9,7 @@
     
     <modules>
         <module>mtwilson-openstack-controller-linux-makeself</module>
-        <module>mtwilson-openstack-controller-zip</module>
         <module>mtwilson-openstack-node-linux-makeself</module>
-        <module>mtwilson-openstack-node-zip</module>
         <module>mtwilson-openstack-trusted-node-linux-makeself</module>
         <!--<module>policyagent-javadoc</module>-->
         <!--commenting out policyagent-javadoc due to this error:

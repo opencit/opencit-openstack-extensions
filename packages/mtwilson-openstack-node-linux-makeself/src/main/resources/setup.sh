@@ -2,19 +2,42 @@
 
 # Mtwilson OpenStack Node Extensions install script
 # Outline:
-# 1. source the "functions.sh" file:  mtwilson-linux-util-*.sh
-# 2. force root user installation
-# 3. read variables from trustagent configuration to input to nova.conf
-# 4. update nova.conf
-# 5. install prerequisites
-# 6. unzip mtwilson-openstack-node archive mtwilson-openstack-node-zip-*.zip
-# 7. apply openstack extension patches
-# 8. check for policyagent
-# 9. rootwrap: add policyagent to compute.filters
-# 10. rootwrap: ensure /usr/local/bin is defined in exec_dirs variable in rootwrap.conf
-# 11. rootwrap: add nova to sudoers list
+# 1. load existing environment configuration
+# 2. source the "functions.sh" file:  mtwilson-linux-util-*.sh
+# 3. look for ~/mtwilson-openstack-node.env and source it if it's there
+# 4. force root user installation
+# 5. read variables from trustagent configuration to input to nova.conf
+# 6. update nova.conf
+# 7. install prerequisites
+# 8. unzip mtwilson-openstack-node archive mtwilson-openstack-node-zip-*.zip
+# 9. apply openstack extension patches
+# 10. check for policyagent
+# 11. rootwrap: add policyagent to compute.filters
+# 12. rootwrap: ensure /usr/local/bin is defined in exec_dirs variable in rootwrap.conf
+# 13. rootwrap: add nova to sudoers list
 
 #####
+
+# default settings
+# note the layout setting is used only by this script
+# and it is not saved or used by the app script
+export OPENSTACK_EXT_HOME=${OPENSTACK_EXT_HOME:-/opt/openstack-ext}
+OPENSTACK_EXT_LAYOUT=${OPENSTACK_EXT_LAYOUT:-home}
+
+# the env directory is not configurable; it is defined as OPENSTACK_EXT_HOME/env and
+# the administrator may use a symlink if necessary to place it anywhere else
+export OPENSTACK_EXT_ENV=$OPENSTACK_EXT_HOME/env
+
+# load application environment variables if already defined
+if [ -d $OPENSTACK_EXT_ENV ]; then
+  OPENSTACK_EXT_ENV_FILES=$(ls -1 $OPENSTACK_EXT_ENV/*)
+  for env_file in $OPENSTACK_EXT_ENV_FILES; do
+    . $env_file
+    env_file_exports=$(cat $env_file | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
+    if [ -n "$env_file_exports" ]; then eval export $env_file_exports; fi
+  done
+fi
+
 
 # functions script (mtwilson-linux-util-3.0-SNAPSHOT.sh) is required
 # we use the following functions:
@@ -26,15 +49,33 @@ if [ -n "$UTIL_SCRIPT_FILE" ] && [ -f "$UTIL_SCRIPT_FILE" ]; then
   . $UTIL_SCRIPT_FILE
 fi
 
+PATCH_UTIL_SCRIPT_FILE=$(ls -1 mtwilson-linux-patch-util-*.sh | head -n 1)
+if [ -n "$PATCH_UTIL_SCRIPT_FILE" ] && [ -f "$PATCH_UTIL_SCRIPT_FILE" ]; then
+  . $PATCH_UTIL_SCRIPT_FILE
+fi
+
+
 ## load installer environment file, if present
-#if [ -f ~/mtwilson-openstack-node.env ]; then
-#  echo "Loading environment variables from $(cd ~ && pwd)/mtwilson-openstack-node.env"
-#  . ~/mtwilson-openstack-node.env
-#  env_file_exports=$(cat ~/mtwilson-openstack-node.env | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
-#  if [ -n "$env_file_exports" ]; then eval export $env_file_exports; fi
-#else
-#  echo "No environment file"
-#fi
+if [ -f ~/mtwilson-openstack-node.env ]; then
+  echo "Loading environment variables from $(cd ~ && pwd)/mtwilson-openstack-node.env"
+  . ~/mtwilson-openstack-node.env
+  env_file_exports=$(cat ~/mtwilson-openstack-node.env | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
+  if [ -n "$env_file_exports" ]; then eval export $env_file_exports; fi
+else
+  echo "No environment file"
+fi
+
+if [ "$OPENSTACK_EXT_LAYOUT" == "linux" ]; then
+  export OPENSTACK_EXT_REPOSITORY=${OPENSTACK_EXT_REPOSITORY:-/var/opt/openstack-ext}
+elif [ "$OPENSTACK_EXT_LAYOUT" == "home" ]; then
+  export OPENSTACK_EXT_REPOSITORY=${OPENSTACK_EXT_REPOSITORY:-$OPENSTACK_EXT_HOME/repository}
+fi
+export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_HOME/bin
+
+for directory in $OPENSTACK_EXT_REPOSITORY $OPENSTACK_EXT_BIN; do
+  mkdir -p $directory
+  chmod 700 $directory
+done
 
 # enforce root user installation
 if [ "$(whoami)" != "root" ]; then
@@ -155,17 +196,30 @@ updateNovaConf "attestation_api_url" "$mtwilsonVmAttestationApiUrlPath" "trusted
 updateNovaConf "attestation_auth_blob" "$mtwilsonVmAttestationAuthBlob" "trusted_computing" "$novaConfFile"
 
 # make sure unzip and authbind are installed
-MTWILSON_OPENSTACK_YUM_PACKAGES="zip unzip"
-MTWILSON_OPENSTACK_APT_PACKAGES="zip unzip"
-MTWILSON_OPENSTACK_YAST_PACKAGES="zip unzip"
-MTWILSON_OPENSTACK_ZYPPER_PACKAGES="zip unzip"
+MTWILSON_OPENSTACK_YUM_PACKAGES="zip unzip patchutils"
+MTWILSON_OPENSTACK_APT_PACKAGES="zip unzip patchutils"
+MTWILSON_OPENSTACK_YAST_PACKAGES="zip unzip patchutils"
+MTWILSON_OPENSTACK_ZYPPER_PACKAGES="zip unzip patchutils"
 auto_install "Installer requirements" "MTWILSON_OPENSTACK"
 if [ $? -ne 0 ]; then echo_failure "Failed to install prerequisites through package installer"; exit -1; fi
 
 # extract mtwilson-openstack-node  (mtwilson-openstack-node-zip-0.1-SNAPSHOT.zip)
 echo "Extracting application..."
-MTWILSON_OPENSTACK_ZIPFILE=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null | head -n 1`
-unzip -oq $MTWILSON_OPENSTACK_ZIPFILE
+MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
+for MTWILSON_OPENSTACK_ZIPFILE in $MTWILSON_OPENSTACK_ZIPFILES; do
+  echo "Extract $MTWILSON_OPENSTACK_ZIPFILE"
+  unzip -oq $MTWILSON_OPENSTACK_ZIPFILE -d $OPENSTACK_EXT_REPOSITORY
+done
+
+# copy utilities script file to application folder
+cp $UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/functions.sh
+cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch-util.sh
+
+
+# set permissions
+chmod 700 $OPENSTACK_EXT_HOME/bin/*.sh
+
+cd $OPENSTACK_EXT_REPOSITORY
 
 ### OpenStack Extensions methods
 function getFlavour() {
@@ -261,9 +315,11 @@ function applyPatches() {
 COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-asset-tag"
 FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
+
 for component in $COMPUTE_COMPONENTS; do
-  version=$(getOpenstackVersion)
-  applyPatches $component $version
+  version=$(getOpenstackVersion).patch
+  #applyPatches $component $version
+  apply_patch $DISTRIBUTION_LOCATION $OPENSTACK_EXT_REPOSITORY/$component/$version 1
 done
 
 find $DISTRIBUTION_LOCATION/nova -name "*.pyc" -delete
