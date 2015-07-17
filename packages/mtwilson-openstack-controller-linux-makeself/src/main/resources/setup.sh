@@ -47,11 +47,11 @@ UTIL_SCRIPT_FILE=$(ls -1 mtwilson-linux-util-*.sh | head -n 1)
 if [ -n "$UTIL_SCRIPT_FILE" ] && [ -f "$UTIL_SCRIPT_FILE" ]; then
   . $UTIL_SCRIPT_FILE
 fi
-
 PATCH_UTIL_SCRIPT_FILE=$(ls -1 mtwilson-linux-patch-util-*.sh | head -n 1)
 if [ -n "$PATCH_UTIL_SCRIPT_FILE" ] && [ -f "$PATCH_UTIL_SCRIPT_FILE" ]; then
   . $PATCH_UTIL_SCRIPT_FILE
 fi
+UNINSTALL_SCRIPT_FILE=$(ls -1 mtwilson-openstack-controller-uninstall.sh | head -n 1)
 
 # load installer environment file, if present
 if [ -f ~/mtwilson-openstack-controller.env ]; then
@@ -241,6 +241,7 @@ done
 # copy utilities script file to application folder
 cp $UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/functions.sh
 cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch-util.sh
+cp $UNINSTALL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/mtwilson-openstack-controller-uninstall.sh
 
 
 # set permissions

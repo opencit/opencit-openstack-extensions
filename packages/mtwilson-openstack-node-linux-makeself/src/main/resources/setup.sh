@@ -38,7 +38,6 @@ if [ -d $OPENSTACK_EXT_ENV ]; then
   done
 fi
 
-
 # functions script (mtwilson-linux-util-3.0-SNAPSHOT.sh) is required
 # we use the following functions:
 # java_detect java_ready_report 
@@ -48,12 +47,11 @@ UTIL_SCRIPT_FILE=$(ls -1 mtwilson-linux-util-*.sh | head -n 1)
 if [ -n "$UTIL_SCRIPT_FILE" ] && [ -f "$UTIL_SCRIPT_FILE" ]; then
   . $UTIL_SCRIPT_FILE
 fi
-
 PATCH_UTIL_SCRIPT_FILE=$(ls -1 mtwilson-linux-patch-util-*.sh | head -n 1)
 if [ -n "$PATCH_UTIL_SCRIPT_FILE" ] && [ -f "$PATCH_UTIL_SCRIPT_FILE" ]; then
   . $PATCH_UTIL_SCRIPT_FILE
 fi
-
+UNINSTALL_SCRIPT_FILE=$(ls -1 mtwilson-openstack-node-uninstall.sh | head -n 1)
 
 ## load installer environment file, if present
 if [ -f ~/mtwilson-openstack-node.env ]; then
@@ -214,7 +212,7 @@ done
 # copy utilities script file to application folder
 cp $UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/functions.sh
 cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch-util.sh
-
+cp $UNINSTALL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/mtwilson-openstack-node-uninstall.sh
 
 # set permissions
 chmod 700 $OPENSTACK_EXT_HOME/bin/*.sh
