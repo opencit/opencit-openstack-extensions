@@ -137,6 +137,10 @@ for component in $COMPUTE_COMPONENTS; do
   revert_patch "/" $OPENSTACK_EXT_REPOSITORY/$component/$version 1
 done
 
+novaConfFile="/etc/nova/nova.conf"
+# Remove filter entry from config file
+sed -i '/^scheduler_default_filters=/ s/,TrustAssertionFilter//g' "$novaConfFile"
+
 openstackRestart
 
 # delete OPENSTACK_EXT_HOME
