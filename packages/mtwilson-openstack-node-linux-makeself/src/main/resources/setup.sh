@@ -194,10 +194,10 @@ updateNovaConf "attestation_api_url" "$mtwilsonVmAttestationApiUrlPath" "trusted
 updateNovaConf "attestation_auth_blob" "$mtwilsonVmAttestationAuthBlob" "trusted_computing" "$novaConfFile"
 
 # make sure unzip and authbind are installed
-MTWILSON_OPENSTACK_YUM_PACKAGES="zip unzip patchutils"
-MTWILSON_OPENSTACK_APT_PACKAGES="zip unzip patchutils"
-MTWILSON_OPENSTACK_YAST_PACKAGES="zip unzip patchutils"
-MTWILSON_OPENSTACK_ZYPPER_PACKAGES="zip unzip patchutils"
+MTWILSON_OPENSTACK_YUM_PACKAGES="zip unzip patch patchutils"
+MTWILSON_OPENSTACK_APT_PACKAGES="zip unzip patch patchutils"
+MTWILSON_OPENSTACK_YAST_PACKAGES="zip unzip patch patchutils"
+MTWILSON_OPENSTACK_ZYPPER_PACKAGES="zip unzip patch patchutils"
 auto_install "Installer requirements" "MTWILSON_OPENSTACK"
 if [ $? -ne 0 ]; then echo_failure "Failed to install prerequisites through package installer"; exit -1; fi
 
