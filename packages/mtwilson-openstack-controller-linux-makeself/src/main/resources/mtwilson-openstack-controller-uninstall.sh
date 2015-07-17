@@ -38,6 +38,9 @@ fi
 # source functions script
 . $OPENSTACK_EXT_HOME/bin/functions.sh
 
+# source patch-util script
+. $OPENSTACK_EXT_HOME/bin/patch-util.sh
+
 # define application directory layout
 if [ "$OPENSTACK_EXT_LAYOUT" == "linux" ]; then
   export OPENSTACK_EXT_REPOSITORY=${OPENSTACK_EXT_REPOSITORY:-/var/opt/openstack-ext}
@@ -48,13 +51,6 @@ export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_HOME/bin
 
 # note that the env dir is not configurable; it is defined as "env" under home
 export OPENSTACK_EXT_ENV=$OPENSTACK_EXT_HOME/env
-
-### PATCH REVERSAL ###
-
-# delete OPENSTACK_EXT_HOME
-if [ -d $OPENSTACK_EXT_HOME ]; then
-  rm -rf $OPENSTACK_EXT_HOME 2>/dev/null
-fi
 
 function getFlavour() {
   flavour=""
@@ -121,8 +117,32 @@ function openstackRestart() {
     exit -1
   fi
 }
+
+function getOpenstackVersion() {
+  if [ -x /usr/bin/nova-manage ] ; then
+    version=$(/usr/bin/nova-manage --version 2>&1)
+  else
+    echo_failure "/usr/bin/nova-manage does not exist"
+    echo_failure "nova compute must be installed"
+    exit -1
+  fi
+  echo $version
+}
+
+### PATCH REVERSAL ###
+COMPUTE_COMPONENTS="mtwilson-openstack-asset-tag"
 FLAVOUR=$(getFlavour)
+version=$(getOpenstackVersion).patch
+for component in $COMPUTE_COMPONENTS; do
+  revert_patch "/" $OPENSTACK_EXT_REPOSITORY/$component/$version 1
+done
+
 openstackRestart
+
+# delete OPENSTACK_EXT_HOME
+if [ -d $OPENSTACK_EXT_HOME ]; then
+  rm -rf $OPENSTACK_EXT_HOME 2>/dev/null
+fi
 
 echo_success "OpenStack controller uninstall complete"
 

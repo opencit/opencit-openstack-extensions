@@ -121,5 +121,5 @@ if [[ $# -lt 1 || $1 = "help" ]]; then
 elif [[ $1 = "create_patch" || $1 = "apply_patch" || $1 = "merge_patch" || $1 = "revert_patch" || $1 = "revert_using_backup" ]]; then
   $@
 else
-  help
+  echo ""
 fi

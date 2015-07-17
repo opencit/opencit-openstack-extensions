@@ -38,6 +38,9 @@ fi
 # source functions script
 . $OPENSTACK_EXT_HOME/bin/functions.sh
 
+# source patch-util script
+. $OPENSTACK_EXT_HOME/bin/patch-util.sh
+
 # define application directory layout
 if [ "$OPENSTACK_EXT_LAYOUT" == "linux" ]; then
   export OPENSTACK_EXT_REPOSITORY=${OPENSTACK_EXT_REPOSITORY:-/var/opt/openstack-ext}
@@ -49,12 +52,6 @@ export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_HOME/bin
 # note that the env dir is not configurable; it is defined as "env" under home
 export OPENSTACK_EXT_ENV=$OPENSTACK_EXT_HOME/env
 
-### PATCH REVERSAL ###
-
-# delete OPENSTACK_EXT_HOME
-if [ -d $OPENSTACK_EXT_HOME ]; then
-  rm -rf $OPENSTACK_EXT_HOME 2>/dev/null
-fi
 
 function getFlavour() {
   flavour=""
@@ -85,6 +82,7 @@ function getFlavour() {
     echo $flavour
   fi
 }
+
 function openstackRestart() {
   if [ "$FLAVOUR" == "ubuntu" ]; then
     service nova-api-metadata restart
@@ -99,15 +97,42 @@ function openstackRestart() {
     exit -1
   fi
 }
+
+function getOpenstackVersion() {
+  if [ -x /usr/bin/nova-manage ] ; then
+    version=$(/usr/bin/nova-manage --version 2>&1)
+  else
+    echo_failure "/usr/bin/nova-manage does not exist"
+    echo_failure "nova compute must be installed"
+    exit -1
+  fi
+  echo $version
+}
+
+function getDistributionLocation() {
+  DISTRIBUTION_LOCATION=$(/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+  if [ $? -ne 0 ]; then echo_failure "Failed to determine distribution location"; echo_failure "Check nova compute configuration"; exit -1; fi
+  echo $DISTRIBUTION_LOCATION
+}
+
+### PATCH REVERSAL ###
+COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-asset-tag"
 FLAVOUR=$(getFlavour)
+DISTRIBUTION_LOCATION=$(getDistributionLocation)
+
+for component in $COMPUTE_COMPONENTS; do
+  version=$(getOpenstackVersion).patch
+  #applyPatches $component $version
+  revert_patch $DISTRIBUTION_LOCATION $OPENSTACK_EXT_REPOSITORY/$component/$version 1
+done
+
 openstackRestart
 
+# delete OPENSTACK_EXT_HOME
+if [ -d $OPENSTACK_EXT_HOME ]; then
+  rm -rf $OPENSTACK_EXT_HOME 2>/dev/null
+fi
+
 echo_success "OpenStack node uninstall complete"
-
-
-
-
-
-
 
 
