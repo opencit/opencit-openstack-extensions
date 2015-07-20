@@ -648,8 +648,7 @@ def get_fs_info(path):
             'free': free,
             'used': used}
 
-
-def fetch_image(context, target, image_id, user_id, project_id, max_size=0):
+def fetch_image(context, target, image_id, instance, user_id, project_id, max_size=0, extra_args={}):
     """Grab image."""
     LOG.info("IntelCIT : Fetching the image from glance " )
 

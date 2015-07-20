@@ -2624,7 +2624,7 @@ class LibvirtDriver(driver.ComputeDriver):
                            'kernel_id': instance['kernel_id'],
                            'ramdisk_id': instance['ramdisk_id']}
 
-            instance1={}
+        instance1={}
         if disk_images['kernel_id']:
 
             # Abhay Dandekar
@@ -4281,22 +4281,6 @@ class LibvirtDriver(driver.ComputeDriver):
         return stats
 
     def check_instance_shared_storage_local(self, context, instance):
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         dirpath = libvirt_utils.get_instance_path(instance)
 
         if not os.path.exists(dirpath):
