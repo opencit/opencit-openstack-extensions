@@ -325,10 +325,15 @@ function find_patch() {
   local patch_suffix=".patch"
   echo "$major $minor $patch"
 
+  if ! [[ $patch =~ ^[0-9]+$ ]]; then
+    echo "Will try to find out patch for $major.$minor release"
+    patch=""
+  fi
+
   patch_file=""
   if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
     patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix
-  else
+  elif [ ! -z $patch ]; then
     for i in $(seq $patch -1 0); do
       echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix"
       if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix ]; then
