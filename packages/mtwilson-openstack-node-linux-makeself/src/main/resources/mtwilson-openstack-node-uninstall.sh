@@ -119,11 +119,48 @@ function getDistributionLocation() {
 COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-asset-tag"
 FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
+version=$(getOpenstackVersion)
+
+function find_patch() {
+  local component=$1
+  local version=$2
+  local major=$(echo $version | awk -F'.' '{ print $1 }')
+  local minor=$(echo $version | awk -F'.' '{ print $2 }')
+  local patch=$(echo $version | awk -F'.' '{ print $3 }')
+  local patch_suffix=".patch"
+  echo "$major $minor $patch"
+
+  patch_file=""
+  if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
+    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix
+  else
+    for i in $(seq $patch -1 0); do
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix ]; then
+        patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix
+        break
+      fi
+    done
+  fi
+  if [ -z $patch_file ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix ]; then
+    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix
+  fi
+
+  if [ -z $patch_file ]; then
+    echo_failure "Could not find suitable patches for Openstack version $version"
+    exit -1
+  else
+    echo "Applying patches from file $patch_file"
+  fi
+}
 
 for component in $COMPUTE_COMPONENTS; do
-  version=$(getOpenstackVersion).patch
-  #applyPatches $component $version
-  revert_patch $DISTRIBUTION_LOCATION $OPENSTACK_EXT_REPOSITORY/$component/$version 1
+  find_patch $component $version
+  revert_patch $DISTRIBUTION_LOCATION $patch_file 1
+  if [ $? -ne 0 ]; then
+    echo_failure "Error while reverting patches."
+    exit -1
+  fi
 done
 
 openstackRestart
