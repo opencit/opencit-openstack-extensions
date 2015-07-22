@@ -40,7 +40,9 @@ function apply_patch() {
     done
   else
     echo "Not able to apply patches."
+    return 1
   fi
+  return 0
 }
 
 function merge_patch() {
@@ -58,7 +60,9 @@ function merge_patch() {
     patch --strip=$strip_num -N -b -V numbered --merge -d $target_dir -i $patch_file_path
   else
     echo "Not able to apply patches."
+    return 1
   fi
+  return 0
 }
 
 function revert_patch() {
@@ -76,7 +80,9 @@ function revert_patch() {
     patch --strip=$strip_num -R -b -V numbered -d $target_dir -i $patch_file_path
   else
     echo "Not able to apply patches."
+    return 1
   fi
+  return 0
 }
 
 function revert_using_backup() {
@@ -99,7 +105,7 @@ function revert_using_backup() {
       echo "ERROR: Backup for $target_dir/$file doesn't exists."
     fi
   done
-
+  return 0
 }
 
 function help() {

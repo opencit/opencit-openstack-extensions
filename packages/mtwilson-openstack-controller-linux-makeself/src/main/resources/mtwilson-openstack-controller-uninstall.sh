@@ -132,9 +132,53 @@ function getOpenstackVersion() {
 ### PATCH REVERSAL ###
 COMPUTE_COMPONENTS="mtwilson-openstack-asset-tag"
 FLAVOUR=$(getFlavour)
-version=$(getOpenstackVersion).patch
+version=$(getOpenstackVersion)
+
+function find_patch() {
+  local component=$1
+  local version=$2
+  local major=$(echo $version | awk -F'.' '{ print $1 }')
+  local minor=$(echo $version | awk -F'.' '{ print $2 }')
+  local patch=$(echo $version | awk -F'.' '{ print $3 }')
+  local patch_suffix=".patch"
+  echo "$major $minor $patch"
+
+  if ! [[ $patch =~ ^[0-9]+$ ]]; then
+    echo "Will try to find out patch for $major.$minor release"
+    patch=""
+  fi
+
+  patch_file=""
+  if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
+    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix
+  elif [ ! -z $patch ]; then
+    for i in $(seq $patch -1 0); do
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix ]; then
+        patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix
+        break
+      fi
+    done
+  fi
+  if [ -z $patch_file ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix ]; then
+    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix
+  fi
+
+  if [ -z $patch_file ]; then
+    echo_failure "Could not find suitable patches for Openstack version $version"
+    exit -1
+  else
+    echo "Applying patches from file $patch_file"
+  fi
+}
+
 for component in $COMPUTE_COMPONENTS; do
-  revert_patch "/" $OPENSTACK_EXT_REPOSITORY/$component/$version 1
+  find_patch $component $version
+  revert_patch "/" $patch_file 1
+  if [ $? -ne 0 ]; then
+    echo_failure "Error while reverting patches."
+    exit -1
+  fi
 done
 
 novaConfFile="/etc/nova/nova.conf"
