@@ -2968,8 +2968,7 @@ class LibvirtDriver(driver.ComputeDriver):
 
             # Abhay Dandekar
             # DCG : update the measured flag
-            (image_service, image_id) = glance.get_remote_image_service(context, instance['image_ref'])
-            kernel_meta = compute_utils.get_image_metadata(context, image_service, instance['kernel_id'], instance)
+            kernel_meta = compute_utils.get_image_metadata(context, self._image_api, instance['kernel_id'], instance)
             LOG.info( ("Kernel Meta : "), kernel_meta=kernel_meta)
 
             if 'properties' in kernel_meta and 'mh_encrypted' in kernel_meta['properties']:
@@ -2990,7 +2989,7 @@ class LibvirtDriver(driver.ComputeDriver):
             if disk_images['ramdisk_id']:
             # Abhay Dandekar
             # DCG : update the measured flag
-                ramdisk_meta = compute_utils.get_image_metadata(context, image_service, instance['ramdisk_id'], instance)
+                ramdisk_meta = compute_utils.get_image_metadata(context, self._image_api, instance['ramdisk_id'], instance)
                 if 'properties' in ramdisk_meta and 'mh_encrypted' in ramdisk_meta['properties']:
                     instance1['mh_encrypted'] = ramdisk_meta['properties']['mh_encrypted']
                     instance1['mh_checksum'] = ramdisk_meta['properties']['mh_checksum']
@@ -3019,8 +3018,7 @@ class LibvirtDriver(driver.ComputeDriver):
                 size = None
             # Abhay Dandekar
             #DCG : updated for measured launch
-            (image_service, image_id) = glance.get_remote_image_service(context, instance['image_ref'])
-            image_meta = compute_utils.get_image_metadata(context, image_service, image_id, instance)
+            image_meta = compute_utils.get_image_metadata(context, self._image_api, instance['image_ref'], instance)
 
                         
             # MH start of policagent hook for disk download and decryption
