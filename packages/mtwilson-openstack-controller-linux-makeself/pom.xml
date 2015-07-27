@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>com.intel.mtwilson.openstack.controller</groupId>
-            <artifactId>mtwilson-openstack-controller-asset-tag</artifactId>
+            <artifactId>mtwilson-openstack-controller-host-tag-vm</artifactId>
             <version>0.1-SNAPSHOT</version>
             <type>zip</type>
         </dependency>

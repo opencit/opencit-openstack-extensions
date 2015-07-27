@@ -362,7 +362,7 @@ function applyPatches() {
 }
 
 ### Apply patches
-COMPUTE_COMPONENTS="mtwilson-openstack-asset-tag"
+COMPUTE_COMPONENTS="mtwilson-openstack-host-tag-vm"
 FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion)

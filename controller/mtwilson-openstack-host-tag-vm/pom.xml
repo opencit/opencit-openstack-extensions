@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.intel.mtwilson.openstack.controller</groupId>
-    <artifactId>mtwilson-openstack-controller-asset-tag</artifactId>
+    <artifactId>mtwilson-openstack-controller-host-tag-vm</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>Mtwilson OpenStack Controller Comprehensive Extensions Zip for Asset Tag</description>
@@ -66,7 +66,7 @@
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>generate-patches-asset-tag</id>
+                        <id>generate-patches-host-tag-vm</id>
                         <phase>generate-resources</phase>
                         <goals>
                             <goal>run</goal>
@@ -77,7 +77,7 @@
                                     <arg value="${project.build.directory}/patch-util.sh" />
                                     <arg value="create_patch" />
                                     <arg value="${project.basedir}/src" />
-                                    <arg value="${project.build.directory}/application/mtwilson-openstack-asset-tag" />
+                                    <arg value="${project.build.directory}/application/mtwilson-openstack-host-tag-vm" />
                                 </exec>
                             </target>
                         </configuration>

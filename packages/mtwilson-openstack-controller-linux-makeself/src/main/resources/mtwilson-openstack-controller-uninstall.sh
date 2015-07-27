@@ -130,7 +130,7 @@ function getOpenstackVersion() {
 }
 
 ### PATCH REVERSAL ###
-COMPUTE_COMPONENTS="mtwilson-openstack-asset-tag"
+COMPUTE_COMPONENTS="mtwilson-openstack-host-tag-vm"
 FLAVOUR=$(getFlavour)
 version=$(getOpenstackVersion)
 
