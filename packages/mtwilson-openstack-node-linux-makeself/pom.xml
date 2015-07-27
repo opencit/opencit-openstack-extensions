@@ -28,7 +28,7 @@
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.openstack.computenode</groupId>
-            <artifactId>mtwilson-openstack-node-asset-tag</artifactId>
+            <artifactId>mtwilson-openstack-node-vm-attestation</artifactId>
             <version>0.1-SNAPSHOT</version>
             <type>zip</type>
         </dependency>

@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.intel.mtwilson.openstack.computenode</groupId>
-    <artifactId>mtwilson-openstack-node-asset-tag</artifactId>
+    <artifactId>mtwilson-openstack-node-vm-attestation</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>Mtwilson OpenStack Compute Node Extensions Zip For Asset Tag</description>
@@ -59,13 +59,13 @@
                 </executions>
             </plugin>
 
-<!-- Generate patches for Asset Tag -->
+            <!-- Generate patches for VM attestation -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>generate-patches-asset-tag</id>
+                        <id>generate-patches-vm-attestation</id>
                         <phase>generate-resources</phase>
                         <goals>
                             <goal>run</goal>
@@ -76,7 +76,7 @@
                                     <arg value="${project.build.directory}/patch-util.sh" />
                                     <arg value="create_patch" />
                                     <arg value="${project.basedir}/src" />
-                                    <arg value="${project.build.directory}/application/mtwilson-openstack-asset-tag" />
+                                    <arg value="${project.build.directory}/application/mtwilson-openstack-vm-attestation" />
                                 </exec>
                             </target>
                         </configuration>
