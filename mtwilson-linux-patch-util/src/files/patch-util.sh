@@ -15,7 +15,11 @@ function create_patch() {
   list_of_dirs=$(ls )
   for dir_name in $list_of_dirs; do
     echo "Creating patch for $original_files_loc/$dir_name"
-    diff -u10 --text -r -N $dir_name ../resources/$dir_name > $patch_file_path/$dir_name.patch
+    diff -U 10 --text -r -N $dir_name ../resources/$dir_name > $patch_file_path/$dir_name.patch
+    if [ $? -ne 0 ]; then
+      echo "Error while creating patch"
+      return 1
+    fi
     echo "Patch created at $patch_file_path/$dir_name.patch"
   done
   cd -
