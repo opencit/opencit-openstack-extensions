@@ -17,7 +17,7 @@ function create_patch() {
     echo "Creating patch for $original_files_loc/$dir_name"
     diff -U 10 --text -r -N $dir_name ../resources/$dir_name > $patch_file_path/$dir_name.patch
     error=$?
-    if [ $? -ne 0 ] && [ $? -ne 1 ]; then
+    if [ $error -ne 0 ] && [ $error -ne 1 ]; then
       echo "Error while creating patch"
       return 1
     fi
