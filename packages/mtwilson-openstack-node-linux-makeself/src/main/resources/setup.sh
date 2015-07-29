@@ -269,6 +269,17 @@ function getOpenstackVersion() {
   fi
   echo $version
 }
+function getOpenstackDpkgVersion() {
+  dpkgVersion=$(dpkg -l | grep nova-common | awk '{print $3}')
+  if [[ "$dpkgVersion" == *":"* ]]; then
+    dpkgVersion=$(echo "$dpkgVersion" | awk -F':' '{print $2}')
+  fi
+  if [ -z "$dpkgVersion" ]; then
+    echo_failure "could not determine dpkg openstack version"
+    exit -1
+  fi
+  echo $dpkgVersion
+}
 
 function getDistributionLocation() {
   DISTRIBUTION_LOCATION=$(/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
@@ -315,10 +326,12 @@ COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-a
 FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion)
+dpkgVersion=$(getOpenstackDpkgVersion)
 
 function find_patch() {
   local component=$1
   local version=$2
+  local dpkgVersion=$3
   local major=$(echo $version | awk -F'.' '{ print $1 }')
   local minor=$(echo $version | awk -F'.' '{ print $2 }')
   local patch=$(echo $version | awk -F'.' '{ print $3 }')
@@ -331,7 +344,10 @@ function find_patch() {
   fi
 
   patch_file=""
-  if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
+  
+  if [ -e "${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}${patch_suffix}" ]; then
+    patch_file="${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}${patch_suffix}"
+  elif [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
     patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix
   elif [ ! -z $patch ]; then
     for i in $(seq $patch -1 0); do
@@ -350,12 +366,12 @@ function find_patch() {
     echo_failure "Could not find suitable patches for Openstack version $version"
     exit -1
   else
-    echo "Applying patches from file $patch_file"
+    echo "Applying component [${component}] patches from file $patch_file"
   fi
 }
 
 for component in $COMPUTE_COMPONENTS; do
-  find_patch $component $version
+  find_patch "${component}" "${version}" "${dpkgVersion}"
   apply_patch $DISTRIBUTION_LOCATION $patch_file 1
   if [ $? -ne 0 ]; then
     echo_failure "Error while applying patches."
