@@ -39,6 +39,11 @@ function apply_patch() {
   patch --dry-run --silent --strip=$strip_num -N -d $target_dir -i $patch_file_path
   if [ $? -eq 0 ]; then
     patch --strip=$strip_num -N -b -V numbered -d $target_dir -i $patch_file_path
+    error=$?
+    if [ $error -ne 0 ]; then
+      echo "Error while applying patch"
+      return 1
+    fi
     modified_files=`lsdiff --strip=$strip_num $patch_file_path`
     for file in $modified_files; do
       chmod 644 $target_dir/$file
@@ -63,6 +68,15 @@ function merge_patch() {
   patch --dry-run --silent --strip=$strip_num -N --merge -d $target_dir -i $patch_file_path
   if [ $? -eq 0 ]; then
     patch --strip=$strip_num -N -b -V numbered --merge -d $target_dir -i $patch_file_path
+    error=$?
+    if [ $error -ne 0 ]; then
+      echo "Error while merging patch"
+      return 1
+    fi
+    modified_files=`lsdiff --strip=$strip_num $patch_file_path`
+    for file in $modified_files; do
+      chmod 644 $target_dir/$file
+    done
   else
     echo "Not able to apply patches."
     return 1
@@ -83,6 +97,11 @@ function revert_patch() {
   patch --dry-run --silent --strip=$strip_num -R -d $target_dir -i $patch_file_path
   if [ $? -eq 0 ]; then
     patch --strip=$strip_num -R -b -V numbered -d $target_dir -i $patch_file_path
+    error=$?
+    if [ $error -ne 0 ]; then
+      echo "Error while reverting patch"
+      return 1
+    fi
   else
     echo "Not able to apply patches."
     return 1
