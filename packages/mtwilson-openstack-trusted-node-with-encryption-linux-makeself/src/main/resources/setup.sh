@@ -71,9 +71,9 @@ if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson VRTM"; exit -1; f
 
 ### INSTALL MTWILSON POLICY AGENT
 echo "Installing mtwilson policy agent..."
-POLICYAGENT_PACKAGE=`ls -1 mtwilson-policyagent-linux-makeself-*.bin 2>/dev/null | tail -n 1`
+POLICYAGENT_PACKAGE=`ls -1 mtwilson-policyagent-with-encryption-linux-makeself-*.bin 2>/dev/null | tail -n 1`
 if [ -z "$POLICYAGENT_PACKAGE" ]; then
-  echo_failure "Failed to find mtwilson policy agent installer package"
+  echo_failure "Failed to find mtwilson policy agent with encryption installer package"
   exit -1
 fi
 ./$POLICYAGENT_PACKAGE
