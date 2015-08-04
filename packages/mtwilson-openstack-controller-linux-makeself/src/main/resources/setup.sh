@@ -229,26 +229,6 @@ MTWILSON_OPENSTACK_ZYPPER_PACKAGES="zip unzip patch patchutils"
 auto_install "Installer requirements" "MTWILSON_OPENSTACK"
 if [ $? -ne 0 ]; then echo_failure "Failed to install prerequisites through package installer"; exit -1; fi
 
-# extract mtwilson-openstack-controller  (mtwilson-openstack-controller-zip-0.1-SNAPSHOT.zip)
-echo "Extracting application..."
-MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-controller-*.zip 2>/dev/null | head -n 1`
-
-for MTWILSON_OPENSTACK_ZIPFILE in $MTWILSON_OPENSTACK_ZIPFILES; do
-  echo "Extract $MTWILSON_OPENSTACK_ZIPFILE"
-  unzip -oq $MTWILSON_OPENSTACK_ZIPFILE -d $OPENSTACK_EXT_REPOSITORY
-done
-
-# copy utilities script file to application folder
-cp $UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/functions.sh
-cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch-util.sh
-cp $UNINSTALL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/mtwilson-openstack-controller-uninstall.sh
-
-
-# set permissions
-chmod 700 $OPENSTACK_EXT_HOME/bin/*.sh
-
-cd $OPENSTACK_EXT_REPOSITORY
-
 ### OpenStack Extensions methods
 function getFlavour() {
   flavour=""
@@ -404,6 +384,39 @@ function find_patch() {
     echo "Applying patches from file $patch_file"
   fi
 }
+
+# Uninstall previously installed patches
+if [ -d $OPENSTACK_EXT_REPOSITORY ]; then
+  for component in $COMPUTE_COMPONENTS; do
+    find_patch $component $version
+    revert_patch "/" $patch_file 1
+    if [ $? -ne 0 ]; then
+      echo_failure "Error while reverting patches."
+      echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
+    fi
+  done
+fi
+
+# extract mtwilson-openstack-controller  (mtwilson-openstack-controller-zip-0.1-SNAPSHOT.zip)
+echo "Extracting application..."
+MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-controller-*.zip 2>/dev/null | head -n 1`
+
+for MTWILSON_OPENSTACK_ZIPFILE in $MTWILSON_OPENSTACK_ZIPFILES; do
+  echo "Extract $MTWILSON_OPENSTACK_ZIPFILE"
+  unzip -oq $MTWILSON_OPENSTACK_ZIPFILE -d $OPENSTACK_EXT_REPOSITORY
+done
+
+# copy utilities script file to application folder
+cp $UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/functions.sh
+cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch-util.sh
+cp $UNINSTALL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/mtwilson-openstack-controller-uninstall.sh
+
+
+# set permissions
+chmod 700 $OPENSTACK_EXT_HOME/bin/*.sh
+
+cd $OPENSTACK_EXT_REPOSITORY
+
 
 for component in $COMPUTE_COMPONENTS; do
   find_patch $component $version
