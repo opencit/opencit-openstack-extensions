@@ -354,17 +354,17 @@ function find_patch() {
 
 # uninstall patches if already applied previously
 
-if [ -d $OPENSTACK_EXT_REPOSITORY ]; then 
-  for component in $COMPUTE_COMPONENTS; do
-    find_patch $component $version
+for component in $COMPUTE_COMPONENTS; do
+  if [ -d $OPENSTACK_EXT_REPOSITORY/$component ]; then
+    find_patch "${component}" "${version}" "${dpkgVersion}"
     revert_patch $DISTRIBUTION_LOCATION $patch_file 1
     if [ $? -ne 0 ]; then
       echo_failure "Error while reverting older patches."
       echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
       #exit -1
     fi
-  done
-fi
+  fi
+done
 
 # extract mtwilson-openstack-node  (mtwilson-openstack-node-zip-0.1-SNAPSHOT.zip)
 echo "Extracting application..."

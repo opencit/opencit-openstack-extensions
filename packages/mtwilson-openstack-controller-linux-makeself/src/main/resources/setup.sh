@@ -386,16 +386,16 @@ function find_patch() {
 }
 
 # Uninstall previously installed patches
-if [ -d $OPENSTACK_EXT_REPOSITORY ]; then
-  for component in $COMPUTE_COMPONENTS; do
+for component in $COMPUTE_COMPONENTS; do
+  if [ -d $OPENSTACK_EXT_REPOSITORY/$component ]; then
     find_patch $component $version
     revert_patch "/" $patch_file 1
     if [ $? -ne 0 ]; then
       echo_failure "Error while reverting patches."
       echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
     fi
-  done
-fi
+  fi
+done
 
 # extract mtwilson-openstack-controller  (mtwilson-openstack-controller-zip-0.1-SNAPSHOT.zip)
 echo "Extracting application..."
