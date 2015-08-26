@@ -252,14 +252,20 @@ function getOpenstackVersion() {
   echo $version
 }
 function getOpenstackDpkgVersion() {
-  dpkgVersion=$(dpkg -l | grep nova-common | awk '{print $3}')
-  if [[ "$dpkgVersion" == *":"* ]]; then
-    dpkgVersion=$(echo "$dpkgVersion" | awk -F':' '{print $2}')
-  fi
-  if [ -z "$dpkgVersion" ]; then
-    echo_failure "could not determine dpkg openstack version"
-    exit -1
-  fi
+  which dpkg > /dev/null 2>&1
+    if [ `echo $?` -ne 0 ]
+    then
+    	dpkgVersion=""
+    else
+    	dpkgVersion=$(dpkg -l | grep nova-common | awk '{print $3}')
+  	if [[ "$dpkgVersion" == *":"* ]]; then
+   	  dpkgVersion=$(echo "$dpkgVersion" | awk -F':' '{print $2}')
+  	fi
+  	if [ -z "$dpkgVersion" ]; then
+    	  echo_failure "could not determine dpkg openstack version"
+	  exit -1
+  	fi
+    fi  
   echo $dpkgVersion
 }
 
