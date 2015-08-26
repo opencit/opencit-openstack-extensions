@@ -258,14 +258,12 @@ function getFlavour() {
 function openstackRestart() {
   if [ "$FLAVOUR" == "ubuntu" ]; then
     # from Openstack_applyPatches.sh; necessary?
-    service nova-compute restart
     service nova-api restart
     service nova-cert restart
     service nova-consoleauth restart
     service nova-scheduler restart
     service nova-conductor restart
     service nova-novncproxy restart
-    service nova-network restart
 
     # from Naresh's instructions
     #service nova-api restart
@@ -273,14 +271,12 @@ function openstackRestart() {
     service apache2 restart
   elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
     # from Openstack_applyPatches.sh; necessary?
-    service openstack-nova-compute restart
     service openstack-nova-api restart
     service openstack-nova-cert restart
     service openstack-nova-consoleauth restart
     service openstack-nova-scheduler restart
     service openstack-nova-conductor restart
     service openstack-nova-novncproxy restart
-    service openstack-nova-network restart
 
     # from Naresh's instructions
     #service openstack-nova-api restart
