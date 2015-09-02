@@ -201,24 +201,6 @@ MTWILSON_OPENSTACK_ZYPPER_PACKAGES="zip unzip patch patchutils"
 auto_install "Installer requirements" "MTWILSON_OPENSTACK"
 if [ $? -ne 0 ]; then echo_failure "Failed to install prerequisites through package installer"; exit -1; fi
 
-# extract mtwilson-openstack-node  (mtwilson-openstack-node-zip-0.1-SNAPSHOT.zip)
-echo "Extracting application..."
-MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
-for MTWILSON_OPENSTACK_ZIPFILE in $MTWILSON_OPENSTACK_ZIPFILES; do
-  echo "Extract $MTWILSON_OPENSTACK_ZIPFILE"
-  unzip -oq $MTWILSON_OPENSTACK_ZIPFILE -d $OPENSTACK_EXT_REPOSITORY
-done
-
-# copy utilities script file to application folder
-cp $UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/functions.sh
-cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch-util.sh
-cp $UNINSTALL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/mtwilson-openstack-node-uninstall.sh
-
-# set permissions
-chmod 700 $OPENSTACK_EXT_HOME/bin/*.sh
-
-cd $OPENSTACK_EXT_REPOSITORY
-
 ### OpenStack Extensions methods
 function getFlavour() {
   flavour=""
@@ -270,14 +252,20 @@ function getOpenstackVersion() {
   echo $version
 }
 function getOpenstackDpkgVersion() {
-  dpkgVersion=$(dpkg -l | grep nova-common | awk '{print $3}')
-  if [[ "$dpkgVersion" == *":"* ]]; then
-    dpkgVersion=$(echo "$dpkgVersion" | awk -F':' '{print $2}')
-  fi
-  if [ -z "$dpkgVersion" ]; then
-    echo_failure "could not determine dpkg openstack version"
-    exit -1
-  fi
+  which dpkg > /dev/null 2>&1
+    if [ `echo $?` -ne 0 ]
+    then
+    	dpkgVersion=""
+    else
+    	dpkgVersion=$(dpkg -l | grep nova-common | awk '{print $3}')
+  	if [[ "$dpkgVersion" == *":"* ]]; then
+   	  dpkgVersion=$(echo "$dpkgVersion" | awk -F':' '{print $2}')
+  	fi
+  	if [ -z "$dpkgVersion" ]; then
+    	  echo_failure "could not determine dpkg openstack version"
+	  exit -1
+  	fi
+    fi  
   echo $dpkgVersion
 }
 
@@ -369,6 +357,38 @@ function find_patch() {
     echo "Applying component [${component}] patches from file $patch_file"
   fi
 }
+
+# uninstall patches if already applied previously
+
+for component in $COMPUTE_COMPONENTS; do
+  if [ -d $OPENSTACK_EXT_REPOSITORY/$component ]; then
+    find_patch "${component}" "${version}" "${dpkgVersion}"
+    revert_patch $DISTRIBUTION_LOCATION $patch_file 1
+    if [ $? -ne 0 ]; then
+      echo_failure "Error while reverting older patches."
+      echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
+      #exit -1
+    fi
+  fi
+done
+
+# extract mtwilson-openstack-node  (mtwilson-openstack-node-zip-0.1-SNAPSHOT.zip)
+echo "Extracting application..."
+MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
+for MTWILSON_OPENSTACK_ZIPFILE in $MTWILSON_OPENSTACK_ZIPFILES; do
+  echo "Extract $MTWILSON_OPENSTACK_ZIPFILE"
+  unzip -oq $MTWILSON_OPENSTACK_ZIPFILE -d $OPENSTACK_EXT_REPOSITORY
+done
+
+# copy utilities script file to application folder
+cp $UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/functions.sh
+cp $PATCH_UTIL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/patch-util.sh
+cp $UNINSTALL_SCRIPT_FILE $OPENSTACK_EXT_HOME/bin/mtwilson-openstack-node-uninstall.sh
+
+# set permissions
+chmod 700 $OPENSTACK_EXT_HOME/bin/*.sh
+
+cd $OPENSTACK_EXT_REPOSITORY
 
 for component in $COMPUTE_COMPONENTS; do
   find_patch "${component}" "${version}" "${dpkgVersion}"

@@ -283,10 +283,12 @@ class UpdateImageForm(forms.SelfHandlingForm):
         if data['architecture']:
             meta['properties']['architecture'] = data['architecture']
 
-        LOG.error(data['geoTag'])
+        orig_image =api.glance.image_get(request, image_id)
+        cit_trust_policy_store = ('mtwilson_trustpolicy_location' in orig_image.properties)
+
         if data['geoTag']:
             geoTag = json.loads(data['geoTag'])
-            if geoTag.has_key('trust'):
+            if geoTag.has_key('trust') and not cit_trust_policy_store:
                 meta['properties']['trust'] = geoTag['trust']
             if geoTag.has_key('tags'):
                 meta['properties']['tags'] = simplejson.dumps(geoTag['tags'])

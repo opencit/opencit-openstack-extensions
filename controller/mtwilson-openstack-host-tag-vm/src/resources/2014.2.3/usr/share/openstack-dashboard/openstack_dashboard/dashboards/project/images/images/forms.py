@@ -43,8 +43,10 @@ IMAGE_FORMAT_CHOICES = IMAGE_BACKEND_SETTINGS.get('image_formats', [])
 
 class CreateImageForm(forms.SelfHandlingForm):
     name = forms.CharField(max_length=255, label=_("Name"))
-    description = forms.CharField(max_length=255, label=_("Description"),
-                                  required=False)
+    description = forms.CharField(widget=forms.widgets.Textarea(
+        attrs={'class': 'modal-body-fixed-width', 'rows': 4}),
+        label=_("Description"),
+        required=False)
 
     source_type = forms.ChoiceField(
         label=_('Image Source'),
@@ -203,8 +205,11 @@ class CreateImageForm(forms.SelfHandlingForm):
 class UpdateImageForm(forms.SelfHandlingForm):
     image_id = forms.CharField(widget=forms.HiddenInput())
     name = forms.CharField(max_length=255, label=_("Name"))
-    description = forms.CharField(max_length=255, label=_("Description"),
-                                  required=False)
+    description = forms.CharField(
+        widget=forms.widgets.Textarea(),
+        label=_("Description"),
+        required=False,
+    )
     kernel = forms.CharField(
         max_length=36,
         label=_("Kernel ID"),
@@ -278,10 +283,12 @@ class UpdateImageForm(forms.SelfHandlingForm):
         if data['architecture']:
             meta['properties']['architecture'] = data['architecture']
 
-        LOG.error(data['geoTag'])
+        orig_image =api.glance.image_get(request, image_id)
+        cit_trust_policy_store = ('mtwilson_trustpolicy_location' in orig_image.properties)
+
         if data['geoTag']:
             geoTag = json.loads(data['geoTag'])
-            if geoTag.has_key('trust'):
+            if geoTag.has_key('trust') and not cit_trust_policy_store:
                 meta['properties']['trust'] = geoTag['trust']
             if geoTag.has_key('tags'):
                 meta['properties']['tags'] = simplejson.dumps(geoTag['tags'])
