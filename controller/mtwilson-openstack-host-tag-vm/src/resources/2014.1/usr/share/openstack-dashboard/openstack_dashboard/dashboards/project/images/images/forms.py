@@ -251,16 +251,17 @@ class UpdateImageForm(forms.SelfHandlingForm):
         if data['architecture']:
             meta['properties']['architecture'] = data['architecture']
 
-        LOG.error(data['geoTag'])
+        orig_image =api.glance.image_get(request, image_id)
+        cit_trust_policy_store = ('mtwilson_trustpolicy_location' in orig_image.properties)
+
         if data['geoTag']:
             geoTag = json.loads(data['geoTag'])
-            if geoTag.has_key('trust'):
+            if geoTag.has_key('trust') and not cit_trust_policy_store:
                 meta['properties']['trust'] = geoTag['trust']
             if geoTag.has_key('tags'):
                 meta['properties']['tags'] = simplejson.dumps(geoTag['tags'])
             else:
                 meta['properties']['tags'] = None
-
 
         # Ensure we do not delete properties that have already been
         # set on an image.
@@ -268,6 +269,7 @@ class UpdateImageForm(forms.SelfHandlingForm):
 
         try:
             image = api.glance.image_update(request, image_id, **meta)
+
             messages.success(request, _('Image was successfully updated.'))
             return image
         except Exception:

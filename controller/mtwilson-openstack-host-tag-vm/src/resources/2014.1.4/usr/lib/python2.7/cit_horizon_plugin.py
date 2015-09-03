@@ -75,7 +75,10 @@ def generate_attestation_status_str(policy, policy_status, asset_tag):
 
         if('trust' in tag_dictionary and tag_dictionary['trust'] == 'true'):
             trust_type = 'trust_only'
-            tags = tag_dictionary['tags']
+
+            tags = None
+            if 'tags' in tag_dictionary:
+                tags = tag_dictionary['tags']
             tag_image_tooltip = 'Trust: Yes; Asset tags: None'
             if(tags == 'None'):
                 return return_string.format(trust_type, tag_image_tooltip +  '; ' + launch_image_tooltip, launch_image_name, tag_image_tooltip + '; ' + launch_image_tooltip)
