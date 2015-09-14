@@ -4,7 +4,7 @@ from horizon import tables
 from horizon import forms
 
 from openstack_dashboard.dashboards.admin.hypervisors import tables as hypervisors_tables
-from openstack_dashboard.dashboards.admin.hypervisors import views as hypervisors_view
+from openstack_dashboard.dashboards.admin.hypervisors import tabs as hypervisors_tabs
 
 from openstack_dashboard.dashboards.admin.images import tables as images_tables
 from openstack_dashboard.dashboards.admin.images import views as images_view
@@ -167,7 +167,7 @@ class GeoTagHypervisorsTable(hypervisors_tables.AdminHypervisorsTable):
         name = "hypervisors"
         columns = ('hostname', 'geo_tag', 'vcpus', 'vcpus_used', 'memory', 'memory_used', 'local', 'local_used', 'running_vms')
 
-hypervisors_view.AdminIndexView.table_class = GeoTagHypervisorsTable
+hypervisors_tabs.HypervisorTab.table_classes = (GeoTagHypervisorsTable,)
 # END: Changes to add the Geo Tag column in the hypervisors table view
 
 # BEGIN: Changes to add the tag creation in the create image form
