@@ -71,9 +71,17 @@ class ViewBuilder(common.ViewBuilder):
     def basic(self, request, instance):
         """Generic, non-detailed view of an instance."""
         asset_tags = '-'
-        if instance["system_metadata"] is not None and "image_trust" in instance["system_metadata"]:
-            asset_tags = {'tags': instance["system_metadata"]["image_tags"], 'trust': instance["system_metadata"]["image_trust"]}
-        LOG.error(asset_tags)
+        image_tags = None
+        if instance["system_metadata"] is not None:
+            if "image_tags" in instance["system_metadata"]:
+                image_tags = instance["system_metadata"]["image_tags"]
+
+            if "image_mtwilson_trustpolicy_location" in instance["system_metadata"]:
+                asset_tags = {'trust': 'true', 'tags': image_tags}
+            elif "image_trust" in instance["system_metadata"]:
+                asset_tags = {'trust': instance["system_metadata"]["image_trust"], 'tags': image_tags}
+
+
         return {
             "server": {
                 "id": instance["uuid"],
@@ -91,8 +99,19 @@ class ViewBuilder(common.ViewBuilder):
         ip_v4 = instance.get('access_ip_v4')
         ip_v6 = instance.get('access_ip_v6')
         asset_tags = '-'
+        image_tags = None
+        if instance["system_metadata"] is not None:
+            if "image_tags" in instance["system_metadata"]:
+                image_tags = instance["system_metadata"]["image_tags"]
+
+            if "image_mtwilson_trustpolicy_location" in instance["system_metadata"]:
+                asset_tags = {'trust': 'true', 'tags': image_tags}
+            elif "image_trust" in instance["system_metadata"]:
+                asset_tags = {'trust': instance["system_metadata"]["image_trust"], 'tags': image_tags}
+
         if instance["system_metadata"] is not None and "image_trust" in instance["system_metadata"]:
             asset_tags = {'tags': instance["system_metadata"]["image_tags"], 'trust': instance["system_metadata"]["image_trust"]}
+
         LOG.error(asset_tags)
         server = {
             "server": {

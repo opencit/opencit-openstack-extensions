@@ -45,6 +45,8 @@ class SelectionUtils:
 
 
     def get_image_selection(self, image):
+       if('mtwilson_trustpolicy_location' in image.properties):
+           image.properties['trust'] = 'true'
        return json.dumps(image.properties)
 
     def get_instance_asset_selection(self, instance):

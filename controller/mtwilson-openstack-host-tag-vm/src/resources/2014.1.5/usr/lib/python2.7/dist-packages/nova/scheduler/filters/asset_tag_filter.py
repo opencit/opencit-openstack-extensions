@@ -220,6 +220,9 @@ class TrustAssertionFilter(filters.BaseHostFilter):
 	# Get the Tag verification flag from the image properties 
         tag_selections = image_props.get('tags') # comma seperated values
         trust_verify = image_props.get('trust') # comma seperated values
+
+        if('mtwilson_trustpolicy_location' in image_props):
+            trust_verify = 'true'
         
         #if tag_selections is None or tag_selections == 'Trust':
         if trust_verify == 'true':

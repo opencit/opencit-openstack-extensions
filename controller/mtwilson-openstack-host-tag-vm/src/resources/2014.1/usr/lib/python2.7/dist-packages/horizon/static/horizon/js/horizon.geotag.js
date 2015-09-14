@@ -101,7 +101,10 @@ function populateUpdateTagsView() {
 	}
 	assetTagDetails = JSON.parse(setProps);
 //	num_tag_elements = 10;
-	if(assetTagDetails.hasOwnProperty('trust') && assetTagDetails['trust'].trim().toLowerCase() == 'true') {
+	if(assetTagDetails.hasOwnProperty('mtwilson_trustpolicy_location')) {
+		$('#id_trust_type_0')[0].disabled = 'disabled';
+	}
+	if(assetTagDetails.hasOwnProperty('mtwilson_trustpolicy_location') || ( assetTagDetails.hasOwnProperty('trust') && assetTagDetails['trust'].trim().toLowerCase() == 'true')) {
 		if(assetTagDetails.hasOwnProperty('tags') && assetTagDetails['tags'] != 'None') {
 			$('#id_trust_type_1')[0].checked = true;
 		 }
