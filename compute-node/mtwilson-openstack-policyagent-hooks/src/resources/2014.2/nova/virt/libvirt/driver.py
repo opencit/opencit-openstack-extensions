@@ -39,7 +39,6 @@ import tempfile
 import threading
 import time
 import uuid
-import subprocess
 
 import eventlet
 from eventlet import greenio
@@ -73,7 +72,6 @@ from nova.network import model as network_model
 from nova import objects
 from nova.openstack.common import excutils
 from nova.openstack.common import fileutils
-from nova.openstack.common.gettextutils import _
 from nova.openstack.common import importutils
 from nova.openstack.common import jsonutils
 from nova.openstack.common import log as logging
@@ -111,7 +109,6 @@ from nova.virt import netutils
 from nova.virt import watchdog_actions
 from nova import volume
 from nova.volume import encryptors
-from nova.virt import images
 
 native_threading = patcher.original("threading")
 native_Queue = patcher.original("Queue")
@@ -2929,9 +2926,6 @@ class LibvirtDriver(driver.ComputeDriver):
                       disk_images=None, network_info=None,
                       block_device_info=None, files=None,
                       admin_pass=None, inject_files=True):
-
-	LOG.info("IntelCIT : inside _create_image %s " %(instance) )
-
         booted_from_volume = self._is_booted_from_volume(
             instance, disk_mapping)
 
@@ -2963,47 +2957,22 @@ class LibvirtDriver(driver.ComputeDriver):
                            'kernel_id': instance['kernel_id'],
                            'ramdisk_id': instance['ramdisk_id']}
 
-	instance1={}
         if disk_images['kernel_id']:
-
-            # Abhay Dandekar
-            # DCG : update the measured flag
-            kernel_meta = compute_utils.get_image_metadata(context, self._image_api, instance['kernel_id'], instance)
-            LOG.info( ("Kernel Meta : "), kernel_meta=kernel_meta)
-
-            if 'properties' in kernel_meta and 'mh_encrypted' in kernel_meta['properties']:
-                instance1['mh_encrypted'] = kernel_meta['properties']['mh_encrypted']
-                instance1['mh_checksum'] = kernel_meta['properties']['mh_checksum']
-                instance1['mh_dek_url'] = kernel_meta['properties']['mh_dek_url']
-
-
             fname = imagecache.get_cache_fname(disk_images, 'kernel_id')
             raw('kernel').cache(fetch_func=libvirt_utils.fetch_image,
                                 context=context,
                                 filename=fname,
                                 image_id=disk_images['kernel_id'],
-				instance=instance,
                                 user_id=instance['user_id'],
-                                project_id=instance['project_id'],
-				extra_args=instance1)
+                                project_id=instance['project_id'])
             if disk_images['ramdisk_id']:
-            # Abhay Dandekar
-            # DCG : update the measured flag
-                ramdisk_meta = compute_utils.get_image_metadata(context, self._image_api, instance['ramdisk_id'], instance)
-                if 'properties' in ramdisk_meta and 'mh_encrypted' in ramdisk_meta['properties']:
-                    instance1['mh_encrypted'] = ramdisk_meta['properties']['mh_encrypted']
-                    instance1['mh_checksum'] = ramdisk_meta['properties']['mh_checksum']
-                    instance1['mh_dek_url'] = ramdisk_meta['properties']['mh_dek_url']
-
                 fname = imagecache.get_cache_fname(disk_images, 'ramdisk_id')
                 raw('ramdisk').cache(fetch_func=libvirt_utils.fetch_image,
                                      context=context,
                                      filename=fname,
                                      image_id=disk_images['ramdisk_id'],
-				     instance=instance,
                                      user_id=instance['user_id'],
-                                     project_id=instance['project_id'],
-				     extra_args=instance1)
+                                     project_id=instance['project_id'])
 
         inst_type = flavors.extract_flavor(instance)
 
@@ -3016,26 +2985,6 @@ class LibvirtDriver(driver.ComputeDriver):
 
             if size == 0 or suffix == '.rescue':
                 size = None
-            # Abhay Dandekar
-            #DCG : updated for measured launch
-            image_meta = compute_utils.get_image_metadata(context, self._image_api, instance['image_ref'], instance)
-
-                        
-            # MH start of policagent hook for disk download and decryption
-			#TODO: Check for all the mtwilson_ property and copy them all
-            if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
-                instance1['mtwilson_trustpolicy_location'] = image_meta['properties']['mtwilson_trustpolicy_location']
-                instance1['instance_type_root_gb']=image_meta['properties']['instance_type_root_gb']
-
-            for prop in image_meta['properties']:
-                LOG.info(_("#####Image prop" + prop + "::" + image_meta['properties'][prop]))
-            
-            #LOG.info(_("Instance root_gb" + instance1['instance_type_root_gb']))            
-            #Temporary: Delete this later 
-            #TODO: Create a separate command to create the symbolic link for Instance dir
-            image_target=os.path.join(CONF.instances_path, "_base", root_fname)
-            if os.path.exists(image_target):
-                os.remove(image_target)
 
             backend = image('disk')
             if backend.SUPPORTS_CLONE:
@@ -3052,10 +3001,10 @@ class LibvirtDriver(driver.ComputeDriver):
                           filename=root_fname,
                           size=size,
                           image_id=disk_images['image_id'],
-                          instance=instance,
                           user_id=instance['user_id'],
-                          project_id=instance['project_id'],
-                          extra_args=instance1)
+                          project_id=instance['project_id'])
+
+            out, err = utils.execute('python', '/opt/policyagent/bin/policyagent.py', 'launch', os.path.join(CONF.instances_path, CONF.image_cache_subdirectory_name, root_fname), root_fname, instance['uuid'], 'glance', instance['root_gb'], run_as_root=True, check_exit_code=[0])
 
         # Lookup the filesystem type if required
         os_type_with_default = disk.get_fs_type_for_os_type(
@@ -5473,7 +5422,6 @@ class LibvirtDriver(driver.ComputeDriver):
             libvirt_utils.fetch_image(context,
                                       os.path.join(instance_dir, 'kernel'),
                                       instance['kernel_id'],
-				      instance,
                                       instance['user_id'],
                                       instance['project_id'])
             if instance['ramdisk_id']:
@@ -5481,7 +5429,6 @@ class LibvirtDriver(driver.ComputeDriver):
                                           os.path.join(instance_dir,
                                                        'ramdisk'),
                                           instance['ramdisk_id'],
-					  instance,
                                           instance['user_id'],
                                           instance['project_id'])
 
@@ -5636,7 +5583,6 @@ class LibvirtDriver(driver.ComputeDriver):
                                 context=context,
                                 filename=cache_name,
                                 image_id=instance['image_ref'],
-				instance=instance,
                                 user_id=instance['user_id'],
                                 project_id=instance['project_id'],
                                 size=info['virt_disk_size'])
@@ -6332,32 +6278,15 @@ class LibvirtDriver(driver.ComputeDriver):
         # may exist even if all rename attempts during the present method
         # invocation failed due to the absence of both target and
         # target_resize.
+        if os.path.islink(target_del):
+            out, err = utils.execute('python', '/opt/policyagent/bin/policyagent.py', 'delete', target_del, run_as_root=True, check_exit_code=[0])
+
         if not remaining_path and os.path.exists(target_del):
             LOG.info(_LI('Deleting instance files %s'), target_del,
                      instance=instance)
             remaining_path = target_del
             try:
-                #arg_pa='version'
-                #cmd=('policyagent',arg_pa)
-                #out,err=execute(*cmd,run_as_root=True, attempts=1)
-                #if err:
-                #    LOG.error(_("IntelCIT :Could execute the policy agent root wrap cmd not crypt format the loop device %s ,  %s " % (out, err) ))
-                #else:
-                #    LOG.info(_("IntelCIT : Executed policy agent version successfully"))
-
-                if os.path.islink(target_del):
-                           cmd=('policyagent', 'delete', target_del)
-                           out,err=utils.execute(*cmd,run_as_root=True, attempts=1)
-                           if err:
-                               LOG.error(_("IntelCIT :Check delete instance") )
-                           else:
-                               LOG.info(_("IntelCIT : deleted the instance" + target_del))
-                else:
-                             #os.unlink(sympath)
-                             #testpath=os.path.realpath(ins_path)
-                             #LOG.info(_("TESTPATH:" + testpath))
-                             #shutil.rmtree(sympath)
-                             shutil.rmtree(target_del)
+                shutil.rmtree(target_del)
             except OSError as e:
                 LOG.error(_LE('Failed to cleanup directory %(target)s: '
                               '%(e)s'), {'target': target_del, 'e': e},

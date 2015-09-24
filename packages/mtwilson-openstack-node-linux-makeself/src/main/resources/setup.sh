@@ -405,10 +405,10 @@ if [ -d /var/log/nova ] ; then
 fi
 
 # Check for policyagent
-if [ ! -x  /usr/local/bin/policyagent ]; then
-  echo_failure "Could not find policyagent"
-  exit -1
-fi
+#if [ ! -x  /usr/local/bin/policyagent ]; then
+#  echo_failure "Could not find policyagent"
+#  exit -1
+#fi
 
 # rootwrap.conf
 rootwrapConfFile="/etc/nova/rootwrap.conf"
@@ -431,11 +431,11 @@ if [ ! -f "$computeFiltersFile" ]; then
   echo_failure "Could not find $computeFiltersFile"
   exit -1
 fi
-computeFiltersPolicyagentExists=$(grep '^policyagent:' "$computeFiltersFile")
-if [ -n "$computeFiltersPolicyagentExists" ]; then
-  sed -i 's/^policyagent:.*/policyagent: CommandFilter, \/usr\/local\/bin\/policyagent, root/g' "$computeFiltersFile"
+computeFiltersPythonExists=$(grep '^python:' "$computeFiltersFile")
+if [ -n "$computeFiltersPythonExists" ]; then
+  sed -i 's/^python:.*/python: CommandFilter, \/usr\/bin\/python, root/g' "$computeFiltersFile"
 else
-  echo "policyagent: CommandFilter, /usr/local/bin/policyagent, root" >> "$computeFiltersFile"
+  echo "python: CommandFilter, /usr/bin/python, root" >> "$computeFiltersFile"
 fi
 
 rootwrapConfExecDirsExists=$(grep '^exec_dirs=' "$rootwrapConfFile")
