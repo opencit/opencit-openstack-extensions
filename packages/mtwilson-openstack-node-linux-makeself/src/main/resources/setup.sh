@@ -24,6 +24,7 @@
 export OPENSTACK_EXT_HOME=${OPENSTACK_EXT_HOME:-/opt/openstack-ext}
 OPENSTACK_EXT_LAYOUT=${OPENSTACK_EXT_LAYOUT:-home}
 
+
 # the env directory is not configurable; it is defined as OPENSTACK_EXT_HOME/env and
 # the administrator may use a symlink if necessary to place it anywhere else
 export OPENSTACK_EXT_ENV=$OPENSTACK_EXT_HOME/env
@@ -70,7 +71,7 @@ elif [ "$OPENSTACK_EXT_LAYOUT" == "home" ]; then
 fi
 export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_HOME/bin
 
-for directory in $OPENSTACK_EXT_REPOSITORY $OPENSTACK_EXT_BIN; do
+for directory in $OPENSTACK_EXT_REPOSITORY $OPENSTACK_EXT_HOME $OPENSTACK_EXT_BIN $OPENSTACK_EXT_ENV; do
   mkdir -p $directory
   chmod 700 $directory
 done
@@ -80,6 +81,7 @@ if [ "$(whoami)" != "root" ]; then
   echo_failure "Running as $(whoami); must install as root"
   exit -1
 fi
+
 
 # read variables from trustagent configuration to input to nova.conf
 trustagentHomeDir="/opt/trustagent"
@@ -184,6 +186,9 @@ function updateNovaConf() {
 # update nova.conf
 novaConfFile="/etc/nova/nova.conf"
 if [ ! -f "$novaConfFile" ]; then
+  novaConfFile="$NOVA_CONFIG_DIR_LOCATION_PATH/nova.conf"
+fi
+if [ ! -f "$novaConfFile"  ]; then
   echo_failure "Could not find $novaConfFile"
   echo_failure "OpenStack compute node must be installed first"
   exit -1
@@ -229,23 +234,43 @@ function getFlavour() {
 }
 function openstackRestart() {
   if [ "$FLAVOUR" == "ubuntu" ]; then
-    service nova-api-metadata restart
-    service nova-network restart
-    service nova-compute restart
+    if [[ "$NOVA_CONFIG_DIR_LOCATION_PATH" != "" ]]; then
+	ps aux | grep python | grep "nova-api-metadata" | awk '{print $2}' | xargs kill -9 
+	nohup nova-api-metadata --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+	 ps aux | grep python | grep "nova-compute" | awk '{print $2}' | xargs kill -9
+	 nohup nova-compute --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+	 ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
+	 nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &	
+    else
+	service nova-api-metadata restart
+    	service nova-network restart
+    	service nova-compute restart
+	fi
   elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
-    service openstack-nova-metadata-api restart
-    service openstack-nova-network restart
-    service openstack-nova-compute restart
+    if [[ "$NOVA_CONFIG_DIR_LOCATION_PATH" != "" ]]; then
+    	 ps aux | grep python | grep "nova-api-metadata" | awk '{print $2}' | xargs kill -9
+        nohup nova-api-metadata --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+         ps aux | grep python | grep "nova-compute" | awk '{print $2}' | xargs kill -9
+         nohup nova-compute --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+         ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
+         nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+    else
+        service openstack-nova-metadata-api restart
+        service openstack-nova-network restart
+        service openstack-nova-compute restart
+    fi
   else
     echo_failure "Cannot determine nova compute restart command based on linux flavor"
+    echo_failure "Please check nova services are properly configured and restart nova services"
     exit -1
   fi
 }
 function getOpenstackVersion() {
-  if [ -x /usr/bin/nova-manage ] ; then
-    version=$(/usr/bin/nova-manage --version 2>&1)
+  novaManageLocation=`which nova-manage` 
+  if [ `echo $?` == 0 ] ; then
+    version=$($novaManageLocation  --version 2>&1)
   else
-    echo_failure "/usr/bin/nova-manage does not exist"
+    echo_failure "nova-manage does not exist"
     echo_failure "nova compute must be installed"
     exit -1
   fi
@@ -269,9 +294,12 @@ function getOpenstackDpkgVersion() {
   echo $dpkgVersion
 }
 
+
 function getDistributionLocation() {
-  DISTRIBUTION_LOCATION=$(/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-  if [ $? -ne 0 ]; then echo_failure "Failed to determine distribution location"; echo_failure "Check nova compute configuration"; exit -1; fi
+	if [ "$DISTRIBUTION_LOCATION" == "" ]; then
+        	DISTRIBUTION_LOCATION=$(/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+        fi
+	if [ $? -ne 0 ]; then echo_failure "Failed to determine distribution location"; echo_failure "Check nova compute configuration"; exit -1; fi
   echo $DISTRIBUTION_LOCATION
 }
 function applyPatches() {
@@ -315,6 +343,14 @@ FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion)
 dpkgVersion=$(getOpenstackDpkgVersion)
+
+#store directory layout in env file
+echo "# $(date)" > $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_HOME=$OPENSTACK_EXT_HOME" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_REPOSITORY=$OPENSTACK_EXT_REPOSITORY" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_BIN" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export NOVA_CONFIG_DIR_LOCATION_PATH=$NOVA_CONFIG_DIR_LOCATION_PATH" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export DISTRIBUTION_LOCATION=$DISTRIBUTION_LOCATION" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
 
 function find_patch() {
   local component=$1
@@ -412,6 +448,9 @@ fi
 
 # rootwrap.conf
 rootwrapConfFile="/etc/nova/rootwrap.conf"
+if [ ! -f "$rootwrapConfFile" ]; then
+rootwrapConfFile="$NOVA_CONFIG_DIR_LOCATION_PATH/rootwrap.conf"
+fi
 if [ ! -f "$rootwrapConfFile" ]; then
   echo_failure "Could not find $rootwrapConfFile"
   exit -1
