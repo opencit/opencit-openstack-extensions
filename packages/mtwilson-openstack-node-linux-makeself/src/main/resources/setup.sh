@@ -21,6 +21,8 @@
 # default settings
 # note the layout setting is used only by this script
 # and it is not saved or used by the app script
+DISTRIBUTION_LOCATION=""
+NOVA_CONFIG_DIR_LOCATION_PATH=""
 export OPENSTACK_EXT_HOME=${OPENSTACK_EXT_HOME:-/opt/openstack-ext}
 OPENSTACK_EXT_LAYOUT=${OPENSTACK_EXT_LAYOUT:-home}
 
@@ -55,10 +57,10 @@ fi
 UNINSTALL_SCRIPT_FILE=$(ls -1 mtwilson-openstack-node-uninstall.sh | head -n 1)
 
 ## load installer environment file, if present
-if [ -f ~/mtwilson-openstack-node.env ]; then
-  echo "Loading environment variables from $(cd ~ && pwd)/mtwilson-openstack-node.env"
-  . ~/mtwilson-openstack-node.env
-  env_file_exports=$(cat ~/mtwilson-openstack-node.env | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
+if [ -f ~/mtwilson-openstack.env ]; then
+  echo "Loading environment variables from $(cd ~ && pwd)/mtwilson-openstack.env"
+  . ~/mtwilson-openstack.env
+  env_file_exports=$(cat ~/mtwilson-openstack.env | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
   if [ -n "$env_file_exports" ]; then eval export $env_file_exports; fi
 else
   echo "No environment file"
@@ -369,28 +371,28 @@ function find_patch() {
 
   patch_file=""
   
-  if [ -e "${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}${patch_suffix}" ]; then
-    patch_file="${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}${patch_suffix}"
-  elif [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
-    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix
+  if [ -e "${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}" ]; then
+    patch_dir="${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}"
+  elif [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version ]; then
+    patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$version
   elif [ ! -z $patch ]; then
     for i in $(seq $patch -1 0); do
-      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix"
-      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix ]; then
-        patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i ]; then
+        patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i
         break
       fi
     done
   fi
-  if [ -z $patch_file ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix ]; then
-    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix
+  if [ -z $patch_dir ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor ]; then
+    patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor
   fi
 
-  if [ -z $patch_file ]; then
+  if [ -z $patch_dir ]; then
     echo_failure "Could not find suitable patches for Openstack version $version"
     exit -1
   else
-    echo "Applying component [${component}] patches from file $patch_file"
+    echo "Applying component [${component}] patches from file $patch_dir"
   fi
 }
 
@@ -399,7 +401,7 @@ function find_patch() {
 for component in $COMPUTE_COMPONENTS; do
   if [ -d $OPENSTACK_EXT_REPOSITORY/$component ]; then
     find_patch "${component}" "${version}" "${dpkgVersion}"
-    revert_patch $DISTRIBUTION_LOCATION $patch_file 1
+    revert_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
     if [ $? -ne 0 ]; then
       echo_failure "Error while reverting older patches."
       echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
@@ -428,7 +430,7 @@ cd $OPENSTACK_EXT_REPOSITORY
 
 for component in $COMPUTE_COMPONENTS; do
   find_patch "${component}" "${version}" "${dpkgVersion}"
-  apply_patch $DISTRIBUTION_LOCATION $patch_file 1
+  apply_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
   if [ $? -ne 0 ]; then
     echo_failure "Error while applying patches."
     exit -1
