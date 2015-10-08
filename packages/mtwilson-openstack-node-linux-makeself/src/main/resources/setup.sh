@@ -21,8 +21,11 @@
 # default settings
 # note the layout setting is used only by this script
 # and it is not saved or used by the app script
+DISTRIBUTION_LOCATION=""
+NOVA_CONFIG_DIR_LOCATION_PATH=""
 export OPENSTACK_EXT_HOME=${OPENSTACK_EXT_HOME:-/opt/openstack-ext}
 OPENSTACK_EXT_LAYOUT=${OPENSTACK_EXT_LAYOUT:-home}
+
 
 # the env directory is not configurable; it is defined as OPENSTACK_EXT_HOME/env and
 # the administrator may use a symlink if necessary to place it anywhere else
@@ -54,10 +57,10 @@ fi
 UNINSTALL_SCRIPT_FILE=$(ls -1 mtwilson-openstack-node-uninstall.sh | head -n 1)
 
 ## load installer environment file, if present
-if [ -f ~/mtwilson-openstack-node.env ]; then
-  echo "Loading environment variables from $(cd ~ && pwd)/mtwilson-openstack-node.env"
-  . ~/mtwilson-openstack-node.env
-  env_file_exports=$(cat ~/mtwilson-openstack-node.env | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
+if [ -f ~/mtwilson-openstack.env ]; then
+  echo "Loading environment variables from $(cd ~ && pwd)/mtwilson-openstack.env"
+  . ~/mtwilson-openstack.env
+  env_file_exports=$(cat ~/mtwilson-openstack.env | grep -E '^[A-Z0-9_]+\s*=' | cut -d = -f 1)
   if [ -n "$env_file_exports" ]; then eval export $env_file_exports; fi
 else
   echo "No environment file"
@@ -70,7 +73,7 @@ elif [ "$OPENSTACK_EXT_LAYOUT" == "home" ]; then
 fi
 export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_HOME/bin
 
-for directory in $OPENSTACK_EXT_REPOSITORY $OPENSTACK_EXT_BIN; do
+for directory in $OPENSTACK_EXT_REPOSITORY $OPENSTACK_EXT_HOME $OPENSTACK_EXT_BIN $OPENSTACK_EXT_ENV; do
   mkdir -p $directory
   chmod 700 $directory
 done
@@ -80,6 +83,7 @@ if [ "$(whoami)" != "root" ]; then
   echo_failure "Running as $(whoami); must install as root"
   exit -1
 fi
+
 
 # read variables from trustagent configuration to input to nova.conf
 trustagentHomeDir="/opt/trustagent"
@@ -184,6 +188,9 @@ function updateNovaConf() {
 # update nova.conf
 novaConfFile="/etc/nova/nova.conf"
 if [ ! -f "$novaConfFile" ]; then
+  novaConfFile="$NOVA_CONFIG_DIR_LOCATION_PATH/nova.conf"
+fi
+if [ ! -f "$novaConfFile"  ]; then
   echo_failure "Could not find $novaConfFile"
   echo_failure "OpenStack compute node must be installed first"
   exit -1
@@ -229,23 +236,43 @@ function getFlavour() {
 }
 function openstackRestart() {
   if [ "$FLAVOUR" == "ubuntu" ]; then
-    service nova-api-metadata restart
-    service nova-network restart
-    service nova-compute restart
+    if [[ "$NOVA_CONFIG_DIR_LOCATION_PATH" != "" ]]; then
+	ps aux | grep python | grep "nova-api-metadata" | awk '{print $2}' | xargs kill -9 
+	nohup nova-api-metadata --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+	 ps aux | grep python | grep "nova-compute" | awk '{print $2}' | xargs kill -9
+	 nohup nova-compute --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+	 ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
+	 nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &	
+    else
+	service nova-api-metadata restart
+    	service nova-network restart
+    	service nova-compute restart
+	fi
   elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
-    service openstack-nova-metadata-api restart
-    service openstack-nova-network restart
-    service openstack-nova-compute restart
+    if [[ "$NOVA_CONFIG_DIR_LOCATION_PATH" != "" ]]; then
+    	 ps aux | grep python | grep "nova-api-metadata" | awk '{print $2}' | xargs kill -9
+        nohup nova-api-metadata --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+         ps aux | grep python | grep "nova-compute" | awk '{print $2}' | xargs kill -9
+         nohup nova-compute --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+         ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
+         nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
+    else
+        service openstack-nova-metadata-api restart
+        service openstack-nova-network restart
+        service openstack-nova-compute restart
+    fi
   else
     echo_failure "Cannot determine nova compute restart command based on linux flavor"
+    echo_failure "Please check nova services are properly configured and restart nova services"
     exit -1
   fi
 }
 function getOpenstackVersion() {
-  if [ -x /usr/bin/nova-manage ] ; then
-    version=$(/usr/bin/nova-manage --version 2>&1)
+  novaManageLocation=`which nova-manage` 
+  if [ `echo $?` == 0 ] ; then
+    version=$($novaManageLocation  --version 2>&1)
   else
-    echo_failure "/usr/bin/nova-manage does not exist"
+    echo_failure "nova-manage does not exist"
     echo_failure "nova compute must be installed"
     exit -1
   fi
@@ -269,9 +296,12 @@ function getOpenstackDpkgVersion() {
   echo $dpkgVersion
 }
 
+
 function getDistributionLocation() {
-  DISTRIBUTION_LOCATION=$(/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-  if [ $? -ne 0 ]; then echo_failure "Failed to determine distribution location"; echo_failure "Check nova compute configuration"; exit -1; fi
+	if [ "$DISTRIBUTION_LOCATION" == "" ]; then
+        	DISTRIBUTION_LOCATION=$(/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+        fi
+	if [ $? -ne 0 ]; then echo_failure "Failed to determine distribution location"; echo_failure "Check nova compute configuration"; exit -1; fi
   echo $DISTRIBUTION_LOCATION
 }
 function applyPatches() {
@@ -316,6 +346,14 @@ DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion)
 dpkgVersion=$(getOpenstackDpkgVersion)
 
+#store directory layout in env file
+echo "# $(date)" > $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_HOME=$OPENSTACK_EXT_HOME" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_REPOSITORY=$OPENSTACK_EXT_REPOSITORY" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_BIN" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export NOVA_CONFIG_DIR_LOCATION_PATH=$NOVA_CONFIG_DIR_LOCATION_PATH" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export DISTRIBUTION_LOCATION=$DISTRIBUTION_LOCATION" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+
 function find_patch() {
   local component=$1
   local version=$2
@@ -333,28 +371,28 @@ function find_patch() {
 
   patch_file=""
   
-  if [ -e "${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}${patch_suffix}" ]; then
-    patch_file="${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}${patch_suffix}"
-  elif [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
-    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix
+  if [ -e "${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}" ]; then
+    patch_dir="${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}"
+  elif [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version ]; then
+    patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$version
   elif [ ! -z $patch ]; then
     for i in $(seq $patch -1 0); do
-      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix"
-      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix ]; then
-        patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i ]; then
+        patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i
         break
       fi
     done
   fi
-  if [ -z $patch_file ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix ]; then
-    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix
+  if [ -z $patch_dir ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor ]; then
+    patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor
   fi
 
-  if [ -z $patch_file ]; then
+  if [ -z $patch_dir ]; then
     echo_failure "Could not find suitable patches for Openstack version $version"
     exit -1
   else
-    echo "Applying component [${component}] patches from file $patch_file"
+    echo "Applying component [${component}] patches from file $patch_dir"
   fi
 }
 
@@ -363,7 +401,7 @@ function find_patch() {
 for component in $COMPUTE_COMPONENTS; do
   if [ -d $OPENSTACK_EXT_REPOSITORY/$component ]; then
     find_patch "${component}" "${version}" "${dpkgVersion}"
-    revert_patch $DISTRIBUTION_LOCATION $patch_file 1
+    revert_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
     if [ $? -ne 0 ]; then
       echo_failure "Error while reverting older patches."
       echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
@@ -392,7 +430,7 @@ cd $OPENSTACK_EXT_REPOSITORY
 
 for component in $COMPUTE_COMPONENTS; do
   find_patch "${component}" "${version}" "${dpkgVersion}"
-  apply_patch $DISTRIBUTION_LOCATION $patch_file 1
+  apply_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
   if [ $? -ne 0 ]; then
     echo_failure "Error while applying patches."
     exit -1
@@ -412,6 +450,9 @@ fi
 
 # rootwrap.conf
 rootwrapConfFile="/etc/nova/rootwrap.conf"
+if [ ! -f "$rootwrapConfFile" ]; then
+rootwrapConfFile="$NOVA_CONFIG_DIR_LOCATION_PATH/rootwrap.conf"
+fi
 if [ ! -f "$rootwrapConfFile" ]; then
   echo_failure "Could not find $rootwrapConfFile"
   exit -1

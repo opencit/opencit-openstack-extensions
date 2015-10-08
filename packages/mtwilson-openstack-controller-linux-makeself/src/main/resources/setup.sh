@@ -21,6 +21,9 @@
 # default settings
 # note the layout setting is used only by this script
 # and it is not saved or used by the app script
+DISTRIBUTION_LOCATION=""
+NOVA_CONFIG_DIR_LOCATION_PATH=""
+OPENSTACK_DASHBOARD_LOCATION=""
 export OPENSTACK_EXT_HOME=${OPENSTACK_EXT_HOME:-/opt/openstack-ext}
 OPENSTACK_EXT_LAYOUT=${OPENSTACK_EXT_LAYOUT:-home}
 
@@ -70,7 +73,7 @@ elif [ "$OPENSTACK_EXT_LAYOUT" == "home" ]; then
 fi
 export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_HOME/bin
 
-for directory in $OPENSTACK_EXT_REPOSITORY $OPENSTACK_EXT_BIN; do
+for directory in $OPENSTACK_EXT_REPOSITORY $OPENSTACK_EXT_BIN $OPENSTACK_EXT_ENV; do
   mkdir -p $directory
   chmod 700 $directory
 done
@@ -98,12 +101,21 @@ done
 mtwilsonAssetTagAuthBlob="$MTWILSON_ASSET_TAG_API_USERNAME:$MTWILSON_ASSET_TAG_API_PASSWORD"
 
 # update openstack-dashboard settings.py
-openstackDashboardSettingsFile="/usr/share/openstack-dashboard/openstack_dashboard/settings.py"
+
+if [ "$OPENSTACK_DASHBOARD_LOCATION" == "" ]; then
+ OPENSTACK_DASHBOARD_LOCATION="/usr/share/openstack-dashboard"
+fi
+
+openstackDashboardSettingsFile="$OPENSTACK_DASHBOARD_LOCATION/openstack_dashboard/settings.py"
+if [ ! -f "$openstackDashboardSettingsFile" ]; then
+  openstackDashboardSettingsFile="/usr/share/openstack-dashboard/openstack_dashboard/settings.py"
+fi
 if [ ! -f "$openstackDashboardSettingsFile" ]; then
   echo_failure "Could not find $openstackDashboardSettingsFile"
   echo_failure "OpenStack controller must be installed first"
   exit -1
 fi
+
 assetTagServiceExistsInSettingsFile=$(grep '^ASSET_TAG_SERVICE = {$' "$openstackDashboardSettingsFile")
 if [ -n "$assetTagServiceExistsInSettingsFile" ]; then
   sed -i '/^ASSET_TAG_SERVICE = {/,/^}/d' "$openstackDashboardSettingsFile"
@@ -190,7 +202,10 @@ function updateNovaConf() {
 }
 
 # update nova.conf
-novaConfFile="/etc/nova/nova.conf"
+novaConfFile="$NOVA_CONFIG_DIR_LOCATION_PATH/nova.conf"
+if [ ! -f "$novaConfFile" ]; then
+ 	novaConfFile="/etc/nova/nova.conf"
+fi
 if [ ! -f "$novaConfFile" ]; then
   echo_failure "Could not find $novaConfFile"
   echo_failure "OpenStack controller must be installed first"
@@ -255,53 +270,82 @@ function getFlavour() {
     echo $flavour
   fi
 }
+
 function openstackRestart() {
   if [ "$FLAVOUR" == "ubuntu" ]; then
-    # from Openstack_applyPatches.sh; necessary?
-    service nova-api restart
-    service nova-cert restart
-    service nova-consoleauth restart
-    service nova-scheduler restart
-    service nova-conductor restart
-    service nova-novncproxy restart
-
-    # from Naresh's instructions
-    #service nova-api restart
-    #service nova-scheduler restart
-    service apache2 restart
+     if [[ "$NOVA_CONFIG_DIR_LOCATION_PATH" != "" ]]; then
+        ps aux | grep python | grep "nova-api" | awk '{print $2}' | xargs kill -9
+         nohup nova-api --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-cert" | awk '{print $2}' | xargs kill -9
+         nohup nova-cert --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-consoleauth" | awk '{print $2}' | xargs kill -9
+         nohup nova-consoleauth --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-scheduler" | awk '{print $2}' | xargs kill -9
+         nohup nova-scheduler --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-conductor" | awk '{print $2}' | xargs kill -9
+         nohup nova-conductor --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-novncproxy" | awk '{print $2}' | xargs kill -9
+         nohup nova-novncproxy --config-dir /etc/nova/ > /dev/null 2>&1 &
+     else
+        service nova-api restart
+        service nova-cert restart
+        service nova-consoleauth restart
+        service nova-scheduler restart
+        service nova-conductor restart
+        service nova-novncproxy restart
+     fi
+        service apache2 restart
   elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
-    # from Openstack_applyPatches.sh; necessary?
-    service openstack-nova-api restart
-    service openstack-nova-cert restart
-    service openstack-nova-consoleauth restart
-    service openstack-nova-scheduler restart
-    service openstack-nova-conductor restart
-    service openstack-nova-novncproxy restart
+     if [[ "$NOVA_CONFIG_DIR_LOCATION_PATH" != "" ]]; then
+        ps aux | grep python | grep "nova-api" | awk '{print $2}' | xargs kill -9
+          nohup nova-api --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-cert" | awk '{print $2}' | xargs kill -9
+          nohup nova-cert --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-consoleauth" | awk '{print $2}' | xargs kill -9
+          nohup nova-consoleauth --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-scheduler" | awk '{print $2}' | xargs kill -9
+          nohup nova-scheduler --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-conductor" | awk '{print $2}' | xargs kill -9
+          nohup nova-conductor --config-dir /etc/nova/ > /dev/null 2>&1 &
+        ps aux | grep python | grep "nova-novncproxy" | awk '{print $2}' | xargs kill -9
+          nohup nova-novncproxy --config-dir /etc/nova/ > /dev/null 2>&1 &
+     else
+        service openstack-nova-api restart
+        service openstack-nova-cert restart
+        service openstack-nova-consoleauth restart
+        service openstack-nova-scheduler restart
+        service openstack-nova-conductor restart
+        service openstack-nova-novncproxy restart
+     fi
+        service apache2 restart
 
-    # from Naresh's instructions
-    #service openstack-nova-api restart
-    #service openstack-nova-scheduler restart
-    service apache2 restart
   else
     echo_failure "Cannot determine nova controller restart command based on linux flavor"
     exit -1
   fi
 }
+
+
 function getOpenstackVersion() {
-  if [ -x /usr/bin/nova-manage ] ; then
-    version=$(/usr/bin/nova-manage --version 2>&1)
-  else
-    echo_failure "/usr/bin/nova-manage does not exist"
-    echo_failure "nova compute must be installed"
-    exit -1
+   novaManageLocation=`which nova-manage`
+   if [ `echo $?` == 0 ] ; then
+     version=$($novaManageLocation  --version 2>&1)
+   else
+     echo_failure "nova-manage does not exist"
+     echo_failure "nova compute must be installed"
+   exit -1
   fi
   echo $version
 }
+
 function getDistributionLocation() {
-  DISTRIBUTION_LOCATION=$(/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+  if [ "$DISTRIBUTION_LOCATION" == "" ]; then
+	DISTRIBUTION_LOCATION=$(/usr/bin/python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())") 
   if [ $? -ne 0 ]; then echo_failure "Failed to determine distribution location"; echo_failure "Check nova compute configuration"; exit -1; fi
-  echo $DISTRIBUTION_LOCATION
+fi  
+echo $DISTRIBUTION_LOCATION
 }
+
 function applyPatches() {
   component=$1
   version=$2
@@ -343,6 +387,14 @@ FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion)
 
+echo "# $(date)" > $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_HOME=$OPENSTACK_EXT_HOME" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_REPOSITORY=$OPENSTACK_EXT_REPOSITORY" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_BIN" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export NOVA_CONFIG_DIR_LOCATION_PATH=$NOVA_CONFIG_DIR_LOCATION_PATH" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export DISTRIBUTION_LOCATION=$DISTRIBUTION_LOCATION" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export OPENSTACK_DASHBOARD_LOCATION=$OPENSTACK_DASHBOARD_LOCATION" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+
 function find_patch() {
   local component=$1
   local version=$2
@@ -357,27 +409,30 @@ function find_patch() {
     patch=""
   fi
 
-  patch_file=""
-  if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
-    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix
+  patch_dir=""
+  if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version ]; then
+    patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$version
+	echo "$patch_dir"
   elif [ ! -z $patch ]; then
     for i in $(seq $patch -1 0); do
-      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix"
-      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix ]; then
-        patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i ]; then
+        patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i
+	echo "$patch_dir"
         break
       fi
     done
   fi
-  if [ -z $patch_file ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix ]; then
-    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix
+  if [ -z $patch_dir ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor ]; then
+    patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor
+	echo "$patch_dir"
   fi
 
-  if [ -z $patch_file ]; then
+  if [ -z $patch_dir ]; then
     echo_failure "Could not find suitable patches for Openstack version $version"
     exit -1
   else
-    echo "Applying patches from file $patch_file"
+    echo "Applying patches from directory $patch_dir"
   fi
 }
 
@@ -385,10 +440,20 @@ function find_patch() {
 for component in $COMPUTE_COMPONENTS; do
   if [ -d $OPENSTACK_EXT_REPOSITORY/$component ]; then
     find_patch $component $version
-    revert_patch "/" $patch_file 1
+    revert_patch "/" "$patch_dir/root.patch" 1
     if [ $? -ne 0 ]; then
-      echo_failure "Error while reverting patches."
-      echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
+      echo_failure "Error while reverting root patches."
+      echo_failure "Continuing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
+    fi
+    revert_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
+    if [ $? -ne 0 ]; then
+      echo_failure "Error while reverting distribution-location patches."
+      echo_failure "Continuing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
+    fi
+    revert_patch "$OPENSTACK_DASHBOARD_LOCATION/" "$patch_dir/openstack-dashboard.patch" 1
+    if [ $? -ne 0 ]; then
+      echo_failure "Error while reverting openstack-dashboard patches."
+      echo_failure "Continuing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
     fi
   fi
 done
@@ -416,15 +481,30 @@ cd $OPENSTACK_EXT_REPOSITORY
 
 for component in $COMPUTE_COMPONENTS; do
   find_patch $component $version
-  apply_patch "/" $patch_file 1
+	echo "$patch_dir/root.patch"
+  apply_patch "/" "$patch_dir/root.patch" 1
   if [ $? -ne 0 ]; then
     echo_failure "Error while applying patches."
     exit -1
   fi
+   apply_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
+if [ $? -ne 0 ]; then
+    echo_failure "Error while applying patches."
+    exit -1
+  fi
+ apply_patch "$OPENSTACK_DASHBOARD_LOCATION/" "$patch_dir/openstack-dashboard.patch" 1
+	if [ $? -ne 0 ]; then
+    echo_failure "Error while applying patches."
+    exit -1
+  fi
+
 done
 
 find /usr/share/openstack-dashboard/ -name "*.pyc" -delete
-find $DISTRIBUTION_LOCATION/novaclient -name "*.pyc" -delete
+NOVACLIENT_LOCATION=`find "/" -name "novaclient"`
+if [ `echo $?` == 0 ] ; then
+find $NOVACLIENT_LOCATION -name "*.pyc" -delete
+fi
 find $DISTRIBUTION_LOCATION/nova -name "*.pyc" -delete
 
 # remove trusted_filter.py if exists
