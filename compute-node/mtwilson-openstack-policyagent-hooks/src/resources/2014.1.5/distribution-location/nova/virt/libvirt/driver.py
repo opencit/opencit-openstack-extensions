@@ -2656,10 +2656,11 @@ class LibvirtDriver(driver.ComputeDriver):
                                 user_id=instance['user_id'],
                                 project_id=instance['project_id'])
 
-            (image_service, image_id) = glance.get_remote_image_service(context, instance['image_ref'])
-            image_meta = compute_utils.get_image_metadata(context, image_service, image_id, instance)
-            if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
-                out, err = utils.execute('python', '/opt/policyagent/bin/policyagent.py', 'launch', os.path.join(CONF.instances_path, CONF.image_cache_subdirectory_name, root_fname), root_fname, instance['uuid'], 'glance', instance['root_gb'], run_as_root=True, check_exit_code=[0])
+            with self._wrapped_conn_lock:
+                (image_service, image_id) = glance.get_remote_image_service(context, instance['image_ref'])
+                image_meta = compute_utils.get_image_metadata(context, image_service, image_id, instance)
+                if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
+                    out, err = utils.execute('python', '/opt/policyagent/bin/policyagent.py', 'launch', os.path.join(CONF.instances_path, CONF.image_cache_subdirectory_name, root_fname), root_fname, instance['uuid'], 'glance', instance['root_gb'], run_as_root=True, check_exit_code=[0])
 
         # Lookup the filesystem type if required
         os_type_with_default = disk.get_fs_type_for_os_type(
