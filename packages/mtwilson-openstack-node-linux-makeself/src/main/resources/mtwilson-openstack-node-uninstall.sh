@@ -185,35 +185,35 @@ function find_patch() {
     patch=""
   fi
 
-  patch_file=""
-  if [ -e "${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}${patch_suffix}" ]; then
-    patch_file="${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}${patch_suffix}"
-  elif [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix ]; then
-    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$version$patch_suffix
+  patch_dir=""
+  if [ -e "${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}" ]; then
+    patch_dir="${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}"
+  elif [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version ]; then
+    patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$version
   elif [ ! -z $patch ]; then
     for i in $(seq $patch -1 0); do
-      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix"
-      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix ]; then
-        patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i$patch_suffix
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i ]; then
+        patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor.$i
         break
       fi
     done
   fi
-  if [ -z $patch_file ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix ]; then
-    patch_file=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor$patch_suffix
+  if [ -z $patch_dir ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor ]; then
+    patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor
   fi
 
-  if [ -z $patch_file ]; then
+  if [ -z $patch_dir ]; then
     echo_failure "Could not find suitable patches for Openstack version $version"
     exit -1
   else
-    echo "Applying patches from file $patch_file"
+    echo "Applying patches from directory $patch_dir"
   fi
 }
 
 for component in $COMPUTE_COMPONENTS; do
   find_patch "${component}" "${version}" "${dpkgVersion}"
-  revert_patch $DISTRIBUTION_LOCATION $patch_file 1
+  revert_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
   if [ $? -ne 0 ]; then
     echo_failure "Error while reverting patches."
     exit -1
