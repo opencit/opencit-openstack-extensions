@@ -1,3 +1,4 @@
 packages/mtwilson-openstack-controller-linux-makeself/target/mtwilson-openstack-controller-0.1-SNAPSHOT.bin
 packages/mtwilson-openstack-node-linux-makeself/target/mtwilson-openstack-node-0.1-SNAPSHOT.bin
 packages/mtwilson-openstack-trusted-node-linux-makeself/target/mtwilson-openstack-trusted-node-0.1-SNAPSHOT.bin
+packages/mtwilson-openstack-trusted-node-with-encryption-linux-makeself/target/mtwilson-openstack-trusted-node-with-encryption-0.1-SNAPSHOT.bin
