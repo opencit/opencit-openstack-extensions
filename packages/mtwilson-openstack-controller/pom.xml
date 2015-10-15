@@ -2,10 +2,10 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.intel.mtwilson.openstack.packages</groupId>
-    <artifactId>mtwilson-openstack-node-linux-makeself</artifactId>
+    <artifactId>mtwilson-openstack-controller</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <description>Self-extracting executable that installs the OpenStack extensions for the compute node</description>
+    <description>Self-extracting executable that installs the comprehensive mtwilson OpenStack extensions for the controller</description>
 
     <parent>
         <groupId>com.intel.mtwilson.maven</groupId>
@@ -16,23 +16,17 @@
   
     <properties>
         <!-- this becomes the installer filename, like ${makeself.name}.bin -->
-        <makeself.name>mtwilson-openstack-node-${project.version}</makeself.name>
+        <makeself.name>${project.artifactId}-${project.version}</makeself.name>
     </properties>
   
     <dependencies>
         <dependency>
-            <groupId>com.intel.mtwilson.openstack.computenode</groupId>
-            <artifactId>mtwilson-openstack-node-policyagent-hooks</artifactId>
+            <groupId>com.intel.mtwilson.openstack.controller</groupId>
+            <artifactId>mtwilson-openstack-controller-host-tag-vm</artifactId>
             <version>0.1-SNAPSHOT</version>
             <type>zip</type>
         </dependency>
         <dependency>
-            <groupId>com.intel.mtwilson.openstack.computenode</groupId>
-            <artifactId>mtwilson-openstack-node-vm-attestation</artifactId>
-            <version>0.1-SNAPSHOT</version>
-            <type>zip</type>
-        </dependency>
-         <dependency>
             <groupId>com.intel.mtwilson.linux</groupId>
             <artifactId>mtwilson-linux-util</artifactId>
             <version>${mtwilson.version}</version>
@@ -45,6 +39,4 @@
             <type>sh</type>
         </dependency>
     </dependencies>
-
-
 </project>
