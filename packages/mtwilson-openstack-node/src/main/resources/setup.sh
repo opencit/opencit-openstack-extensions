@@ -442,11 +442,11 @@ if [ -d /var/log/nova ] ; then
   chown -R nova:nova /var/log/nova
 fi
 
-# Check for policyagent
-#if [ ! -x  /usr/local/bin/policyagent ]; then
-#  echo_failure "Could not find policyagent"
-#  exit -1
-#fi
+#Check for policyagent
+if [ ! -x  /usr/local/bin/policyagent ]; then
+  echo_failure "Could not find policyagent"
+  exit -1
+fi
 
 # rootwrap.conf
 rootwrapConfFile="/etc/nova/rootwrap.conf"
