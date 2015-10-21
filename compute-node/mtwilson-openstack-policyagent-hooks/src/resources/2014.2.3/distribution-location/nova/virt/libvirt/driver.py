@@ -2997,7 +2997,9 @@ class LibvirtDriver(driver.ComputeDriver):
                 fetch_func = clone_fallback_to_fetch
             else:
                 fetch_func = libvirt_utils.fetch_image
-            backend.cache(fetch_func=fetch_func,
+
+            with self._wrapped_conn_lock:
+                backend.cache(fetch_func=fetch_func,
                           context=context,
                           filename=root_fname,
                           size=size,
@@ -3005,7 +3007,6 @@ class LibvirtDriver(driver.ComputeDriver):
                           user_id=instance['user_id'],
                           project_id=instance['project_id'])
 
-            with self._wrapped_conn_lock:
                 image_ref = instance.get('image_ref')
                 image_meta = compute_utils.get_image_metadata(context, self._image_api, image_ref, instance)
                 if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:

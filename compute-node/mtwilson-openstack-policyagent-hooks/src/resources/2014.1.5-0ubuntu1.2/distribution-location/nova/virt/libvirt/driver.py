@@ -2726,7 +2726,8 @@ class LibvirtDriver(driver.ComputeDriver):
             if size == 0 or suffix == '.rescue':
                 size = None
 
-            image('disk').cache(fetch_func=libvirt_utils.fetch_image,
+            with self._wrapped_conn_lock:
+                image('disk').cache(fetch_func=libvirt_utils.fetch_image,
                                 context=context,
                                 filename=root_fname,
                                 size=size,
@@ -2734,7 +2735,6 @@ class LibvirtDriver(driver.ComputeDriver):
                                 user_id=instance['user_id'],
                                 project_id=instance['project_id'])
 
-            with self._wrapped_conn_lock:
                 (image_service, image_id) = glance.get_remote_image_service(context, instance['image_ref'])
                 image_meta = compute_utils.get_image_metadata(context, image_service, image_id, instance)
                 if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
