@@ -329,13 +329,13 @@ function openstackRestart() {
 function getOpenstackVersion() {
    novaManageLocation=`which nova-manage`
    if [ `echo $?` == 0 ] ; then
-     version=$($novaManageLocation  --version 2>&1)
+     version="$(python -c "from nova import version; print version.version_string()")"
    else
      echo_failure "nova-manage does not exist"
      echo_failure "nova compute must be installed"
-   exit -1
-  fi
-  echo $version
+     exit -1
+   fi
+   echo $version
 }
 
 function getDistributionLocation() {

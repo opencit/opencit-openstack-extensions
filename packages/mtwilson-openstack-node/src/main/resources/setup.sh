@@ -270,7 +270,7 @@ function openstackRestart() {
 function getOpenstackVersion() {
   novaManageLocation=`which nova-manage` 
   if [ `echo $?` == 0 ] ; then
-    version=$($novaManageLocation  --version 2>&1)
+    version="$(python -c "from nova import version; print version.version_string()")"
   else
     echo_failure "nova-manage does not exist"
     echo_failure "nova compute must be installed"
@@ -442,7 +442,7 @@ if [ -d /var/log/nova ] ; then
   chown -R nova:nova /var/log/nova
 fi
 
-#Check for policyagent
+# Check for policyagent
 if [ ! -x  /usr/local/bin/policyagent ]; then
   echo_failure "Could not find policyagent"
   exit -1
