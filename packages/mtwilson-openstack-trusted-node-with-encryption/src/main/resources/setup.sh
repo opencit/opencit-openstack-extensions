@@ -61,7 +61,7 @@ if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson trust agent"; exi
 
 ### INSTALL MTWILSON VRTM
 echo "Installing mtwilson VRTM..."
-VRTM_PACKAGE=`ls -1 vrtm-linux-makeself-*.bin 2>/dev/null | tail -n 1`
+VRTM_PACKAGE=`ls -1 vrtm-*.bin 2>/dev/null | tail -n 1`
 if [ -z "$VRTM_PACKAGE" ]; then
   echo_failure "Failed to find mtwilson VRTM installer package"
   exit -1
@@ -71,7 +71,7 @@ if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson VRTM"; exit -1; f
 
 ### INSTALL MTWILSON POLICY AGENT
 echo "Installing mtwilson policy agent..."
-POLICYAGENT_PACKAGE=`ls -1 mtwilson-policyagent-with-encryption-linux-makeself-*.bin 2>/dev/null | tail -n 1`
+POLICYAGENT_PACKAGE=`ls -1 mtwilson-policyagent-with-encryption-*.bin 2>/dev/null | tail -n 1`
 if [ -z "$POLICYAGENT_PACKAGE" ]; then
   echo_failure "Failed to find mtwilson policy agent with encryption installer package"
   exit -1
@@ -81,7 +81,7 @@ if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson policy agent"; ex
 
 ### INSTALL MTWILSON OPENSTACK COMPUTE NODE EXTENSIONS
 echo "Installing mtwilson openstack compute node extensions..."
-MTWILSON_OPENSTACK_PACKAGE=`ls -1 mtwilson-openstack-node-linux-makeself-*.bin 2>/dev/null | tail -n 1`
+MTWILSON_OPENSTACK_PACKAGE=`ls -1 mtwilson-openstack-node-*.bin 2>/dev/null | tail -n 1`
 if [ -z "$MTWILSON_OPENSTACK_PACKAGE" ]; then
   echo_failure "Failed to find mtwilson openstack compute node extensions installer package"
   exit -1
