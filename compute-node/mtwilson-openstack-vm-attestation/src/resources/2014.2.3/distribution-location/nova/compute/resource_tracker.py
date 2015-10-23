@@ -774,7 +774,12 @@ class ResourceTracker(object):
                 res = c.getresponse()
                 res_data = res.read()
                 policy_name, policy_status = self.verify_and_parse_saml(res_data)
-            
+
+            # If policy_name is not available do not try again as VM might be non-measured. Once response from CIT 
+            # clearly mentions reason for failure we can add some more logic here. For now do not retry.
+            if policy_name == 'na':
+                policy_name = 'non-measured'
+
             instance['metadata']['measurement_policy'] = policy_name
             instance['metadata']['measurement_status'] = policy_status
             instance.save()
@@ -820,7 +825,7 @@ class ResourceTracker(object):
 
             return policy_name, policy_status 
         except:
-            LOG.error("Exception");
+            LOG.error("Exception while getting VM Attestation report. This could be because of either VM is not measured or is shutdown");
             return policy_name, policy_status 
 
 
