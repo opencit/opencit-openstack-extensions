@@ -1223,12 +1223,18 @@ class ComputeManager(manager.Manager):
         instance = objects.Instance.get_by_uuid(context,
                                                 event.get_instance_uuid(),
                                                 expected_attrs=[])
+        LOG.info("Resetting measurement status for VM UUID " + event.get_instance_uuid())
+        instance['metadata']['measurement_policy'] = 'na'
+        instance['metadata']['measurement_status'] = 'na'
+        instance.save()
+
         vm_power_state = None
         if event.get_transition() == virtevent.EVENT_LIFECYCLE_STOPPED:
             vm_power_state = power_state.SHUTDOWN
-            instance['metadata']['measurement_policy'] = 'na'
-            instance['metadata']['measurement_status'] = 'na'
-            instance.save()
+ #           LOG.error("**************************" + instance['metadata']['measurement_policy'])
+ #           instance['metadata']['measurement_policy'] = 'na'
+ #           instance['metadata']['measurement_status'] = 'na'
+ #           instance.save()
         elif event.get_transition() == virtevent.EVENT_LIFECYCLE_STARTED:
             vm_power_state = power_state.RUNNING
         elif event.get_transition() == virtevent.EVENT_LIFECYCLE_PAUSED:

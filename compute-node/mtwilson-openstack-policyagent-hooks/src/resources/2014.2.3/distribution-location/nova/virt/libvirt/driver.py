@@ -3010,7 +3010,7 @@ class LibvirtDriver(driver.ComputeDriver):
                 image_ref = instance.get('image_ref')
                 image_meta = compute_utils.get_image_metadata(context, self._image_api, image_ref, instance)
                 if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
-                    out, err = utils.execute('python', '/opt/policyagent/bin/policyagent.py', 'launch', os.path.join(CONF.instances_path, CONF.image_cache_subdirectory_name, root_fname), root_fname, instance['uuid'], 'glance', instance['root_gb'], run_as_root=True, check_exit_code=[0])
+                    out, err = utils.execute('policyagent', 'launch', os.path.join(CONF.instances_path, CONF.image_cache_subdirectory_name, root_fname), root_fname, instance['uuid'], 'glance', instance['root_gb'], run_as_root=True, check_exit_code=[0])
 
         # Lookup the filesystem type if required
         os_type_with_default = disk.get_fs_type_for_os_type(
@@ -6334,7 +6334,7 @@ class LibvirtDriver(driver.ComputeDriver):
         # invocation failed due to the absence of both target and
         # target_resize.
         if os.path.islink(target_del):
-            out, err = utils.execute('python', '/opt/policyagent/bin/policyagent.py', 'delete', target_del, run_as_root=True, check_exit_code=[0])
+            out, err = utils.execute('policyagent', 'delete', target_del, run_as_root=True, check_exit_code=[0])
 
         if not remaining_path and os.path.exists(target_del):
             LOG.info(_LI('Deleting instance files %s'), target_del,
