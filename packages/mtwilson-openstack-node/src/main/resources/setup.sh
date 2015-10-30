@@ -472,11 +472,11 @@ if [ ! -f "$computeFiltersFile" ]; then
   echo_failure "Could not find $computeFiltersFile"
   exit -1
 fi
-computeFiltersPythonExists=$(grep '^python:' "$computeFiltersFile")
-if [ -n "$computeFiltersPythonExists" ]; then
-  sed -i 's/^python:.*/python: CommandFilter, \/usr\/bin\/python, root/g' "$computeFiltersFile"
+computeFiltersPolicyagentExists=$(grep '^policyagent:' "$computeFiltersFile")
+if [ -n "$computeFiltersPolicyagentExists" ]; then
+  sed -i 's/^policyagent:.*/policyagent: CommandFilter, \/usr\/local\/bin\/policyagent, root/g' "$computeFiltersFile"
 else
-  echo "python: CommandFilter, /usr/bin/python, root" >> "$computeFiltersFile"
+  echo "policyagent: CommandFilter, /usr/local/bin/policyagent, root" >> "$computeFiltersFile"
 fi
 
 rootwrapConfExecDirsExists=$(grep '^exec_dirs=' "$rootwrapConfFile")

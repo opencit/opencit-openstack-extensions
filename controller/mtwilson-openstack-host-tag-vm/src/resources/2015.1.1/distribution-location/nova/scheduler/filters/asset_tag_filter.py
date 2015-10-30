@@ -324,8 +324,8 @@ class TrustAssertionFilter(filters.BaseHostFilter):
             host = CONF.trusted_computing.attestation_server
             port = CONF.trusted_computing.attestation_port
             auth_blob = CONF.trusted_computing.attestation_auth_blob
-            host_url = CONF.trusted_computing.attestation_host_url + '?nameEqualTo=' + hostname
-            LOG.error(host_url)
+            host_url = CONF.trusted_computing.attestation_host_url + '?nameEqualTo=' + str(hostname)
+            LOG.debug(host_url)
             c = httplib.HTTPSConnection(host + ':' + port)
             userAndPass = b64encode(auth_blob).decode("ascii")
             headers = { 'Authorization' : 'Basic %s' %  userAndPass , 'Accept': 'application/json'}
@@ -333,8 +333,9 @@ class TrustAssertionFilter(filters.BaseHostFilter):
             res = c.getresponse()
             res_data = res.read()
             return json.loads(res_data)['hosts'][0]['id']
-        except Exception:
-            LOG.error("Exception")
+        except Exception, e:
+            LOG.error(Exception)
+            LOG.error(e)
             return ""
 
 
