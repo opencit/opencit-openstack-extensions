@@ -711,7 +711,7 @@ class ResourceTracker(object):
 
         for instance in instances:
             if instance['vm_state'] != vm_states.DELETED:
-                if(instance['vm_state'] != vm_states.ACTIVE):
+                if(instance['vm_state'] != vm_states.ACTIVE and instance['vm_state'] != vm_states.ERROR):
                     continue
 
                 if(('measurement_policy' not in instance['metadata']) or 

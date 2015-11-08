@@ -282,7 +282,7 @@ function getOpenstackDpkgVersion() {
   which dpkg > /dev/null 2>&1
     if [ `echo $?` -ne 0 ]
     then
-    	dpkgVersion=""
+    	dpkgVersion="NA"
     else
     	dpkgVersion=$(dpkg -l | grep nova-common | awk '{print $3}')
   	if [[ "$dpkgVersion" == *":"* ]]; then
