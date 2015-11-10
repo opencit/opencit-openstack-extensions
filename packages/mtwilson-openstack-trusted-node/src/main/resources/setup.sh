@@ -5,12 +5,14 @@
 # 1. source the "functions.sh" file:  mtwilson-linux-util-3.0-SNAPSHOT.sh
 # 2. load existing environment configuration
 # 3. look for ~/mtwilson-openstack.env and source it if it's there
-# enforce root user installation
-# install prerequisites
-# install Mtwilson Trust Agent and Measurement Agent
-# install Mtwilson VRTM
-# install Mtwilson Policy Agent
-# install Mtwilson OpenStack compute node extensions
+# 4. enforce root user installation
+# 5. install prerequisites
+# 6. install Mtwilson Trust Agent and Measurement Agent
+# 7. Detect if virtualization is available
+# 8. Install virtualization components
+#    8a. install Mtwilson VRTM
+#    8b. install Mtwilson Policy Agent
+#    8c. install Mtwilson OpenStack compute node extensions
 
 #####
 
@@ -59,6 +61,20 @@ fi
 ./$TRUSTAGENT_PACKAGE
 if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson trust agent"; exit -1; fi
 
+# Detect if virtualization is available
+tagentCommand=$(which tagent 2>/dev/null)
+tagentCommand=${tagentCommand:-"/opt/trustagent/bin/tagent"}
+if [ ! -f "$tagentCommand" ]; then
+  echo_failure "Cannot find tagent script"
+  exit -1
+fi
+virshVersionOutput=$("$tagentCommand" system-info virsh version)
+if [[ $virshVersionOutput != *"Running hypervisor"* ]]; then
+  echo_success "non-virtualized server installation complete"
+  exit
+fi
+
+# Install virtualization components
 ### INSTALL MTWILSON VRTM
 echo "Installing mtwilson VRTM..."
 VRTM_PACKAGE=`ls -1 vrtm-*.bin 2>/dev/null | tail -n 1`
@@ -89,4 +105,4 @@ fi
 ./$MTWILSON_OPENSTACK_PACKAGE
 if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson openstack compute node extensions"; exit -1; fi
 
-echo_success "Installation complete"
+echo_success "virtualized server installation complete"
