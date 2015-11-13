@@ -53,7 +53,7 @@ if [ $? -ne 0 ]; then echo_failure "Failed to install prerequisites through pack
 
 ### INSTALL MTWILSON TRUST AGENT WITH MEASUREMENT AGENT
 echo "Installing mtwilson trust agent..."
-TRUSTAGENT_PACKAGE=`ls -1 mtwilson-trustagent-installer-*.bin 2>/dev/null | tail -n 1`
+TRUSTAGENT_PACKAGE=`ls -1 mtwilson-trustagent-*.bin 2>/dev/null | tail -n 1`
 if [ -z "$TRUSTAGENT_PACKAGE" ]; then
   echo_failure "Failed to find mtwilson trust agent installer package"
   exit -1
