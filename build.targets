@@ -1,3 +1,4 @@
 packages/mtwilson-openstack-controller/target/mtwilson-openstack-controller-0.1-SNAPSHOT.bin
 packages/mtwilson-openstack-node/target/mtwilson-openstack-node-0.1-SNAPSHOT.bin
-packages/mtwilson-openstack-trusted-node/target/mtwilson-openstack-trusted-node-0.1-SNAPSHOT.bin
+packages/mtwilson-openstack-trusted-node-rhel/target/mtwilson-openstack-trusted-node-rhel-0.1-SNAPSHOT.bin
+packages/mtwilson-openstack-trusted-node-ubuntu/target/mtwilson-openstack-trusted-node-ubuntu-0.1-SNAPSHOT.bin
