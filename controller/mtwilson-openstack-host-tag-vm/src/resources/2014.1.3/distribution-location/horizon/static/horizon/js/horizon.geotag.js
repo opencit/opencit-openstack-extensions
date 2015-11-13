@@ -61,10 +61,10 @@ setInterval( function() {
 			document.getElementById('id_geoTag').value = document.getElementById('id_properties').value;
 		} 	
 		if( $("#id_trust_type_1").is(':checked')) { 
-			if(!is_tag_trust_checked) {
+//			if(!is_tag_trust_checked) {
 				setTagElements();
 				is_tag_trust_checked = true;
-			}
+//			}
 			tag_elements_set = true;
 			$("#id_trust_type_0").prop('checked', true);
 		} else if( $("#id_trust_type_0").is(':checked')) { 
@@ -101,7 +101,10 @@ function populateUpdateTagsView() {
 	}
 	assetTagDetails = JSON.parse(setProps);
 //	num_tag_elements = 10;
-	if(assetTagDetails.hasOwnProperty('trust') && assetTagDetails['trust'].trim().toLowerCase() == 'true') {
+	if(assetTagDetails.hasOwnProperty('mtwilson_trustpolicy_location')) {
+		$('#id_trust_type_0')[0].disabled = 'disabled';
+	}
+	if(assetTagDetails.hasOwnProperty('mtwilson_trustpolicy_location') || ( assetTagDetails.hasOwnProperty('trust') && assetTagDetails['trust'].trim().toLowerCase() == 'true')) {
 		if(assetTagDetails.hasOwnProperty('tags') && assetTagDetails['tags'] != 'None') {
 			$('#id_trust_type_1')[0].checked = true;
 		 }
@@ -162,6 +165,7 @@ function createTagElements(key, value) {
 
 	inp = document.createElement('select');
 	inp.id = 'tag-value-select-' + num_tag_elements;
+	$("#" + inp.id).remove();
 	inp.setAttribute('class', 'image_form_inp_elements');
 	if(typeof value != 'undefined' && tags_object.hasOwnProperty(key)) {
 		var loopIter = 1;
@@ -228,7 +232,8 @@ function populateTagValues(el, value) {
 	updateKeyValPairs();
 
 	vals_el.options = [];
-	vals_el.options[0] = new Option("Select", "");
+	//vals_el.options[0] = new Option("Select", "");
+	vals_el.appendChild(new Option("Select", ""));
 	if(selected_key.trim() == "") { return; }
 	var loopIter = 1;
 	var selectIndex = 0;
