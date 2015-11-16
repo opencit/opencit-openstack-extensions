@@ -370,7 +370,8 @@ function find_patch() {
   fi
 
   patch_file=""
-  
+  patch_dir=""
+
   if [ -e "${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}" ]; then
     patch_dir="${OPENSTACK_EXT_REPOSITORY}/${component}/${dpkgVersion}"
   elif [ -e $OPENSTACK_EXT_REPOSITORY/$component/$version ]; then
