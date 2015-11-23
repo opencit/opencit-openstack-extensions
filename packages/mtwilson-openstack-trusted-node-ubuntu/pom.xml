@@ -37,6 +37,7 @@
             <artifactId>vrtm</artifactId>
             <version>0.1-SNAPSHOT</version>
             <type>bin</type>
+            <classifier>ubuntu</classifier>
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.policyagent.packages</groupId>
