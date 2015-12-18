@@ -166,7 +166,7 @@ function getDistributionLocation() {
 
 ### PATCH REVERSAL ###
 if [ -z "$DEPLOYMENT_TYPE" ]
-then DEPLOYMENT_TYPE="VM"
+then DEPLOYMENT_TYPE="vm"
 fi
 
 if [ $DEPLOYMENT_TYPE = "docker" ] || [ $DEPLOYMENT_TYPE = "standalone_docker" ]
