@@ -175,7 +175,7 @@ class AttestationService(object):
             headers['x-auth-blob'] = self.auth_blob
             headers['Authorization'] = "Basic " + auth
             headers['Accept'] = 'application/samlassertion+xml'
-            headers['Content-Type'] = 'application/json'
+            #headers['Content-Type'] = 'application/json'
         #status, res = self._do_request(cmd, subcmd, params, headers)
         status, res = self._do_request(cmd, subcmd, host_uuid, headers)
         if status == httplib.OK:
