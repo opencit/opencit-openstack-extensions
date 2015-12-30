@@ -148,7 +148,8 @@ class AttestationService(object):
         # :returns: result data
         # :raises: IOError if the request fails
 
-        action_url = "%s" % (self.api_url)
+        #action_url = "%s" % (self.api_url)
+        action_url = "%s?host_id=%s&limit=1" % (self.api_url, params)
         try:
             c = HTTPSClientAuthConnection(self.host, self.port,
                                           key_file=self.key_file,
@@ -178,8 +179,9 @@ class AttestationService(object):
             headers['x-auth-blob'] = self.auth_blob
             headers['Authorization'] = "Basic " + auth
             headers['Accept'] = 'application/samlassertion+xml'
-            headers['Content-Type'] = 'application/json'
-        status, res = self._do_request(cmd, subcmd, params, headers)
+            #headers['Content-Type'] = 'application/json'
+        #status, res = self._do_request(cmd, subcmd, params, headers)
+        status, res = self._do_request(cmd, subcmd, host_uuid, headers)
         if status == httplib.OK:
             data = res.read()
             return status, data
@@ -195,7 +197,8 @@ class AttestationService(object):
         result = None
 
         #status, data = self._request("POST", "PollHosts", hosts)
-        status, data = self._request("POST", "", host_uuid)
+        #status, data = self._request("POST", "", host_uuid)
+        status, data = self._request("GET", "", host_uuid)
 
         return data 
 
