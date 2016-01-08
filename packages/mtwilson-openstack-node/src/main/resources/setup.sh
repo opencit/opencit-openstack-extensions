@@ -94,12 +94,12 @@ if [ ! -f "$trustagentPropertiesFile" ]; then
   echo_failure "Mtwilson Trust Agent must be installed first"
   exit -1
 fi
-mtwilsonServer=$(tagent config "mtwilson.api.url")
+mtwilsonServer=$(tagent config "mtwilson.api.url" | awk -F'/' '{print $3}' | awk -F':' '{print $1}' | tr -d '\\')
 if [ -z "$mtwilsonServer" ]; then
   echo_failure "Error reading Mtwilson server from configuration"
   exit -1
 fi
-mtwilsonServerPort=$(tagent config "mtwilson.api.url")
+mtwilsonServerPort=$(tagent config "mtwilson.api.url" | awk -F'/' '{print $3}' | awk -F':' '{print $2}')
 if [ -z "$mtwilsonServerPort" ]; then
   echo_failure "Error reading Mtwilson server port from configuration"
   exit -1
