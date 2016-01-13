@@ -170,10 +170,10 @@ function patchOpenstackComputePkgs()
 		service openstack-nova-compute restart
 	fi
 
-	if [ ! -x  /usr/local/bin/policyagent ]
-	then
-		echo "WARN : Could not find policyagent, kindly install the same"
-	fi
+	#if [ ! -x  /usr/local/bin/policyagent ]
+	#then
+	#	echo "WARN : Could not find policyagent, kindly install the same"
+	#fi
 
 }
 

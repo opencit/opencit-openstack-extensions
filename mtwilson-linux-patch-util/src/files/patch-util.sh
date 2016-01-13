@@ -14,9 +14,20 @@ function create_patch() {
   cd $original_files_loc
   list_of_dirs=$(ls )
   for dir_name in $list_of_dirs; do
-    echo "Creating patch for $original_files_loc/$dir_name"
-    diff -u10 --text -r -N $dir_name ../resources/$dir_name > $patch_file_path/$dir_name.patch
-    echo "Patch created at $patch_file_path/$dir_name.patch"
+    cd $dir_name
+    list_of_subdirs=$(ls)
+      for subdir_name in $list_of_subdirs; do
+        echo "Creating patch for $original_files_loc/$dir_name/$subdir_name"
+        mkdir -p $patch_file_path/$dir_name
+        diff -U 10 --text -r -N $subdir_name ../../resources/$dir_name/$subdir_name > $patch_file_path/$dir_name/$subdir_name.patch
+        error=$?
+        if [ $error -ne 0 ] && [ $error -ne 1 ]; then
+          echo "Error while creating patch"
+          return 1
+        fi
+        echo "Patch created at $patch_file_path/$dir_name/$subdir_name.patch"
+      done
+     cd ../
   done
   cd -
 }
@@ -34,13 +45,20 @@ function apply_patch() {
   patch --dry-run --silent --strip=$strip_num -N -d $target_dir -i $patch_file_path
   if [ $? -eq 0 ]; then
     patch --strip=$strip_num -N -b -V numbered -d $target_dir -i $patch_file_path
+    error=$?
+    if [ $error -ne 0 ]; then
+      echo "Error while applying patch"
+      return 1
+    fi
     modified_files=`lsdiff --strip=$strip_num $patch_file_path`
     for file in $modified_files; do
       chmod 644 $target_dir/$file
     done
   else
     echo "Not able to apply patches."
+    return 1
   fi
+  return 0
 }
 
 function merge_patch() {
@@ -56,9 +74,20 @@ function merge_patch() {
   patch --dry-run --silent --strip=$strip_num -N --merge -d $target_dir -i $patch_file_path
   if [ $? -eq 0 ]; then
     patch --strip=$strip_num -N -b -V numbered --merge -d $target_dir -i $patch_file_path
+    error=$?
+    if [ $error -ne 0 ]; then
+      echo "Error while merging patch"
+      return 1
+    fi
+    modified_files=`lsdiff --strip=$strip_num $patch_file_path`
+    for file in $modified_files; do
+      chmod 644 $target_dir/$file
+    done
   else
     echo "Not able to apply patches."
+    return 1
   fi
+  return 0
 }
 
 function revert_patch() {
@@ -74,9 +103,16 @@ function revert_patch() {
   patch --dry-run --silent --strip=$strip_num -R -d $target_dir -i $patch_file_path
   if [ $? -eq 0 ]; then
     patch --strip=$strip_num -R -b -V numbered -d $target_dir -i $patch_file_path
+    error=$?
+    if [ $error -ne 0 ]; then
+      echo "Error while reverting patch"
+      return 1
+    fi
   else
     echo "Not able to apply patches."
+    return 1
   fi
+  return 0
 }
 
 function revert_using_backup() {
@@ -99,7 +135,7 @@ function revert_using_backup() {
       echo "ERROR: Backup for $target_dir/$file doesn't exists."
     fi
   done
-
+  return 0
 }
 
 function help() {
