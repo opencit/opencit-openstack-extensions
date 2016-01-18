@@ -344,7 +344,7 @@ function applyPatches() {
 
 ### Apply patches
 if [ -z "$DEPLOYMENT_TYPE" ]
-then DEPLOYMENT_TYPE="vm"
+then DEPLOYMENT_TYPE="VM"
 fi
 
 if [ $DEPLOYMENT_TYPE = "docker" ] || [ $DEPLOYMENT_TYPE = "standalone_docker" ]
@@ -427,7 +427,7 @@ done
 # extract mtwilson-openstack-node  (mtwilson-openstack-node-zip-0.1-SNAPSHOT.zip)
 MTWILSON_OPENSTACK_ZIPFILES=""
 if [ -z "$DEPLOYMENT_TYPE" ]
-then DEPLOYMENT_TYPE="vm"
+then DEPLOYMENT_TYPE="VM"
 fi
 
 if [ $DEPLOYMENT_TYPE = "docker" ]
