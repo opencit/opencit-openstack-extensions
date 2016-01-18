@@ -97,22 +97,22 @@ if [ ! -f "$trustagentPropertiesFile" ]; then
   echo_failure "Mtwilson Trust Agent must be installed first"
   exit -1
 fi
-mtwilsonServer=$(read_property_from_file "mtwilson.api.url" "$trustagentPropertiesFile" | awk -F'/' '{print $3}' | awk -F':' '{print $1}' | tr -d '\\')
+mtwilsonServer=$(tagent config "mtwilson.api.url" | awk -F'/' '{print $3}' | awk -F':' '{print $1}' | tr -d '\\')
 if [ -z "$mtwilsonServer" ]; then
   echo_failure "Error reading Mtwilson server from configuration"
   exit -1
 fi
-mtwilsonServerPort=$(read_property_from_file "mtwilson.api.url" "$trustagentPropertiesFile" | awk -F'/' '{print $3}' | awk -F':' '{print $2}')
+mtwilsonServerPort=$(tagent config "mtwilson.api.url" | awk -F'/' '{print $3}' | awk -F':' '{print $2}')
 if [ -z "$mtwilsonServerPort" ]; then
   echo_failure "Error reading Mtwilson server port from configuration"
   exit -1
 fi
-mtwilsonVmAttestationApiUsername=$(read_property_from_file "mtwilson.api.username" "$trustagentPropertiesFile")
+mtwilsonVmAttestationApiUsername=$(tagent config "mtwilson.api.username")
 if [ -z "$mtwilsonVmAttestationApiUsername" ]; then
   echo_failure "Error reading Mtwilson VM attestation API username from configuration"
   exit -1
 fi
-mtwilsonVmAttestationApiPassword=$(read_property_from_file "mtwilson.api.password" "$trustagentPropertiesFile")
+mtwilsonVmAttestationApiPassword=$(tagent config "mtwilson.api.password")
 if [ -z "$mtwilsonVmAttestationApiPassword" ]; then
   echo_failure "Error reading Mtwilson VM attestation API password from configuration"
   exit -1
@@ -418,7 +418,7 @@ for component in $COMPUTE_COMPONENTS; do
     revert_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
     if [ $? -ne 0 ]; then
       echo_failure "Error while reverting older patches."
-      echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
+      echo_failure "Continuing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
       #exit -1
     fi
   fi
