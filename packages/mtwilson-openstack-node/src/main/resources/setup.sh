@@ -405,7 +405,7 @@ for component in $COMPUTE_COMPONENTS; do
     revert_patch "$DISTRIBUTION_LOCATION/" "$patch_dir/distribution-location.patch" 1
     if [ $? -ne 0 ]; then
       echo_failure "Error while reverting older patches."
-      echo_failure "Continueing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
+      echo_failure "Continuing with installation. If it fails while applying patches uninstall openstack-ext component and then rerun installer."
       #exit -1
     fi
   fi
