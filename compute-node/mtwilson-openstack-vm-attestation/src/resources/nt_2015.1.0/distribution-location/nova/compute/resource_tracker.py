@@ -20,7 +20,7 @@ model.
 """
 import copy
 import httplib
-import urllib
+import ssl
 from base64 import b64encode
 import random
 from lxml import etree
@@ -834,7 +834,8 @@ class ResourceTracker(object):
             port = CONF.trusted_computing.attestation_server_port #'10.1.68.95'
             attestation_url = CONF.trusted_computing.attestation_api_url# + '?hostNameEqualTo=' + CONF.my_ip + '&vmInstanceIdEqualTo=' + instance.uuid
             auth_blob = CONF.trusted_computing.attestation_auth_blob #'admin:password'
-            c = httplib.HTTPSConnection(host + ':' + port)
+            ctx = ssl._create_unverified_context()
+            c = httplib.HTTPSConnection(host, port, context=ctx)
             userAndPass = b64encode(auth_blob).decode("ascii")
 
             # Setup the header & body for the request
@@ -846,7 +847,7 @@ class ResourceTracker(object):
                 container_id = self.driver._get_container_id(instance)
                 params = {'host_name': instance.host, 'vm_instance_id': container_id}
             else :
-                params = {'host_name': instance.host, 'vm_instance_id': instance.uuid}
+                params = {'host_name': instance.host, 'vm_instance_id': instance.name}
             c.request('POST', attestation_url, jsonutils.dumps(params), headers)
             res = c.getresponse()
             res_data = res.read()
@@ -858,7 +859,7 @@ class ResourceTracker(object):
                 if CONF.compute_driver == "novadocker.virt.docker.DockerDriver":
                     params = {'host_name': CONF.my_ip, 'vm_instance_id': container_id}
                 else :
-                    params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.uuid}
+                    params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.name}
                 c.request('POST', attestation_url, jsonutils.dumps(params), headers)
                 res = c.getresponse()
                 res_data = res.read()

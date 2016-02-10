@@ -114,7 +114,7 @@ class ImageCache(object):
                                  instance.user_id,
                                  instance.project_id)
                     if 'mtwilson_trustpolicy_location' in instance['metadata']:
-                        output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'prepare_trusted_image', base_vhd_path, image_id, instance.name, instance.mtwilson_trustpolicy_location, instance.root_gb)
+                        output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'prepare_trusted_image', base_vhd_path, image_id, instance.name, instance['metadata']['mtwilson_trustpolicy_location'], instance.root_gb)
                     format_ext = self._vhdutils.get_vhd_format(base_vhd_path)
                     vhd_path = base_vhd_path + '.' + format_ext.lower()
                     self._pathutils.rename(base_vhd_path, vhd_path)
