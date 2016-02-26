@@ -1214,10 +1214,6 @@ class ComputeManager(manager.Manager):
         instance = objects.Instance.get_by_uuid(context,
                                                 event.get_instance_uuid(),
                                                 expected_attrs=[])
-        LOG.info("Resetting measurement status for VM UUID " + event.get_instance_uuid())
-        instance['metadata']['measurement_policy'] = 'na'
-        instance['metadata']['measurement_status'] = 'na'
-        instance.save()
         vm_power_state = None
         if event.get_transition() == virtevent.EVENT_LIFECYCLE_STOPPED:
             vm_power_state = power_state.SHUTDOWN
@@ -1258,7 +1254,7 @@ class ComputeManager(manager.Manager):
             LOG.debug("Ignoring event %s", event)
 
     def init_virt_events(self):
-        self.driver.register_event_Listener(self.handle_events)
+        self.driver.register_event_listener(self.handle_events)
 
     def init_host(self):
         """Initialization for a standalone compute service."""
@@ -1585,9 +1581,6 @@ class ComputeManager(manager.Manager):
             raise exception.BuildAbortException(
                 instance_uuid=instance.uuid,
                 reason=_("Instance disappeared during build"))
-        except exception.MeasuredLaunchError as e:
-            with excutils.save_and_reraise_exception():
-                LOG.debug(e.format_message(), instance=instance)
         except (exception.UnexpectedTaskStateError,
                 exception.VirtualInterfaceCreateException) as e:
             # Don't try to reschedule, just log and reraise.

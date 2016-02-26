@@ -167,7 +167,6 @@ class VMOps(object):
 
         base_vhd_path = self._imagecache.get_cached_image(context, instance,
                                                           rescue_image_id)
-
         base_vhd_info = self._vhdutils.get_vhd_info(base_vhd_path)
         base_vhd_size = base_vhd_info['MaxInternalSize']
         format_ext = base_vhd_path.split('.')[-1]
@@ -265,9 +264,6 @@ class VMOps(object):
 
         # Make sure we're starting with a clean slate.
         self._delete_disk_files(instance_name)
-        if 'properties' in image_meta and 'mtwilson_trustpolicy_location' in image_meta['properties']:
-            instance['metadata']['mtwilson_trustpolicy_location'] = image_meta['properties']['mtwilson_trustpolicy_location']
-            instance.save()
 
         if self._volumeops.ebs_root_in_block_devices(block_device_info):
             root_vhd_path = None
@@ -282,10 +278,6 @@ class VMOps(object):
             self.create_instance(instance, network_info, block_device_info,
                                  root_vhd_path, eph_vhd_path,
                                  vm_gen, image_meta)
-            LOG.info(instance)
-            if 'mtwilson_trustpolicy_location' in instance['metadata']:
-                #Call PA to invoke vrtm for measurement
-                output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'invoke_vrtm', instance.image_ref, instance.name)
 
             if configdrive.required_by(instance):
                 configdrive_path = self._create_config_drive(instance,
@@ -528,12 +520,7 @@ class VMOps(object):
                 return
 
         self._set_vm_state(instance,
-                           constants.HYPERV_VM_STATE_DISABLED)
-        if 'mtwilson_trustpolicy_location' in instance['metadata']:
-            #Call PA to invoke vrtm for measurement
-            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'invoke_vrtm', instance.image_ref, instance.name)
-        self._set_vm_state(instance,
-                           constants.HYPERV_VM_STATE_ENABLED)
+                           constants.HYPERV_VM_STATE_REBOOT)
 
     def _soft_shutdown(self, instance,
                        timeout=CONF.hyperv.wait_soft_reboot_seconds,
@@ -618,9 +605,6 @@ class VMOps(object):
 
     def power_on(self, instance, block_device_info=None, network_info=None):
         """Power on the specified instance."""
-        if 'mtwilson_trustpolicy_location' in instance['metadata']:
-            #Call PA to invoke vrtm for measurement
-            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'invoke_vrtm', instance.image_ref, instance.name)
         LOG.debug("Power on instance", instance=instance)
 
         if block_device_info:
