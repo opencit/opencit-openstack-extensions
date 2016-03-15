@@ -1258,7 +1258,7 @@ class ComputeManager(manager.Manager):
             LOG.debug("Ignoring event %s", event)
 
     def init_virt_events(self):
-        self.driver.register_event_Listener(self.handle_events)
+        self.driver.register_event_listener(self.handle_events)
 
     def init_host(self):
         """Initialization for a standalone compute service."""
