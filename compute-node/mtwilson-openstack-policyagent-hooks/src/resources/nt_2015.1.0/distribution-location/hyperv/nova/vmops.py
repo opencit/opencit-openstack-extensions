@@ -283,9 +283,6 @@ class VMOps(object):
                                  root_vhd_path, eph_vhd_path,
                                  vm_gen, image_meta)
             LOG.info(instance)
-            if 'mtwilson_trustpolicy_location' in instance['metadata']:
-                #Call PA to invoke vrtm for measurement
-                output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'invoke_vrtm', instance.image_ref, instance.name)
 
             if configdrive.required_by(instance):
                 configdrive_path = self._create_config_drive(instance,
