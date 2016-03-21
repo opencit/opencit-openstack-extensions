@@ -105,4 +105,14 @@ fi
 ./$MTWILSON_OPENSTACK_PACKAGE
 if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson openstack compute node extensions"; exit -1; fi
 
+### INSTALL MTWILSON DOCKER
+echo "Installing mtwilson docker..."
+DOCKER_PACKAGE=`ls -1 mtwilson-docker-*.bin 2>/dev/null | tail -n 1`
+if [ -z "$DOCKER_PACKAGE" ]; then
+  echo_failure "Failed to find mtwilson docker installer package"
+  exit -1
+fi
+./$DOCKER_PACKAGE
+if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson docker"; exit -1; fi
+
 echo_success "virtualized server installation complete"
