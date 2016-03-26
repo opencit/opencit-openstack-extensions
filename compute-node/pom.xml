@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.intel.mtwilson.openstack.computenode</groupId>
     <artifactId>mtwilson-openstack-computenode-build-packages</artifactId>
     <version>0.1-SNAPSHOT</version>
+    
     <packaging>pom</packaging>
     
     <parent>
@@ -13,7 +13,7 @@
         <version>0.1-SNAPSHOT</version>
         <relativePath/>
     </parent>
-	
+    
     <modules>
         <module>mtwilson-openstack-policyagent-hooks</module>
         <module>mtwilson-openstack-vm-attestation</module>
@@ -23,4 +23,5 @@
             goal org.apache.maven.plugins:maven-javadoc-plugin:2.10.1:jar failed: For artifact {null:null:null:jar}: The groupId cannot be empty. -> [Help 1]
         -->
     </modules>
+    
 </project>
