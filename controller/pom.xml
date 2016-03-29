@@ -3,7 +3,6 @@
     
     <groupId>com.intel.mtwilson.openstack.controller</groupId>
     <artifactId>mtwilson-openstack-controller-build-packages</artifactId>
-    <version>0.1-SNAPSHOT</version>
     
     <packaging>pom</packaging>
     
@@ -16,11 +15,6 @@
     
     <modules>
         <module>mtwilson-openstack-host-tag-vm</module>
-        <!--<module>policyagent-javadoc</module>-->
-        <!--commenting out policyagent-javadoc due to this error:
-            [ERROR] Failed to execute goal org.apache.maven.plugins:maven-javadoc-plugin:2.10.1:jar (all-javadoc-jar) on project policyagent-javadoc: Execution all-javadoc-jar of
-            goal org.apache.maven.plugins:maven-javadoc-plugin:2.10.1:jar failed: For artifact {null:null:null:jar}: The groupId cannot be empty. -> [Help 1]
-        -->
     </modules>
     
 </project>

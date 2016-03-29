@@ -3,7 +3,6 @@
     
     <groupId>com.intel.mtwilson.openstack.util</groupId>
     <artifactId>mtwilson-linux-patch-util</artifactId>
-    <version>0.1-SNAPSHOT</version>
     
     <packaging>pom</packaging>
     <name>mtwilson-linux-patch-util</name>

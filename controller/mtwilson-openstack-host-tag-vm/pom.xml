@@ -3,7 +3,6 @@
     
     <groupId>com.intel.mtwilson.openstack.controller</groupId>
     <artifactId>mtwilson-openstack-controller-host-tag-vm</artifactId>
-    <version>0.1-SNAPSHOT</version>
     
     <packaging>jar</packaging>
     <description>Mtwilson OpenStack Controller Comprehensive Extensions Zip for Asset Tag</description>

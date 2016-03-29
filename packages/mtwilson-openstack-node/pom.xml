@@ -3,7 +3,6 @@
     
     <groupId>com.intel.mtwilson.openstack.packages</groupId>
     <artifactId>mtwilson-openstack-node</artifactId>
-    <version>0.1-SNAPSHOT</version>
     
     <packaging>pom</packaging>
     <description>Self-extracting executable that installs the OpenStack extensions for the compute node</description>
@@ -24,19 +23,19 @@
         <dependency>
             <groupId>com.intel.mtwilson.openstack.computenode</groupId>
             <artifactId>mtwilson-openstack-node-policyagent-hooks</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>zip</type>
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.openstack.computenode</groupId>
             <artifactId>mtwilson-openstack-node-vm-attestation</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>zip</type>
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.linux</groupId>
             <artifactId>mtwilson-linux-util</artifactId>
-            <version>${mtwilson.version}</version>
+            <version>${project.version}</version>
             <type>sh</type>
         </dependency>
         <dependency>

@@ -3,7 +3,6 @@
     
     <groupId>com.intel.mtwilson.openstack.computenode</groupId>
     <artifactId>mtwilson-openstack-node-vm-attestation</artifactId>
-    <version>0.1-SNAPSHOT</version>
     
     <packaging>jar</packaging>
     <description>Mtwilson OpenStack Compute Node Extensions Zip For Asset Tag</description>

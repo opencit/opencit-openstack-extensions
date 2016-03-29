@@ -141,8 +141,6 @@
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mtwilson.version>3.0-SNAPSHOT</mtwilson.version> <!-- for any components that we use from the latest mt wilson build -->
-        <!--<mtwilson.openstack.version>0.1-SNAPSHOT</mtwilson.openstack.version>-->
         <license.copyright>2014 Intel Corporation. All rights reserved.</license.copyright>
         <license.url>http://cscenter.intel.com/portal/</license.url>
     </properties>
