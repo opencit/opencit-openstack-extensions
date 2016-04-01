@@ -1,0 +1,172 @@
+#!/bin/bash
+
+red='\e[0;31m'
+NC='\e[0m' # No Color
+
+if [ "$1" = "initcfg" ]
+then
+	echo "CIT_IP=<IP Address>
+CIT_PORT=<PORT>
+CIT_AUTH_BLOB=<AUTH_BLOB>" > setup.cfg
+
+	echo "Default setup.cfg created in the directory. Please run ./setup for continuing with the setup process. Alternatively update the config and run ./setup."
+	exit 1
+elif [ "$1" = "install" ]
+then
+	echo "Installing the patch on the Openstack controller"
+else
+	echo -e "${red}initcfg:"
+	echo -e "${NC}     Creates a fresh setup.cfg" 
+	echo
+	echo -e "${red}install:'"
+	echo -e "${NC}'Installs the patch on the running openstack controller. This command has to be run on the controller node where nova and horizon are running" 
+	exit
+fi
+
+
+echo
+echo -e "${red}\e[1mBefore applying the patch, please update setup.cfg to change Attestation server IP and access credentials."
+echo
+echo "-------------------------------------------------------------------------------------------"
+echo "|                                                                                         |"
+echo "| If you have to change the Attestation server access details later, use the below files: |"
+echo "| Nova:    /etc/nova/nova.conf                                                            |"
+echo "| Horizon: /usr/share/openstack-dashboard/openstack_dashboard/settings.py                 |"
+echo "|                                                                                         |"
+echo "-------------------------------------------------------------------------------------------"
+echo -e "${NC}"
+
+
+
+horizon_config="ASSET_TAG_SERVICE = {
+    'IP': 'CIT_IP',
+    'port': 'CIT_PORT',
+    'certificate_url': '/certificate-requests',
+    'auth_blob': 'CIT_AUTH_BLOB',
+    'api_url': '/mtwilson/v2/host-attestations',
+    'host_url': '/mtwilson/v2/hosts',
+    'tags_url': '/mtwilson/v2/tag-kv-attributes.json?filter=false'
+}
+
+MIDDLEWARE_CLASSES = ("
+
+nova_config="[trusted_computing]
+attestation_server = CIT_IP
+attestation_port = CIT_PORT
+attestation_auth_blob = CIT_AUTH_BLOB
+attestation_api_url=/mtwilson/v2/host-attestations
+attestation_host_url=/mtwilson/v2/hosts
+attestation_server_ca_file=/etc/nova/ssl.crt
+"
+
+if [ ! -f 'setup.cfg' ]
+then
+	echo "CIT_IP=<IP Address>
+CIT_PORT=<PORT>
+CIT_AUTH_BLOB=<AUTH_BLOB>" > setup.cfg
+fi
+
+read_replace_markups() {
+        pattern=$1
+        config_match=`grep -ic "$pattern" setup.cfg`
+        if [ $config_match  -gt 0 ]
+        then
+                read -p "Please enter the $2 [Default value is $3]: "
+                if [ -z $REPLY ] && [ -z $3 ]
+                then
+                        echo "$2 cannot be empty/null"
+                        exit 1
+                elif [ -z $REPLY ]
+                then
+                        REPLY=$3
+                fi
+
+#"${original_string/Suzi/$string_to_replace_Suzi_with}"
+#                nova_config = horizon_config.replace($4, $REPLY)
+#                sed -ie "s/$1/$REPLY/" horizon_settings
+#                sed -ie "s/$1/$REPLY/" nova_settings
+	else
+		REPLY=`grep $4 setup.cfg | cut -d= -f2`
+		if [ -z "$REPLY" ]; then
+			echo "setup.cfg is malformed. Please run ./setup initcfg to start fresh."
+		fi
+        fi
+	horizon_config="${horizon_config/$4/$REPLY}"
+	nova_config="${nova_config/$4/$REPLY}"
+	sed -ie "s/$4.*/$4=$REPLY/" setup.cfg
+}
+
+read_replace_markups "<IP Address>" "Attestation server IP Address" "" "CIT_IP"
+read_replace_markups "<PORT>" "Attestation server Port [8181 or 8443]" 8181 "CIT_PORT"
+read_replace_markups "<AUTH_BLOB>" "Attestation server authentication details {format- user:password}" "admin:password" "CIT_AUTH_BLOB"
+rm -f setup.cfge
+
+
+echo "$nova_config" > nova_settings
+echo "$horizon_config" > horizon_settings 
+
+#read -p "Do you want to continue? (y/n) " -n 1 -r
+#echo 
+#if [[ ! $REPLY =~ ^[Yy]$ ]]
+#then
+#    exit 1
+#fi
+
+
+#echo "------------------------------------------------------------------"
+echo "Setting up the new nova scheduler filter"
+#echo "------------------------------------------------------------------"
+#echo 
+#echo
+
+cp nova/asset_tag_filter.py /usr/lib/python2.7/dist-packages/nova/scheduler/filters/
+#cp nova/asset_tag_filter.py /usr/share/pyshared/nova/scheduler/filters/
+#ln -s /usr/share/pyshared/nova/scheduler/filters/asset_tag_filter.py  /usr/lib/python2.7/dist-packages/nova/scheduler/filters/
+cat nova_settings >> /etc/nova/nova.conf
+sed -ie 's/enabled_apis=ec2,osapi_compute,metadata/enabled_apis=ec2,osapi_compute,metadata\nscheduler_driver=nova.scheduler.filter_scheduler.FilterScheduler\nscheduler_default_filters = TrustAssertionFilter,RamFilter,ComputeFilter/' /etc/nova/nova.conf
+mv "/usr/lib/python2.7/dist-packages/nova/scheduler/filters/trusted_filter.py" /root
+
+#echo "------------------------------------------------------------------"
+echo "Setting up the Horizon changes"
+#echo "------------------------------------------------------------------"
+#echo 
+#echo
+
+cp horizon/lib/*.py /usr/lib/python2.7
+cp horizon/dashboard/images/*.py /usr/share/openstack-dashboard/openstack_dashboard/dashboards/project/images/images/
+cp horizon/js/horizon.geotag.js /usr/lib/python2.7/dist-packages/horizon/static/horizon/js/horizon.geotag.js
+sed -ie "s/{\% endcompress \%}/{\% endcompress \%}\n<script src='\{\{ STATIC_URL \}\}horizon\/js\/horizon.geotag.js' type='text\/javascript' charset='utf-8'><\/script>/" /usr/share/openstack-dashboard/openstack_dashboard/templates/horizon/_scripts.html
+
+#cp horizon/imgs/*.png /usr/share/openstack-dashboard-ubuntu-theme/static/ubuntu/img/
+#cat horizon/css/horizon_geotag.less >> /usr/share/openstack-dashboard-ubuntu-theme/static/ubuntu/css/ubuntu.css
+
+#cp horizon/imgs/* /usr/share/openstack-dashboard/openstack_dashboard/static/dashboard/img
+#cat horizon/css/horizon_geotag.less  >> /usr/share/openstack-dashboard/openstack_dashboard/static/dashboard/css/*.css
+cat horizon/css/horizon_geotag.less | tee --append /usr/share/openstack-dashboard/openstack_dashboard/static/dashboard/css/*.css > /dev/null
+
+sed -ie "s/HORIZON_CONFIG = {/HORIZON_CONFIG = {\n    'customization_module': 'horizon_geo_tag.overrides',/" /usr/share/openstack-dashboard/openstack_dashboard/settings.py
+
+cp /usr/share/openstack-dashboard/openstack_dashboard/settings.py settings_old.py
+sed -e "/MIDDLEWARE_CLASSES = (/r horizon_settings" -e "s///" settings_old.py > /usr/share/openstack-dashboard/openstack_dashboard/settings.py
+
+rm -rf *_settingse
+
+cp horizon/nova/servers.py /usr/lib/python2.7/dist-packages/nova/api/openstack/compute/views/
+cp horizon/nova/nova.py /usr/share/openstack-dashboard/openstack_dashboard/api/
+
+#echo "------------------------------------------------------------------"
+echo "Restarting the required services (nova-scheduler, horizon: apache2)"
+#echo "------------------------------------------------------------------"
+#echo 
+#echo
+
+service nova-scheduler restart
+service nova-api restart
+#echo 
+#echo
+service apache2 restart
+
+rm -f nova_settings
+rm -f horizon_settings 
+rm -f settings_old.py
+rm -f sed*

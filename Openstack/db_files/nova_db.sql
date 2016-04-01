@@ -1,5 +1,0 @@
-Drop DATABASE IF EXISTS nova;
-CREATE DATABASE nova;
-GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' IDENTIFIED BY 'intelrp';
-GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' IDENTIFIED BY 'intelrp';
-#SHOW DATABASES;
