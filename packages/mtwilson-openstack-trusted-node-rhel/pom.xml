@@ -44,7 +44,7 @@
         <dependency>
             <groupId>com.intel.mtwilson.policyagent.packages</groupId>
             <artifactId>mtwilson-policyagent</artifactId>
-            <version>3.0-SNAPSHOT</version>
+            <version>0.1-SNAPSHOT</version>
             <!--<version>${project.version}</version>-->
             <type>bin</type>
         </dependency>
