@@ -23,6 +23,9 @@
 # and it is not saved or used by the app script
 DISTRIBUTION_LOCATION=""
 NOVA_CONFIG_DIR_LOCATION_PATH=""
+COMPUTE_COMPONENTS=""
+DEPLOYMENT_TYPE=""
+
 export OPENSTACK_EXT_HOME=${OPENSTACK_EXT_HOME:-/opt/openstack-ext}
 OPENSTACK_EXT_LAYOUT=${OPENSTACK_EXT_LAYOUT:-home}
 
@@ -340,7 +343,16 @@ function applyPatches() {
 }
 
 ### Apply patches
-COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
+if [ -z "$DEPLOYMENT_TYPE" ]
+then DEPLOYMENT_TYPE="VM"
+fi
+
+if [ $DEPLOYMENT_TYPE = "docker" ] || [ $DEPLOYMENT_TYPE = "standalone_docker" ]
+then COMPUTE_COMPONENTS="mtwilson-openstack-vm-attestation"
+else COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
+fi
+
+#COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
 FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion)
@@ -353,6 +365,7 @@ echo "export OPENSTACK_EXT_REPOSITORY=$OPENSTACK_EXT_REPOSITORY" >> $OPENSTACK_E
 echo "export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_BIN" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
 echo "export NOVA_CONFIG_DIR_LOCATION_PATH=$NOVA_CONFIG_DIR_LOCATION_PATH" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
 echo "export DISTRIBUTION_LOCATION=$DISTRIBUTION_LOCATION" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export DEPLOYMENT_TYPE=$DEPLOYMENT_TYPE" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
 
 function find_patch() {
   local component=$1
@@ -412,8 +425,17 @@ for component in $COMPUTE_COMPONENTS; do
 done
 
 # extract mtwilson-openstack-node  (mtwilson-openstack-node-zip-0.1-SNAPSHOT.zip)
+MTWILSON_OPENSTACK_ZIPFILES=""
+if [ -z "$DEPLOYMENT_TYPE" ]
+then DEPLOYMENT_TYPE="VM"
+fi
+
+if [ $DEPLOYMENT_TYPE = "docker" ]
+then MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-vm*.zip 2>/dev/null`
+else MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
+fi
 echo "Extracting application..."
-MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
+#MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
 for MTWILSON_OPENSTACK_ZIPFILE in $MTWILSON_OPENSTACK_ZIPFILES; do
   echo "Extract $MTWILSON_OPENSTACK_ZIPFILE"
   unzip -oq $MTWILSON_OPENSTACK_ZIPFILE -d $OPENSTACK_EXT_REPOSITORY

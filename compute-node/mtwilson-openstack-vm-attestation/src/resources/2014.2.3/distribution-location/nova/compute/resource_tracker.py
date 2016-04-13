@@ -760,7 +760,13 @@ class ResourceTracker(object):
             # Setup the header & body for the request
             headers = { 'Authorization' : 'Basic %s' %  userAndPass, 'Accept': 'application/samlassertion+xml', 'Content-Type': 'application/json' }
 
-            params = {'host_name': instance.host, 'vm_instance_id': instance.uuid} 
+            params = None
+            container_id=None
+            if CONF.compute_driver == "novadocker.virt.docker.DockerDriver":
+                container_id = self.driver._get_container_id(instance)
+                params = {'host_name': instance.host, 'vm_instance_id': container_id}
+            else :
+                params = {'host_name': instance.host, 'vm_instance_id': instance.uuid}
             c.request('POST', attestation_url, jsonutils.dumps(params), headers)
             res = c.getresponse()
             res_data = res.read()
@@ -769,7 +775,10 @@ class ResourceTracker(object):
             policy_name, policy_status = self.verify_and_parse_saml(res_data)
 
             if policy_name == 'na':
-                params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.uuid} 
+                if CONF.compute_driver == "novadocker.virt.docker.DockerDriver":
+                    params = {'host_name': CONF.my_ip, 'vm_instance_id': container_id}
+                else :
+                    params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.uuid}
                 c.request('POST', attestation_url, jsonutils.dumps(params), headers)
                 res = c.getresponse()
                 res_data = res.read()
