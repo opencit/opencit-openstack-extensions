@@ -1,25 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.intel.mtwilson.openstack.controller</groupId>
     <artifactId>mtwilson-openstack-controller-build-packages</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    
     <packaging>pom</packaging>
     
     <parent>
         <groupId>com.intel.mtwilson.openstack</groupId>
         <artifactId>mtwilson-openstack-maven-root</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>3.0-SNAPSHOT</version>
         <relativePath/>
     </parent>
     
     <modules>
         <module>mtwilson-openstack-host-tag-vm</module>
-        <!--<module>policyagent-javadoc</module>-->
-        <!--commenting out policyagent-javadoc due to this error:
-            [ERROR] Failed to execute goal org.apache.maven.plugins:maven-javadoc-plugin:2.10.1:jar (all-javadoc-jar) on project policyagent-javadoc: Execution all-javadoc-jar of
-            goal org.apache.maven.plugins:maven-javadoc-plugin:2.10.1:jar failed: For artifact {null:null:null:jar}: The groupId cannot be empty. -> [Help 1]
-        -->
     </modules>
+    
 </project>
