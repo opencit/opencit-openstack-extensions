@@ -3,7 +3,7 @@
     
     <groupId>com.intel.mtwilson.openstack.packages</groupId>
     <artifactId>mtwilson-openstack-node</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0.1-SNAPSHOT</version>
     
     <packaging>pom</packaging>
     <description>Self-extracting executable that installs the OpenStack extensions for the compute node</description>

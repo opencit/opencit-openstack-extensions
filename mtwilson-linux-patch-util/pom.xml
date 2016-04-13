@@ -3,7 +3,7 @@
     
     <groupId>com.intel.mtwilson.openstack.util</groupId>
     <artifactId>mtwilson-linux-patch-util</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0.1-SNAPSHOT</version>
     
     <packaging>pom</packaging>
     <name>mtwilson-linux-patch-util</name>
@@ -12,7 +12,7 @@
     <parent>
         <groupId>com.intel.mtwilson.linux</groupId>
         <artifactId>mtwilson-linux</artifactId>
-        <version>3.0-SNAPSHOT</version>
+        <version>3.0.1-SNAPSHOT</version>
         <relativePath/>
     </parent>
     
