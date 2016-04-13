@@ -25,12 +25,13 @@ SHOULD include dedicated exception logging.
 import functools
 import sys
 
-from oslo.config import cfg
+from oslo_config import cfg
+from oslo_log import log as logging
+from oslo_utils import excutils
+import six
 import webob.exc
 
-from nova.openstack.common import excutils
-from nova.openstack.common.gettextutils import _
-from nova.openstack.common import log as logging
+from nova.i18n import _, _LE
 from nova import safe_utils
 
 LOG = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ CONF.register_opts(exc_log_opts)
 
 
 class ConvertedException(webob.exc.WSGIHTTPException):
-    def __init__(self, code=0, title="", explanation=""):
+    def __init__(self, code=500, title="", explanation=""):
         self.code = code
         self.title = title
         self.explanation = explanation
@@ -55,13 +56,13 @@ class ConvertedException(webob.exc.WSGIHTTPException):
 
 def _cleanse_dict(original):
     """Strip all admin_password, new_pass, rescue_pass keys from a dict."""
-    return dict((k, v) for k, v in original.iteritems() if not "_pass" in k)
+    return {k: v for k, v in six.iteritems(original) if "_pass" not in k}
 
 
 def wrap_exception(notifier=None, get_notifier=None):
     """This decorator wraps a method to catch any exceptions that may
-    get thrown. It logs the exception as well as optionally sending
-    it to the notification system.
+    get thrown. It also optionally sends the exception to the notification
+    system.
     """
     def inner(f):
         def wrapped(self, context, *args, **kw):
@@ -121,16 +122,17 @@ class NovaException(Exception):
                 exc_info = sys.exc_info()
                 # kwargs doesn't match a variable in the message
                 # log the issue and the kwargs
-                LOG.exception(_('Exception in string format operation'))
-                for name, value in kwargs.iteritems():
-                    LOG.error("%s: %s" % (name, value))
+                LOG.exception(_LE('Exception in string format operation'))
+                for name, value in six.iteritems(kwargs):
+                    LOG.error("%s: %s" % (name, value))    # noqa
 
                 if CONF.fatal_exception_format_errors:
-                    raise exc_info[0], exc_info[1], exc_info[2]
+                    six.reraise(*exc_info)
                 else:
                     # at least get the core message out if something happened
                     message = self.msg_fmt
 
+        self.message = message
         super(NovaException, self).__init__(message)
 
     def format_message(self):
@@ -145,6 +147,10 @@ class EncryptionFailure(NovaException):
 
 class DecryptionFailure(NovaException):
     msg_fmt = _("Failed to decrypt text: %(reason)s")
+
+
+class RevokeCertFailure(NovaException):
+    msg_fmt = _("Failed to revoke certificate for %(project_id)s")
 
 
 class VirtualInterfaceCreateException(NovaException):
@@ -165,18 +171,26 @@ class GlanceConnectionFailed(NovaException):
         "%(reason)s")
 
 
-class NotAuthorized(NovaException):
+class CinderConnectionFailed(NovaException):
+    msg_fmt = _("Connection to cinder host failed: %(reason)s")
+
+
+class Forbidden(NovaException):
     ec2_code = 'AuthFailure'
     msg_fmt = _("Not authorized.")
     code = 403
 
 
-class AdminRequired(NotAuthorized):
+class AdminRequired(Forbidden):
     msg_fmt = _("User does not have admin privileges")
 
 
-class PolicyNotAuthorized(NotAuthorized):
+class PolicyNotAuthorized(Forbidden):
     msg_fmt = _("Policy doesn't allow %(action)s to be performed.")
+
+
+class VolumeLimitExceeded(Forbidden):
+    msg_fmt = _("Volume resource quota exceeded")
 
 
 class ImageNotActive(NovaException):
@@ -246,6 +260,10 @@ class InvalidBDMForLegacy(InvalidBDM):
                 "be converted to legacy format. ")
 
 
+class InvalidBDMVolumeNotBootable(InvalidBDM):
+    msg_fmt = _("Block Device %(id)s is not bootable.")
+
+
 class InvalidAttribute(Invalid):
     msg_fmt = _("Attribute not supported: %(attr)s")
 
@@ -262,7 +280,12 @@ class VolumeUnattached(Invalid):
 class VolumeNotCreated(NovaException):
     msg_fmt = _("Volume %(volume_id)s did not finish being created"
                 " even after we waited %(seconds)s seconds or %(attempts)s"
-                " attempts.")
+                " attempts. And its status is %(volume_status)s.")
+
+
+class VolumeEncryptionNotSupported(Invalid):
+    msg_fmt = _("Volume encryption is not supported for %(volume_type)s "
+                "volume %(volume_id)s")
 
 
 class InvalidKeypair(Invalid):
@@ -284,7 +307,7 @@ class InvalidVolume(Invalid):
 
 
 class InvalidVolumeAccessMode(Invalid):
-    msg_fmt = _("Invalid volume access mode") + ": %(access_mode)s"
+    msg_fmt = _("Invalid volume access mode: %(access_mode)s")
 
 
 class InvalidMetadata(Invalid):
@@ -308,13 +331,18 @@ class InvalidContentType(Invalid):
     msg_fmt = _("Invalid content type %(content_type)s.")
 
 
-class InvalidCidr(Invalid):
-    msg_fmt = _("Invalid cidr %(cidr)s.")
+class InvalidAPIVersionString(Invalid):
+    msg_fmt = _("API Version String %(version)s is of invalid format. Must "
+                "be of format MajorNum.MinorNum.")
 
 
-class InvalidUnicodeParameter(Invalid):
-    msg_fmt = _("Invalid Parameter: "
-                "Unicode is not supported by the current database.")
+class VersionNotFoundForAPIMethod(Invalid):
+    msg_fmt = _("API version %(version)s is not supported on this method.")
+
+
+class InvalidGlobalAPIVersion(Invalid):
+    msg_fmt = _("Version %(req_ver)s is not supported by the API. Minimum "
+                "is %(min_ver)s and maximum is %(max_ver)s.")
 
 
 # Cannot be templated as the error syntax varies.
@@ -325,7 +353,27 @@ class InvalidParameterValue(Invalid):
 
 
 class InvalidAggregateAction(Invalid):
-    msg_fmt = _("Cannot perform action '%(action)s' on aggregate "
+    msg_fmt = _("Unacceptable parameters.")
+    code = 400
+
+
+class InvalidAggregateActionAdd(InvalidAggregateAction):
+    msg_fmt = _("Cannot add host to aggregate "
+                "%(aggregate_id)s. Reason: %(reason)s.")
+
+
+class InvalidAggregateActionDelete(InvalidAggregateAction):
+    msg_fmt = _("Cannot remove host from aggregate "
+                "%(aggregate_id)s. Reason: %(reason)s.")
+
+
+class InvalidAggregateActionUpdate(InvalidAggregateAction):
+    msg_fmt = _("Cannot update aggregate "
+                "%(aggregate_id)s. Reason: %(reason)s.")
+
+
+class InvalidAggregateActionUpdateMeta(InvalidAggregateAction):
+    msg_fmt = _("Cannot update metadata of aggregate "
                 "%(aggregate_id)s. Reason: %(reason)s.")
 
 
@@ -391,6 +439,10 @@ class InstanceDeployFailure(Invalid):
 
 
 class MultiplePortsNotApplicable(Invalid):
+    msg_fmt = _("Failed to launch instances: %(reason)s")
+
+
+class InvalidFixedIpAndMaxCountRequest(Invalid):
     msg_fmt = _("Failed to launch instances: %(reason)s")
 
 
@@ -519,16 +571,24 @@ class AgentBuildExists(NovaException):
 
 
 class VolumeNotFound(NotFound):
-    ec2_code = 'InvalidVolumeID.NotFound'
+    ec2_code = 'InvalidVolume.NotFound'
     msg_fmt = _("Volume %(volume_id)s could not be found.")
+
+
+class BDMNotFound(NotFound):
+    msg_fmt = _("No Block Device Mapping with id %(id)s.")
 
 
 class VolumeBDMNotFound(NotFound):
     msg_fmt = _("No volume Block Device Mapping with id %(volume_id)s.")
 
 
+class VolumeBDMPathNotFound(VolumeBDMNotFound):
+    msg_fmt = _("No volume Block Device Mapping at path: %(path)s")
+
+
 class SnapshotNotFound(NotFound):
-    ec2_code = 'InvalidSnapshotID.NotFound'
+    ec2_code = 'InvalidSnapshot.NotFound'
     msg_fmt = _("Snapshot %(snapshot_id)s could not be found.")
 
 
@@ -574,16 +634,64 @@ class StorageRepositoryNotFound(NotFound):
     msg_fmt = _("Cannot find SR to read/write VDI.")
 
 
+class InstanceMappingNotFound(NotFound):
+    msg_fmt = _("Instance %(uuid)s has no mapping to a cell.")
+
+
 class NetworkDuplicated(Invalid):
     msg_fmt = _("Network %(network_id)s is duplicated.")
+
+
+class NetworkDhcpReleaseFailed(NovaException):
+    msg_fmt = _("Failed to release IP %(address)s with MAC %(mac_address)s")
 
 
 class NetworkInUse(NovaException):
     msg_fmt = _("Network %(network_id)s is still in use.")
 
 
-class NetworkNotCreated(NovaException):
+class NetworkSetHostFailed(NovaException):
+    msg_fmt = _("Network set host failed for network %(network_id)s.")
+
+
+class NetworkNotCreated(Invalid):
     msg_fmt = _("%(req)s is required to create a network.")
+
+
+class LabelTooLong(Invalid):
+    msg_fmt = _("Maximum allowed length for 'label' is 255.")
+
+
+class InvalidIntValue(Invalid):
+    msg_fmt = _("%(key)s must be an integer.")
+
+
+class InvalidCidr(Invalid):
+    msg_fmt = _("%(cidr)s is not a valid ip network.")
+
+
+class InvalidAddress(Invalid):
+    msg_fmt = _("%(address)s is not a valid ip address.")
+
+
+class AddressOutOfRange(Invalid):
+    msg_fmt = _("%(address)s is not within %(cidr)s.")
+
+
+class DuplicateVlan(NovaException):
+    msg_fmt = _("Detected existing vlan with id %(vlan)d")
+    code = 409
+
+
+class CidrConflict(NovaException):
+    msg_fmt = _('Requested cidr (%(cidr)s) conflicts '
+                'with existing cidr (%(other)s)')
+    code = 409
+
+
+class NetworkHasProject(NetworkInUse):
+    msg_fmt = _('Network must be disassociated from project '
+                '%(project_id)s before it can be deleted.')
 
 
 class NetworkNotFound(NotFound):
@@ -618,14 +726,14 @@ class NoMoreNetworks(NovaException):
     msg_fmt = _("No more available networks.")
 
 
-class NetworkNotFoundForProject(NotFound):
+class NetworkNotFoundForProject(NetworkNotFound):
     msg_fmt = _("Either network uuid %(network_uuid)s is not present or "
                 "is not assigned to the project %(project_id)s.")
 
 
 class NetworkAmbiguous(Invalid):
     msg_fmt = _("More than one possible network found. Specify "
-                "network ID(s) to select which one(s) to connect to,")
+                "network ID(s) to select which one(s) to connect to.")
 
 
 class NetworkRequiresSubnet(Invalid):
@@ -633,9 +741,25 @@ class NetworkRequiresSubnet(Invalid):
                 " instances on.")
 
 
-class ExternalNetworkAttachForbidden(NotAuthorized):
+class ExternalNetworkAttachForbidden(Forbidden):
     msg_fmt = _("It is not allowed to create an interface on "
                 "external network %(network_uuid)s")
+
+
+class NetworkMissingPhysicalNetwork(NovaException):
+    msg_fmt = _("Physical network is missing for network %(network_uuid)s")
+
+
+class VifDetailsMissingVhostuserSockPath(Invalid):
+    msg_fmt = _("vhostuser_sock_path not present in vif_details"
+                " for vif %(vif_id)s")
+
+
+class VifDetailsMissingMacvtapParameters(Invalid):
+    msg_fmt = _("Parameters %(missing_params)s not present in"
+                " vif_details for vif %(vif_id)s. Check your Neutron"
+                " configuration to validate that the macvtap parameters are"
+                " correct.")
 
 
 class DatastoreNotFound(NotFound):
@@ -656,6 +780,11 @@ class PortNotUsable(Invalid):
 
 class PortNotFree(Invalid):
     msg_fmt = _("No free port available for instance %(instance)s.")
+
+
+class PortBindingFailed(Invalid):
+    msg_fmt = _("Binding failed for port %(port_id)s, please check neutron "
+                "logs for more information.")
 
 
 class FixedIpExists(NovaException):
@@ -688,6 +817,10 @@ class FixedIpNotFoundForNetwork(FixedIpNotFound):
                 "network (%(network_uuid)s).")
 
 
+class FixedIpAssociateFailed(NovaException):
+    msg_fmt = _("Fixed IP associate failed for network: %(net)s.")
+
+
 class FixedIpAlreadyInUse(NovaException):
     msg_fmt = _("Fixed IP address %(address)s is already in use on instance "
                 "%(instance_uuid)s.")
@@ -704,7 +837,7 @@ class FixedIpInvalid(Invalid):
 
 class NoMoreFixedIps(NovaException):
     ec2_code = 'UnsupportedOperation'
-    msg_fmt = _("Zero fixed ips available.")
+    msg_fmt = _("No fixed IP addresses available for network: %(net)s")
 
 
 class NoFixedIpsDefined(NotFound):
@@ -764,6 +897,19 @@ class NoFloatingIpInterface(NotFound):
     msg_fmt = _("Interface %(interface)s not found.")
 
 
+class FloatingIpAllocateFailed(NovaException):
+    msg_fmt = _("Floating IP allocate failed.")
+
+
+class FloatingIpAssociateFailed(NovaException):
+    msg_fmt = _("Floating IP %(address)s association has failed.")
+
+
+class FloatingIpBadRequest(Invalid):
+    ec2_code = "UnsupportedOperation"
+    msg_fmt = _("The floating IP request failed with a BadRequest")
+
+
 class CannotDisassociateAutoAssignedFloatingIP(NovaException):
     ec2_code = "UnsupportedOperation"
     msg_fmt = _("Cannot disassociate auto assigned floating ip")
@@ -794,6 +940,11 @@ class ComputeHostNotFound(HostNotFound):
     msg_fmt = _("Compute host %(host)s could not be found.")
 
 
+class ComputeHostNotCreated(HostNotFound):
+    msg_fmt = _("Compute host %(name)s needs to be created first"
+                " before updating.")
+
+
 class HostBinaryNotFound(NotFound):
     msg_fmt = _("Could not find binary %(binary)s on host %(host)s.")
 
@@ -805,6 +956,10 @@ class InvalidReservationExpiration(Invalid):
 class InvalidQuotaValue(Invalid):
     msg_fmt = _("Change would make usage less than 0 for the following "
                 "resources: %(unders)s")
+
+
+class InvalidQuotaMethodUsage(Invalid):
+    msg_fmt = _("Wrong quota method %(method)s used on resource %(res)s")
 
 
 class QuotaNotFound(NotFound):
@@ -957,6 +1112,11 @@ class FlavorAccessNotFound(NotFound):
                 "%(project_id)s combination.")
 
 
+class FlavorExtraSpecUpdateCreateFailed(NovaException):
+    msg_fmt = _("Flavor %(id)d extra spec cannot be updated or created "
+                "after %(retries)d retries.")
+
+
 class CellNotFound(NotFound):
     msg_fmt = _("Cell %(cell_name)s doesn't exist.")
 
@@ -1011,10 +1171,6 @@ class FileNotFound(NotFound):
     msg_fmt = _("File %(file_path)s could not be found.")
 
 
-class NoFilesFound(NotFound):
-    msg_fmt = _("Zero files could be found.")
-
-
 class SwitchNotFoundForNetworkAdapter(NotFound):
     msg_fmt = _("Virtual switch associated with the "
                 "network adapter %(adapter)s not found.")
@@ -1028,12 +1184,8 @@ class ClassNotFound(NotFound):
     msg_fmt = _("Class %(class_name)s could not be found: %(exception)s")
 
 
-class NotAllowed(NovaException):
-    msg_fmt = _("Action not allowed.")
-
-
-class ImageRotationNotAllowed(NovaException):
-    msg_fmt = _("Rotation is not allowed for snapshots")
+class InstanceTagNotFound(NotFound):
+    msg_fmt = _("Instance %(instance_id)s has no tag '%(tag)s'")
 
 
 class RotationRequiredForBackup(NovaException):
@@ -1068,6 +1220,10 @@ class InvalidSharedStorage(NovaException):
 
 class InvalidLocalStorage(NovaException):
     msg_fmt = _("%(path)s is not on local storage: %(reason)s")
+
+
+class StorageError(NovaException):
+    msg_fmt = _("Storage error: %(reason)s")
 
 
 class MigrationError(NovaException):
@@ -1109,7 +1265,24 @@ class FlavorMemoryTooSmall(NovaException):
 
 
 class FlavorDiskTooSmall(NovaException):
-    msg_fmt = _("Flavor's disk is too small for requested image.")
+    msg_fmt = _("The created instance's disk would be too small.")
+
+
+class FlavorDiskSmallerThanImage(FlavorDiskTooSmall):
+    msg_fmt = _("Flavor's disk is too small for requested image. Flavor disk "
+                "is %(flavor_size)i bytes, image is %(image_size)i bytes.")
+
+
+class FlavorDiskSmallerThanMinDisk(FlavorDiskTooSmall):
+    msg_fmt = _("Flavor's disk is smaller than the minimum size specified in "
+                "image metadata. Flavor disk is %(flavor_size)i bytes, "
+                "minimum size is %(image_min_disk)i bytes.")
+
+
+class VolumeSmallerThanMinDisk(FlavorDiskTooSmall):
+    msg_fmt = _("Volume is smaller than the minimum size specified in image "
+                "metadata. Volume size is %(volume_size)i bytes, minimum "
+                "size is %(image_min_disk)i bytes.")
 
 
 class InsufficientFreeMemory(NovaException):
@@ -1120,9 +1293,16 @@ class NoValidHost(NovaException):
     msg_fmt = _("No valid host was found. %(reason)s")
 
 
+class MaxRetriesExceeded(NoValidHost):
+    msg_fmt = _("Exceeded maximum number of retries. %(reason)s")
+
+
 class QuotaError(NovaException):
     ec2_code = 'ResourceLimitExceeded'
     msg_fmt = _("Quota exceeded: code=%(code)s")
+    # NOTE(cyeoh): 413 should only be used for the ec2 API
+    # The error status code for out of quota for the nova api should be
+    # 403 Forbidden.
     code = 413
     headers = {'Retry-After': 0}
     safe = True
@@ -1130,7 +1310,7 @@ class QuotaError(NovaException):
 
 class TooManyInstances(QuotaError):
     msg_fmt = _("Quota exceeded for %(overs)s: Requested %(req)s,"
-                " but already used %(used)d of %(allowed)d %(resource)s")
+                " but already used %(used)s of %(allowed)s %(overs)s")
 
 
 class FloatingIpLimitExceeded(QuotaError):
@@ -1149,11 +1329,11 @@ class OnsetFileLimitExceeded(QuotaError):
     msg_fmt = _("Personality file limit exceeded")
 
 
-class OnsetFilePathLimitExceeded(QuotaError):
+class OnsetFilePathLimitExceeded(OnsetFileLimitExceeded):
     msg_fmt = _("Personality file path too long")
 
 
-class OnsetFileContentLimitExceeded(QuotaError):
+class OnsetFileContentLimitExceeded(OnsetFileLimitExceeded):
     msg_fmt = _("Personality file content too long")
 
 
@@ -1206,15 +1386,6 @@ class InstancePasswordSetFailed(NovaException):
     safe = True
 
 
-class DuplicateVlan(NovaException):
-    msg_fmt = _("Detected existing vlan with id %(vlan)d")
-
-
-class CidrConflict(NovaException):
-    msg_fmt = _("There was a conflict when trying to complete your request.")
-    code = 409
-
-
 class InstanceNotFound(NotFound):
     ec2_code = 'InvalidInstanceID.NotFound'
     msg_fmt = _("Instance %(instance_id)s could not be found.")
@@ -1230,21 +1401,18 @@ class InvalidAssociation(NotFound):
     msg_fmt = _("Invalid association.")
 
 
-class NodeNotFound(NotFound):
-    msg_fmt = _("Node %(node_id)s could not be found.")
-
-
-class NodeNotFoundByUUID(NotFound):
-    msg_fmt = _("Node with UUID %(node_uuid)s could not be found.")
-
-
 class MarkerNotFound(NotFound):
     msg_fmt = _("Marker %(marker)s could not be found.")
 
 
 class InvalidInstanceIDMalformed(Invalid):
+    msg_fmt = _("Invalid id: %(instance_id)s (expecting \"i-...\")")
     ec2_code = 'InvalidInstanceID.Malformed'
-    msg_fmt = _("Invalid id: %(val)s (expecting \"i-...\").")
+
+
+class InvalidVolumeIDMalformed(Invalid):
+    msg_fmt = _("Invalid id: %(volume_id)s (expecting \"i-...\")")
+    ec2_code = 'InvalidVolumeID.Malformed'
 
 
 class CouldNotFetchImage(NovaException):
@@ -1282,11 +1450,13 @@ class ConfigDriveUnknownFormat(NovaException):
 
 
 class InterfaceAttachFailed(Invalid):
-    msg_fmt = _("Failed to attach network adapter device to %(instance)s")
+    msg_fmt = _("Failed to attach network adapter device to "
+                "%(instance_uuid)s")
 
 
 class InterfaceDetachFailed(Invalid):
-    msg_fmt = _("Failed to detach network adapter device from  %(instance)s")
+    msg_fmt = _("Failed to detach network adapter device from "
+                "%(instance_uuid)s")
 
 
 class InstanceUserDataTooLarge(NovaException):
@@ -1299,9 +1469,18 @@ class InstanceUserDataMalformed(NovaException):
     msg_fmt = _("User data needs to be valid base 64.")
 
 
-class UnexpectedTaskStateError(NovaException):
-    msg_fmt = _("Unexpected task state: expecting %(expected)s but "
-                "the actual state is %(actual)s")
+class InstanceUpdateConflict(NovaException):
+    msg_fmt = _("Conflict updating instance %(instance_uuid)s. "
+                "Expected: %(expected)s. Actual: %(actual)s")
+
+
+class UnknownInstanceUpdateConflict(InstanceUpdateConflict):
+    msg_fmt = _("Conflict updating instance %(instance_uuid)s, but we were "
+                "unable to determine the cause")
+
+
+class UnexpectedTaskStateError(InstanceUpdateConflict):
+    pass
 
 
 class UnexpectedDeletingTaskStateError(UnexpectedTaskStateError):
@@ -1315,11 +1494,6 @@ class InstanceActionNotFound(NovaException):
 
 class InstanceActionEventNotFound(NovaException):
     msg_fmt = _("Event %(event)s not found for action id %(action_id)s")
-
-
-class UnexpectedVMStateError(NovaException):
-    msg_fmt = _("Unexpected VM state: expecting %(expected)s but "
-                "the actual state is %(actual)s")
 
 
 class CryptoCAFileNotFound(FileNotFound):
@@ -1378,16 +1552,8 @@ class InstanceFaultRollback(NovaException):
         super(InstanceFaultRollback, self).__init__(message % inner_exception)
 
 
-class UnsupportedObjectError(NovaException):
-    msg_fmt = _('Unsupported object type %(objtype)s')
-
-
 class OrphanedObjectError(NovaException):
     msg_fmt = _('Cannot call %(method)s on orphaned %(objtype)s object')
-
-
-class IncompatibleObjectVersion(NovaException):
-    msg_fmt = _('Version %(objver)s of %(objname)s is not supported')
 
 
 class ObjectActionError(NovaException):
@@ -1419,11 +1585,6 @@ class InstanceGroupIdExists(NovaException):
     msg_fmt = _("Instance group %(group_uuid)s already exists.")
 
 
-class InstanceGroupMetadataNotFound(NotFound):
-    msg_fmt = _("Instance group %(group_uuid)s has no metadata with "
-                "key %(metadata_key)s.")
-
-
 class InstanceGroupMemberNotFound(NotFound):
     msg_fmt = _("Instance group %(group_uuid)s has no member with "
                 "id %(instance_id)s.")
@@ -1431,6 +1592,10 @@ class InstanceGroupMemberNotFound(NotFound):
 
 class InstanceGroupPolicyNotFound(NotFound):
     msg_fmt = _("Instance group %(group_uuid)s has no policy %(policy)s.")
+
+
+class InstanceGroupSaveException(NovaException):
+    msg_fmt = _("%(field)s should not be part of the updates.")
 
 
 class PluginRetriesExceeded(NovaException):
@@ -1463,21 +1628,32 @@ class PciDeviceWrongAddressFormat(NovaException):
     msg_fmt = _("The PCI address %(address)s has an incorrect format.")
 
 
+class PciDeviceInvalidAddressField(NovaException):
+    msg_fmt = _("Invalid PCI Whitelist: "
+                "The PCI address %(address)s has an invalid %(field)s.")
+
+
+class PciDeviceInvalidDeviceName(NovaException):
+    msg_fmt = _("Invalid PCI Whitelist: "
+                "The PCI whitelist can specify devname or address,"
+                " but not both")
+
+
 class PciDeviceNotFoundById(NotFound):
     msg_fmt = _("PCI device %(id)s not found")
 
 
-class PciDeviceNotFound(NovaException):
+class PciDeviceNotFound(NotFound):
     msg_fmt = _("PCI Device %(node_id)s:%(address)s not found.")
 
 
-class PciDeviceInvalidStatus(NovaException):
+class PciDeviceInvalidStatus(Invalid):
     msg_fmt = _(
         "PCI device %(compute_node_id)s:%(address)s is %(status)s "
         "instead of %(hopestatus)s")
 
 
-class PciDeviceInvalidOwner(NovaException):
+class PciDeviceInvalidOwner(Invalid):
     msg_fmt = _(
         "PCI device %(compute_node_id)s:%(address)s is owned by %(owner)s "
         "instead of %(hopeowner)s")
@@ -1494,7 +1670,7 @@ class PciDevicePoolEmpty(NovaException):
         "from empty pool")
 
 
-class PciInvalidAlias(NovaException):
+class PciInvalidAlias(Invalid):
     msg_fmt = _("Invalid PCI alias definition: %(reason)s")
 
 
@@ -1510,10 +1686,6 @@ class MissingParameter(NovaException):
 
 class PciConfigInvalidWhitelist(Invalid):
     msg_fmt = _("Invalid PCI devices Whitelist config %(reason)s")
-
-
-class PciTrackerInvalidNodeId(NovaException):
-    msg_fmt = _("Cannot change %(node_id)s to %(new_node_id)s")
 
 
 # Cannot be templated, msg needs to be constructed when raised.
@@ -1539,6 +1711,10 @@ class KeyManagerError(NovaException):
     msg_fmt = _("Key manager error: %(reason)s")
 
 
+class VolumesNotRemoved(Invalid):
+    msg_fmt = _("Failed to remove volume(s): (%(reason)s)")
+
+
 class InvalidVideoMode(Invalid):
     msg_fmt = _("Provided video model (%(model)s) is not supported.")
 
@@ -1557,6 +1733,208 @@ class InvalidWatchdogAction(Invalid):
     msg_fmt = _("Provided watchdog action (%(action)s) is not supported.")
 
 
-class NoBlockMigrationForConfigDriveInLibVirt(NovaException):
-    msg_fmt = _("Block migration of instances with config drives is not "
-                "supported in libvirt.")
+class NoLiveMigrationForConfigDriveInLibVirt(NovaException):
+    msg_fmt = _("Live migration of instances with config drives is not "
+                "supported in libvirt unless libvirt instance path and "
+                "drive data is shared across compute nodes.")
+
+
+class LiveMigrationWithOldNovaNotSafe(NovaException):
+    msg_fmt = _("Host %(server)s is running an old version of Nova, "
+                "live migrations involving that version may cause data loss. "
+                "Upgrade Nova on %(server)s and try again.")
+
+
+class UnshelveException(NovaException):
+    msg_fmt = _("Error during unshelve instance %(instance_id)s: %(reason)s")
+
+
+class ImageVCPULimitsRangeExceeded(Invalid):
+    msg_fmt = _("Image vCPU limits %(sockets)d:%(cores)d:%(threads)d "
+                "exceeds permitted %(maxsockets)d:%(maxcores)d:%(maxthreads)d")
+
+
+class ImageVCPUTopologyRangeExceeded(Invalid):
+    msg_fmt = _("Image vCPU topology %(sockets)d:%(cores)d:%(threads)d "
+                "exceeds permitted %(maxsockets)d:%(maxcores)d:%(maxthreads)d")
+
+
+class ImageVCPULimitsRangeImpossible(Invalid):
+    msg_fmt = _("Requested vCPU limits %(sockets)d:%(cores)d:%(threads)d "
+                "are impossible to satisfy for vcpus count %(vcpus)d")
+
+
+class InvalidArchitectureName(Invalid):
+    msg_fmt = _("Architecture name '%(arch)s' is not recognised")
+
+
+class ImageNUMATopologyIncomplete(Invalid):
+    msg_fmt = _("CPU and memory allocation must be provided for all "
+                "NUMA nodes")
+
+
+class ImageNUMATopologyForbidden(Forbidden):
+    msg_fmt = _("Image property '%(name)s' is not permitted to override "
+                "NUMA configuration set against the flavor")
+
+
+class ImageNUMATopologyAsymmetric(Invalid):
+    msg_fmt = _("Asymmetric NUMA topologies require explicit assignment "
+                "of CPUs and memory to nodes in image or flavor")
+
+
+class ImageNUMATopologyCPUOutOfRange(Invalid):
+    msg_fmt = _("CPU number %(cpunum)d is larger than max %(cpumax)d")
+
+
+class ImageNUMATopologyCPUDuplicates(Invalid):
+    msg_fmt = _("CPU number %(cpunum)d is assigned to two nodes")
+
+
+class ImageNUMATopologyCPUsUnassigned(Invalid):
+    msg_fmt = _("CPU number %(cpuset)s is not assigned to any node")
+
+
+class ImageNUMATopologyMemoryOutOfRange(Invalid):
+    msg_fmt = _("%(memsize)d MB of memory assigned, but expected "
+                "%(memtotal)d MB")
+
+
+class InvalidHostname(Invalid):
+    msg_fmt = _("Invalid characters in hostname '%(hostname)s'")
+
+
+class NumaTopologyNotFound(NotFound):
+    msg_fmt = _("Instance %(instance_uuid)s does not specify a NUMA topology")
+
+
+class MigrationContextNotFound(NotFound):
+    msg_fmt = _("Instance %(instance_uuid)s does not specify a migration "
+                "context.")
+
+
+class SocketPortRangeExhaustedException(NovaException):
+    msg_fmt = _("Not able to acquire a free port for %(host)s")
+
+
+class SocketPortInUseException(NovaException):
+    msg_fmt = _("Not able to bind %(host)s:%(port)d, %(error)s")
+
+
+class ImageSerialPortNumberInvalid(Invalid):
+    msg_fmt = _("Number of serial ports '%(num_ports)s' specified in "
+                "'%(property)s' isn't valid.")
+
+
+class ImageSerialPortNumberExceedFlavorValue(Invalid):
+    msg_fmt = _("Forbidden to exceed flavor value of number of serial "
+                "ports passed in image meta.")
+
+
+class InvalidImageConfigDrive(Invalid):
+    msg_fmt = _("Image's config drive option '%(config_drive)s' is invalid")
+
+
+class InvalidHypervisorVirtType(Invalid):
+    msg_fmt = _("Hypervisor virtualization type '%(hv_type)s' is not "
+                "recognised")
+
+
+class InvalidVirtualMachineMode(Invalid):
+    msg_fmt = _("Virtual machine mode '%(vmmode)s' is not recognised")
+
+
+class MeasuredLaunchError(NovaException):
+    msg_fmt = _("%(reason)s")
+
+
+class InvalidToken(Invalid):
+    msg_fmt = _("The token '%(token)s' is invalid or has expired")
+
+
+class InvalidConnectionInfo(Invalid):
+    msg_fmt = _("Invalid Connection Info")
+
+
+class InstanceQuiesceNotSupported(Invalid):
+    msg_fmt = _('Quiescing is not supported in instance %(instance_id)s')
+
+
+class QemuGuestAgentNotEnabled(Invalid):
+    msg_fmt = _('QEMU guest agent is not enabled')
+
+
+class SetAdminPasswdNotSupported(Invalid):
+    msg_fmt = _('Set admin password is not supported')
+
+
+class MemoryPageSizeInvalid(Invalid):
+    msg_fmt = _("Invalid memory page size '%(pagesize)s'")
+
+
+class MemoryPageSizeForbidden(Invalid):
+    msg_fmt = _("Page size %(pagesize)s forbidden against '%(against)s'")
+
+
+class MemoryPageSizeNotSupported(Invalid):
+    msg_fmt = _("Page size %(pagesize)s is not supported by the host.")
+
+
+class CPUPinningNotSupported(Invalid):
+    msg_fmt = _("CPU pinning is not supported by the host: "
+                "%(reason)s")
+
+
+class CPUPinningInvalid(Invalid):
+    msg_fmt = _("Cannot pin/unpin cpus %(requested)s from the following "
+                "pinned set %(pinned)s")
+
+
+class CPUPinningUnknown(Invalid):
+    msg_fmt = _("CPU set to pin/unpin %(requested)s must be a subset of "
+                "known CPU set %(cpuset)s")
+
+
+class ImageCPUPinningForbidden(Forbidden):
+    msg_fmt = _("Image property 'hw_cpu_policy' is not permitted to override "
+                "CPU pinning policy set against the flavor")
+
+
+class UnsupportedPolicyException(Invalid):
+    msg_fmt = _("ServerGroup policy is not supported: %(reason)s")
+
+
+class CellMappingNotFound(NotFound):
+    msg_fmt = _("Cell %(uuid)s has no mapping.")
+
+
+class NUMATopologyUnsupported(Invalid):
+    msg_fmt = _("Host does not support guests with NUMA topology set")
+
+
+class MemoryPagesUnsupported(Invalid):
+    msg_fmt = _("Host does not support guests with custom memory page sizes")
+
+
+class EnumFieldInvalid(Invalid):
+    msg_fmt = _('%(typename)s in %(fieldname)s is not an instance of Enum')
+
+
+class EnumFieldUnset(Invalid):
+    msg_fmt = _('%(fieldname)s missing field type')
+
+
+class InvalidImageFormat(Invalid):
+    msg_fmt = _("Invalid image format '%(format)s'")
+
+
+class UnsupportedImageModel(Invalid):
+    msg_fmt = _("Image model '%(image)s' is not supported")
+
+
+class DatabaseMigrationError(NovaException):
+    msg_fmt = _("Database migration failed: %(reason)s")
+
+
+class HostMappingNotFound(Invalid):
+    msg_fmt = _("Host '%(name)s' is not mapped to any cell")
