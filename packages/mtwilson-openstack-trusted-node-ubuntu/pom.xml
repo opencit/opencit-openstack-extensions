@@ -3,52 +3,52 @@
     
     <groupId>com.intel.mtwilson.openstack.packages</groupId>
     <artifactId>mtwilson-openstack-trusted-node-ubuntu</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    
     <packaging>pom</packaging>
     <description>Self-extracting executable that installs the Mystery Hill compute node comprehensive packages</description>
-
+    
     <parent>
         <groupId>com.intel.mtwilson.maven</groupId>
         <artifactId>mtwilson-maven-package-makeself</artifactId>
-        <version>3.0-SNAPSHOT</version>
+        <version>3.1-SNAPSHOT</version>
         <relativePath/>
     </parent>
-  
+    
     <properties>
         <!-- this becomes the installer filename, like ${makeself.name}.bin -->
         <makeself.name>${project.artifactId}-${project.version}</makeself.name>
     </properties>
-  
+    
     <dependencies>
         <dependency>
             <groupId>com.intel.mtwilson.linux</groupId>
             <artifactId>mtwilson-linux-util</artifactId>
-            <version>${mtwilson.version}</version>
+            <version>${project.version}</version>
             <type>sh</type>
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.linux</groupId>
             <artifactId>mtwilson-trustagent-ubuntu</artifactId>
-            <version>3.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>bin</type>
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.vrtm.packages</groupId>
             <artifactId>vrtm</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>bin</type>
             <classifier>ubuntu</classifier>
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.policyagent.packages</groupId>
             <artifactId>mtwilson-policyagent</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>bin</type>
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.openstack.packages</groupId>
             <artifactId>mtwilson-openstack-node</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>bin</type>
         </dependency>
 	<dependency>
@@ -58,6 +58,5 @@
             <type>bin</type>
         </dependency>
     </dependencies>
-
-
+    
 </project>

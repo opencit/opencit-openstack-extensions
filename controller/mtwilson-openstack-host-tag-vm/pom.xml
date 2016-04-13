@@ -3,26 +3,22 @@
     
     <groupId>com.intel.mtwilson.openstack.controller</groupId>
     <artifactId>mtwilson-openstack-controller-host-tag-vm</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    
     <packaging>jar</packaging>
     <description>Mtwilson OpenStack Controller Comprehensive Extensions Zip for Asset Tag</description>
-	
+    
     <parent>
         <groupId>com.intel.mtwilson.maven</groupId>
         <artifactId>mtwilson-maven-package-bin-zip</artifactId>
-        <version>3.0-SNAPSHOT</version>
+        <version>3.1-SNAPSHOT</version>
         <relativePath/>
     </parent>
-
+    
     <properties>
         <build.timestamp>${maven.build.timestamp}</build.timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss.SSSZ</maven.build.timestamp.format>
-        <!-- format examples, see http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html for complete documentation:
-             "EEE, d MMM yyyy HH:mm:ss Z"	Wed, 4 Jul 2001 12:08:56 -0700
-             "yyyy-MM-dd'T'HH:mm:ss.SSSZ"	2001-07-04T12:08:56.235-0700   
-        -->
     </properties>
-
+    
     <build>
         <resources>
             <resource>
@@ -32,8 +28,7 @@
         </resources>
         
         <plugins>
-
-<!-- Add pathc-util.sh to target directory to generate patches -->
+            <!-- Add pathc-util.sh to target directory to generate patches -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -41,26 +36,25 @@
                     <execution>
                         <phase>generate-sources</phase>
                         <goals>
-                             <goal>copy</goal>
+                            <goal>copy</goal>
                         </goals>
                         <configuration>
-                             <artifactItems>
-                                 <artifactItem>
-                                     <groupId>com.intel.mtwilson.openstack.util</groupId>
-                                     <artifactId>mtwilson-linux-patch-util</artifactId>
-                                     <version>${project.version}</version>
-                                     <type>sh</type>
-                                     <outputDirectory>${project.build.directory}</outputDirectory>
-                                     <destFileName>patch-util.sh</destFileName>
-                                 </artifactItem>
-                             </artifactItems>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.intel.mtwilson.openstack.util</groupId>
+                                    <artifactId>mtwilson-linux-patch-util</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>sh</type>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <destFileName>patch-util.sh</destFileName>
+                                </artifactItem>
+                            </artifactItems>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-
-
-<!-- Generate patches for Asset Tag -->
+            
+            <!-- Generate patches for Asset Tag -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -96,49 +90,7 @@
                     </dependency>
                 </dependencies>
             </plugin>
-
         </plugins>
     </build>
-
-
-    <dependencies>
-        
-        <!--<dependency>
-            <groupId>com.intel.mtwilson.integration</groupId>
-            <artifactId>mtwilson-launcher</artifactId>
-            <version>${mtwilson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.intel.mtwilson.services</groupId>
-            <artifactId>mtwilson-extensions-cache</artifactId>
-            <version>${mtwilson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.intel.mtwilson.services</groupId>
-            <artifactId>mtwilson-setup</artifactId>
-            <version>${mtwilson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.intel.mtwilson.integration</groupId>
-            <artifactId>mtwilson-password-vault</artifactId>
-            <version>${mtwilson.version}</version>
-        </dependency>-->
-            
-        <!--<dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>-->
     
-
-    </dependencies>  
 </project>
