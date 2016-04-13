@@ -36,14 +36,16 @@
         <dependency>
             <groupId>com.intel.mtwilson.vrtm.packages</groupId>
             <artifactId>vrtm</artifactId>
-            <version>${project.version}</version>
+            <version>0.1-SNAPSHOT</version>
+            <!--<version>${project.version}</version>-->
             <type>bin</type>
             <classifier>ubuntu</classifier>
         </dependency>
         <dependency>
             <groupId>com.intel.mtwilson.policyagent.packages</groupId>
             <artifactId>mtwilson-policyagent</artifactId>
-            <version>${project.version}</version>
+            <version>3.0-SNAPSHOT</version>
+            <!--<version>${project.version}</version>-->
             <type>bin</type>
         </dependency>
         <dependency>
