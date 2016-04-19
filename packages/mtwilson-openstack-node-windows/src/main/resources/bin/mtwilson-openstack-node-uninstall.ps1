@@ -51,4 +51,8 @@ foreach ($component in $components)
 	}
 }
 
+$service_restart = Start-Process $PATCH_UTILS openstackrestart -PassThru | Wait-Process
+if ($service_restart.ExitCode -gt 0 ) {
+                echo "$_ exited with status code $($service_restart.ExitCode)"
+}
 
