@@ -34,13 +34,6 @@
             <version>0.1-SNAPSHOT</version>
             <type>zip</type>
         </dependency>
-         <dependency>
-            <groupId>com.intel.mtwilson.openstack.util</groupId>
-            <artifactId>mtwilson-linux-patch-util</artifactId>
-            <version>${project.version}</version>
-            <type>cmd</type>
-        </dependency>
-
     </dependencies>
 
     <profiles>
