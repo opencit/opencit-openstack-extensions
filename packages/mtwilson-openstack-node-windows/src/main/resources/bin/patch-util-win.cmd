@@ -68,8 +68,6 @@ goto :EOF
 	echo Restarting nova-compute service
 	net stop nova-compute
 	net start nova-compute
-	pause
-call:openstackrestart
 
 echo OpenStack Compute Node Extensions Installation complete
 goto :EOF
