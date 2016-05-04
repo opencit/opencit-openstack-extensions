@@ -34,8 +34,9 @@
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
 ; License page
-#!insertmacro MUI_PAGE_LICENSE "license.txt"
+;!insertmacro MUI_PAGE_LICENSE "license.txt"
 ; Directory page
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW DirectoryPageShow
 !insertmacro MUI_PAGE_DIRECTORY
 ; Instfiles page
 !insertmacro MUI_PAGE_INSTFILES
@@ -58,7 +59,7 @@ ShowUnInstDetails show
 
 Function .onInit
 	Var /GLOBAL Logfile
-    StrCpy $Logfile "$INSTDIR\logs\patchInstallLog.txt"
+        StrCpy $Logfile "$INSTDIR\logs\patchInstallLog.txt"
 	${LogSetFileName} $Logfile
 	${LogSetOn}
 FunctionEnd
@@ -66,6 +67,14 @@ FunctionEnd
 Function Error_Log_File
 	MessageBox MB_OK "Error occurred.... Please refer to logs in $INSTDIR\logs\patchInstallLog.txt"
 	Abort ; causes installer to quit.
+FunctionEnd
+
+Function DirectoryPageShow
+	FindWindow $R0 "#32770" "" $HWNDPARENT
+	GetDlgItem $R1 $R0 1019
+	EnableWindow $R1 0
+	GetDlgItem $R1 $R0 1001
+	EnableWindow $R1 0
 FunctionEnd
 
 Section "openstack-extension" SEC01
@@ -155,8 +164,6 @@ Section "openstack-extension" SEC01
   SetOutPath "$INSTDIR\pre-requisites"
 
   SetOutPath "$INSTDIR"
-  
-  SetOverwrite ifnewer
 
   # Create System Environment Variable - OPENSTACK_EXT_HOME
   !define env_hklm 'HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
@@ -412,13 +419,13 @@ Section -Post
 SectionEnd
 
 Function un.onUninstSuccess
-  HideWindow
-  MessageBox MB_ICONINFORMATION|MB_OK "$(^Name) was successfully removed from your computer."
+;  HideWindow
+;  MessageBox MB_ICONINFORMATION|MB_OK "$(^Name) was successfully removed from your computer."
 FunctionEnd
 
 Function un.onInit
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all of its components?" IDYES +2
-  Abort
+;  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all of its components?" IDYES +2
+;  Abort
 FunctionEnd
 
 Function un.Error_Log_File
@@ -474,8 +481,6 @@ Section Uninstall
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.2.3\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2015.1.1\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_2015.1.0\distribution-location.patch"
-# Delete "$INSTDIR\pre-requisites\GnuWin32-0.6.3.exe"
-# Delete "$INSTDIR\pre-requisites\gawk-3.1.6-1-setup.exe"
   Delete "$INSTDIR\pre-requisites\patch-2.5.9-7-setup.exe"
   Delete "$INSTDIR\pre-requisites\Cygwin-setup-x86_64.exe"
   Delete "$INSTDIR\"
