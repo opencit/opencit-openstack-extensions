@@ -12,7 +12,7 @@
 
 !define PRODUCT_NAME "Openstack-extension"
 !define PRODUCT_VERSION "1.0"
-!define PRODUCT_PUBLISHER "Intel, Inc."
+!define PRODUCT_PUBLISHER "Intel Corporation"
 !define PRODUCT_WEB_SITE "http://www.intel.com"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
