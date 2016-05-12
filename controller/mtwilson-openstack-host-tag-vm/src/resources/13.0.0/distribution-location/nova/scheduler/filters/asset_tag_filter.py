@@ -71,24 +71,9 @@ import random
 LOG = logging.getLogger(__name__)
 
 trusted_opts = [
-    cfg.StrOpt('attestation_server',
-               help='attestation server http'),
-    cfg.StrOpt('attestation_server_ca_file',
-               help='attestation server Cert file for Identity verification'),
-    cfg.StrOpt('attestation_port',
-               default='8443',
-               help='attestation server port'),
-    cfg.StrOpt('attestation_api_url',
-               default='/mtwilson/v2/host-attestations',
-               help='attestation web API URL'),
     cfg.StrOpt('attestation_host_url',
                default='/mtwilson/v2/hosts',
                help='attestation web API URL'),
-    cfg.StrOpt('attestation_auth_blob',
-               help='attestation authorization blob - must change'),
-    cfg.IntOpt('attestation_auth_timeout',
-               default=60,
-               help='Attestation status cache valid period length'),
 ]
 
 CONF = cfg.CONF
