@@ -16,6 +16,7 @@
 
 #####
 
+DEFAULT_DEPLOYMENT_TYPE="vm"
 
 # functions script (mtwilson-linux-util-3.0-SNAPSHOT.sh) is required
 # we use the following functions:
@@ -105,7 +106,12 @@ fi
 ./$MTWILSON_OPENSTACK_PACKAGE
 if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson openstack compute node extensions"; exit -1; fi
 
-if [ $DEPLOYMENT_TYPE != "vm" ]; then
+if [ -z "$DEPLOYMENT_TYPE" ]
+    then
+        DEPLOYMENT_TYPE=$DEFAULT_DEPLOYMENT_TYPE
+fi
+
+if [ $DEPLOYMENT_TYPE == "docker" ]; then
 	### INSTALL MTWILSON DOCKER
 	echo "Installing mtwilson docker..."
 	DOCKER_PACKAGE=`ls -1 mtwilson-docker-*.bin 2>/dev/null | tail -n 1`
