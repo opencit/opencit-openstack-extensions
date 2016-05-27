@@ -148,6 +148,7 @@ fi
 
 # convert DER to PEM formatted cert
 openssl x509 -inform der -in ${mtwilsonServerCaFile} -out ${mtwilsonServerCaFilePem}
+chown nova:nova ${mtwilsonServerCaFilePem}
 
 function openstack_update_property_in_file() {
   local property="${1}"
