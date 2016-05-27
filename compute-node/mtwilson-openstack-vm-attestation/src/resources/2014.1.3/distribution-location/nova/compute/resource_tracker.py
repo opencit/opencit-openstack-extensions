@@ -46,6 +46,7 @@ import urllib
 from base64 import b64encode
 import random
 from lxml import etree
+import ssl
 
 resource_tracker_opts = [
     cfg.IntOpt('reserved_host_disk_mb', default=0,
@@ -649,6 +650,8 @@ class ResourceTracker(object):
                    help='Attestation server API url'),
                 cfg.StrOpt('attestation_auth_blob',
                    help='Attestation server authentication details'),
+                cfg.StrOpt('attestation_server_ca_file',
+                    help='Attestation server SSL certificate file location'),
             ]
 
             # Read the configuration params from nova.conf
@@ -661,7 +664,6 @@ class ResourceTracker(object):
             port = CONF.trusted_computing.attestation_server_port #'10.1.68.95'
             attestation_url = CONF.trusted_computing.attestation_api_url# + '?hostNameEqualTo=' + CONF.my_ip + '&vmInstanceIdEqualTo=' + instance.uuid
             auth_blob = CONF.trusted_computing.attestation_auth_blob #'admin:password'
-            c = httplib.HTTPSConnection(host + ':' + port)
             userAndPass = b64encode(auth_blob).decode("ascii")
 
             # Setup the header & body for the request
@@ -674,6 +676,14 @@ class ResourceTracker(object):
                 params = {'host_name': instance.host, 'vm_instance_id': container_name}
             else :
                 params = {'host_name': instance.host, 'vm_instance_id': instance.uuid}
+
+            # Setup the SSL context for certificate verification
+            as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            as_context.verify_mode = ssl.CERT_REQUIRED
+            as_context.check_hostname = True
+            as_context.load_verify_locations(CONF.trusted_computing.attestation_server_ca_file)
+
+            c = httplib.HTTPSConnection(host, port=port, context=as_context)
             c.request('POST', attestation_url, jsonutils.dumps(params), headers)
             res = c.getresponse()
             res_data = res.read()
