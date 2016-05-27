@@ -48,7 +48,7 @@ class ImageURLField(forms.URLField):
     default_validators = [validators.URLValidator(schemes=["http", "https"])]
 
 
-def create_image_metadata(data):
+def create_image_metadata(data, cit_trust_policy_store):
     """Use the given dict of image form data to generate the metadata used for
     creating the image in glance.
     """
@@ -88,10 +88,6 @@ def create_image_metadata(data):
         meta['properties']['ramdisk_id'] = data['ramdisk']
     if data.get('architecture'):
         meta['properties']['architecture'] = data['architecture']
-
-    orig_image =api.glance.image_get(request, image_id)
-    cit_trust_policy_store = ('mtwilson_trustpolicy_location' in orig_image.properties)
- 
     if data['geoTag']:
         geoTag = json.loads(data['geoTag'])
         if geoTag.has_key('trust') and not cit_trust_policy_store:
@@ -267,7 +263,7 @@ class CreateImageForm(forms.SelfHandlingForm):
             return data
 
     def handle(self, request, data):
-        meta = create_image_metadata(data)
+        meta = create_image_metadata(data, False)
 
         # Add image source file or URL to metadata
         if (settings.HORIZON_IMAGES_ALLOW_UPLOAD and
@@ -364,9 +360,13 @@ class UpdateImageForm(forms.SelfHandlingForm):
     def handle(self, request, data):
         image_id = data['image_id']
         error_updating = _('Unable to update image "%s".')
-        meta = create_image_metadata(data)
         LOG.error('In Update image')
         
+        orig_image = api.glance.image_get(request, image_id)
+        cit_trust_policy_store = ('mtwilson_trustpolicy_location' in orig_image.properties)
+
+        meta = create_image_metadata(data, cit_trust_policy_store)
+
         # Ensure we do not delete properties that have already been
         # set on an image.
         meta['purge_props'] = False

@@ -9348,6 +9348,13 @@ div.form-horizontal .form-group {
          padding-left: 10px;
 }
 
+.trust_and_geo:after {
+         content: "\f041";
+         font-size: 1.6em;
+         color: green;
+         padding-left: 16px;
+ }
+
 .no_trust:before{
          content: "\f09c";
         font-size: 1.6em;
