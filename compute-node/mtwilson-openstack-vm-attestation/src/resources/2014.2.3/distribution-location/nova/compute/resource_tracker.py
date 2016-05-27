@@ -771,12 +771,17 @@ class ResourceTracker(object):
                 params = {'host_name': instance.host, 'vm_instance_id': instance.uuid}
 
             # Setup the SSL context for certificate verification
-            as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-            as_context.verify_mode = ssl.CERT_REQUIRED
-            as_context.check_hostname = True
-            as_context.load_verify_locations(CONF.trusted_computing.attestation_server_ca_file)
-
-            c = httplib.HTTPSConnection(host, port=port, context=as_context)
+            if  hasattr(ssl,'SSLContext') and CONF.trusted_computing.attestation_server_ca_file:
+                LOG.info("Using SSL certifcate verification")
+                as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+                as_context.verify_mode = ssl.CERT_REQUIRED
+                as_context.check_hostname = True
+                as_context.load_verify_locations(CONF.trusted_computing.attestation_server_ca_file)
+                c = httplib.HTTPSConnection(host, port=port, context=as_context)
+            else:
+                LOG.warn("Not using SSL certificate verification")
+                c = httplib.HTTPSConnection(host + ':' + port)
+				
             c.request('POST', attestation_url, jsonutils.dumps(params), headers)
             res = c.getresponse()
             res_data = res.read()
