@@ -92,6 +92,9 @@ done
 while [ -z "$MTWILSON_SERVER_PORT" ]; do
   prompt_with_default MTWILSON_SERVER_PORT "Mtwilson Server Port:" "8443"
 done
+while [ -z "$MTWILSON_TLS_CERT_SHA1" ]; do
+  prompt_with_default_password MTWILSON_TLS_CERT_SHA1 "Mtwilson Server TLS Certificate SHA1:" "$MTWILSON_TLS_CERT_SHA1"
+done
 while [ -z "$MTWILSON_ASSET_TAG_API_USERNAME" ]; do
   prompt_with_default MTWILSON_ASSET_TAG_API_USERNAME "Mtwilson Asset Tag API Username:" "tagadmin"
 done
@@ -100,7 +103,7 @@ while [ -z "$MTWILSON_ASSET_TAG_API_PASSWORD" ]; do
 done
 mtwilsonAssetTagAuthBlob="$MTWILSON_ASSET_TAG_API_USERNAME:$MTWILSON_ASSET_TAG_API_PASSWORD"
 
-#Download mtwilson ca certificate
+# set mtwilson ca certificate paths
 mtwilsonServerCaFile="/etc/nova/as-ssl.crt"
 mtwilsonServerCaFilePem="${mtwilsonServerCaFile}.pem"
 
@@ -112,15 +115,31 @@ rm -f ${mtwilsonServerCaFilePem}
 # download mtwilson server ssl cert
 openssl s_client -showcerts -connect ${mtwilsonServer}:${mtwilsonServerPort} </dev/null 2>/dev/null | openssl x509 -outform DER > ${mtwilsonServerCaFile}
 
+# take the sha1 of the downloaded mtwilson server ssl cert
+measured_server_tls_cert_sha1=$(sha1sum ${mtwilsonServerCaFile} 2>/dev/null | cut -f1 -d " ")
+
+# compare the mtwilson server measure ssl cert sha1 to the value defined in the trustagent config
+if [ "${MTWILSON_TLS_CERT_SHA1}" != "${measured_server_tls_cert_sha1}" ]; then
+  echo "SHA1 of downloaded SSL certificate [${measured_server_tls_cert_sha1}] does not match the expected value [${MTWILSON_TLS_CERT_SHA1}]"
+  rm -f ${mtwilsonServerCaFile}
+  rm -f ${mtwilsonServerCaFilePem}
+  exit -1
+fi
+
 # convert DER to PEM formatted cert
 openssl x509 -inform der -in ${mtwilsonServerCaFile} -out ${mtwilsonServerCaFilePem}
 chown nova:nova ${mtwilsonServerCaFilePem}
 
 # update openstack-dashboard settings.py
-
 if [ "$OPENSTACK_DASHBOARD_LOCATION" == "" ]; then
  OPENSTACK_DASHBOARD_LOCATION="/usr/share/openstack-dashboard"
 fi
+
+# copy mtwilson ca certificate to path accessible by apache2 server and set ownership and permission
+apache2MtwilsonServerCaFilePem="${OPENSTACK_DASHBOARD_LOCATION}/openstack_dashboard/conf/as-ssl.crt.pem"
+rm -f ${apache2MtwilsonServerCaFilePem}
+cp ${mtwilsonServerCaFilePem} ${apache2MtwilsonServerCaFilePem}
+chmod 644 ${mtwilsonServerCaFilePem}
 
 openstackDashboardSettingsFile="$OPENSTACK_DASHBOARD_LOCATION/openstack_dashboard/settings.py"
 if [ ! -f "$openstackDashboardSettingsFile" ]; then
