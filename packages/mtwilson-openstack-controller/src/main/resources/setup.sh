@@ -100,6 +100,22 @@ while [ -z "$MTWILSON_ASSET_TAG_API_PASSWORD" ]; do
 done
 mtwilsonAssetTagAuthBlob="$MTWILSON_ASSET_TAG_API_USERNAME:$MTWILSON_ASSET_TAG_API_PASSWORD"
 
+#Download mtwilson ca certificate
+mtwilsonServerCaFile="/etc/nova/as-ssl.crt"
+mtwilsonServerCaFilePem="${mtwilsonServerCaFile}.pem"
+
+# file operations
+mkdir -p $(dirname ${mtwilsonServerCaFile})
+rm -f ${mtwilsonServerCaFile}
+rm -f ${mtwilsonServerCaFilePem}
+
+# download mtwilson server ssl cert
+openssl s_client -showcerts -connect ${mtwilsonServer}:${mtwilsonServerPort} </dev/null 2>/dev/null | openssl x509 -outform DER > ${mtwilsonServerCaFile}
+
+# convert DER to PEM formatted cert
+openssl x509 -inform der -in ${mtwilsonServerCaFile} -out ${mtwilsonServerCaFilePem}
+chown nova:nova ${mtwilsonServerCaFilePem}
+
 # update openstack-dashboard settings.py
 
 if [ "$OPENSTACK_DASHBOARD_LOCATION" == "" ]; then
@@ -130,7 +146,8 @@ echo "    'certificate_url': '/certificate-requests'," >> "$openstackDashboardSe
 echo "    'auth_blob': '$mtwilsonAssetTagAuthBlob'," >> "$openstackDashboardSettingsFile"
 echo "    'api_url': '/mtwilson/v2/host-attestations'," >> "$openstackDashboardSettingsFile"
 echo "    'host_url': '/mtwilson/v2/hosts'," >> "$openstackDashboardSettingsFile"
-echo "    'tags_url': '/mtwilson/v2/tag-kv-attributes.json?filter=false'" >> "$openstackDashboardSettingsFile"
+echo "    'tags_url': '/mtwilson/v2/tag-kv-attributes.json?filter=false'," >> "$openstackDashboardSettingsFile"
+echo "    'attestation_server_ca_file': '$mtwilsonServerCaFilePem'" >> "$openstackDashboardSettingsFile"
 echo "}" >> "$openstackDashboardSettingsFile"
 
 function openstack_update_property_in_file() {
@@ -216,7 +233,7 @@ updateNovaConf "attestation_port" "$MTWILSON_SERVER_PORT" "trusted_computing" "$
 updateNovaConf "attestation_auth_blob" "$mtwilsonAssetTagAuthBlob" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_api_url" "/mtwilson/v2/host-attestations" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_host_url" "/mtwilson/v2/hosts" "trusted_computing" "$novaConfFile"
-updateNovaConf "attestation_server_ca_file" "/etc/nova/ssl.crt" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_server_ca_file" "${mtwilsonServerCaFilePem}" "trusted_computing" "$novaConfFile"
 updateNovaConf "scheduler_driver" "nova.scheduler.filter_scheduler.FilterScheduler" "DEFAULT" "$novaConfFile"
 schedulerDefaultFiltersExists=$(grep '^scheduler_default_filters=' "$novaConfFile")
 if [ -n "$schedulerDefaultFiltersExists" ]; then
