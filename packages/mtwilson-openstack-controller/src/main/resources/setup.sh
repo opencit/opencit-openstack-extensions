@@ -233,7 +233,7 @@ updateNovaConf "attestation_port" "$MTWILSON_SERVER_PORT" "trusted_computing" "$
 updateNovaConf "attestation_auth_blob" "$mtwilsonAssetTagAuthBlob" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_api_url" "/mtwilson/v2/host-attestations" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_host_url" "/mtwilson/v2/hosts" "trusted_computing" "$novaConfFile"
-updateNovaConf "attestation_server_ca_file" "${mtwilsonServerCaFile}" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_server_ca_file" "${mtwilsonServerCaFilePem}" "trusted_computing" "$novaConfFile"
 updateNovaConf "scheduler_driver" "nova.scheduler.filter_scheduler.FilterScheduler" "DEFAULT" "$novaConfFile"
 schedulerDefaultFiltersExists=$(grep '^scheduler_default_filters=' "$novaConfFile")
 if [ -n "$schedulerDefaultFiltersExists" ]; then
