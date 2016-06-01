@@ -166,7 +166,7 @@ echo "    'auth_blob': '$mtwilsonAssetTagAuthBlob'," >> "$openstackDashboardSett
 echo "    'api_url': '/mtwilson/v2/host-attestations'," >> "$openstackDashboardSettingsFile"
 echo "    'host_url': '/mtwilson/v2/hosts'," >> "$openstackDashboardSettingsFile"
 echo "    'tags_url': '/mtwilson/v2/tag-kv-attributes.json?filter=false'," >> "$openstackDashboardSettingsFile"
-echo "    'attestation_server_ca_file': '$mtwilsonServerCaFilePem'" >> "$openstackDashboardSettingsFile"
+echo "    'attestation_server_ca_file': '$apache2MtwilsonServerCaFilePem'" >> "$openstackDashboardSettingsFile"
 echo "}" >> "$openstackDashboardSettingsFile"
 
 function openstack_update_property_in_file() {
