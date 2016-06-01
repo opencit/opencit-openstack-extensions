@@ -329,7 +329,16 @@ class TrustAssertionFilter(filters.BaseHostFilter):
             auth_blob = CONF.trusted_computing.attestation_auth_blob
             host_url = CONF.trusted_computing.attestation_host_url + '?nameEqualTo=' + str(hostname)
             LOG.debug(host_url)
-            c = httplib.HTTPSConnection(host + ':' + port)
+            if  hasattr(ssl,'SSLContext') and CONF.trusted_computing.attestation_server_ca_file:
+                LOG.info("Using SSL certifcate verification")
+                as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+                as_context.verify_mode = ssl.CERT_REQUIRED
+                as_context.check_hostname = True
+                as_context.load_verify_locations(CONF.trusted_computing.attestation_server_ca_file)
+                c = httplib.HTTPSConnection(host, port=port, context=as_context)
+            else:
+                LOG.warn("Not using SSL certificate verification")
+                c = httplib.HTTPSConnection(host + ':' + port)            
             userAndPass = b64encode(auth_blob).decode("ascii")
             headers = { 'Authorization' : 'Basic %s' %  userAndPass , 'Accept': 'application/json'}
             c.request('GET', host_url, headers=headers)
