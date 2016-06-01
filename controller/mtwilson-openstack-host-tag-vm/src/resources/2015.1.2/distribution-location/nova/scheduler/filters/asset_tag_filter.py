@@ -126,7 +126,7 @@ class HTTPSClientAuthConnection(httplib.HTTPSConnection):
         sock = socket.create_connection((self.host, self.port), self.timeout)
         self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
                                     ca_certs=self.ca_file)
-                                    #cert_reqs=ssl.CERT_REQUIRED)
+                                    cert_reqs=ssl.CERT_REQUIRED)
 
 
 class AttestationService(object):
@@ -330,15 +330,16 @@ class TrustAssertionFilter(filters.BaseHostFilter):
             host_url = CONF.trusted_computing.attestation_host_url + '?nameEqualTo=' + str(hostname)
             LOG.debug(host_url)
             if  hasattr(ssl,'SSLContext') and CONF.trusted_computing.attestation_server_ca_file:
-                LOG.info("Using SSL certifcate verification")
+                LOG.info("Using SSL context HTTPS client connection to attestation server with SSL certifcate verification")
                 as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
                 as_context.verify_mode = ssl.CERT_REQUIRED
                 as_context.check_hostname = True
                 as_context.load_verify_locations(CONF.trusted_computing.attestation_server_ca_file)
                 c = httplib.HTTPSConnection(host, port=port, context=as_context)
             else:
-                LOG.warn("Not using SSL certificate verification")
-                c = httplib.HTTPSConnection(host + ':' + port)             
+                LOG.info("Using socket HTTPS client connection to attestation server with SSL certifcate verification")
+                c = HTTPSClientAuthConnection(host, port, key_file=None, cert_file=None, ca_file=CONF.trusted_computing.attestation_server_ca_file)
+				 
             userAndPass = b64encode(auth_blob).decode("ascii")
             headers = { 'Authorization' : 'Basic %s' %  userAndPass , 'Accept': 'application/json'}
             c.request('GET', host_url, headers=headers)
