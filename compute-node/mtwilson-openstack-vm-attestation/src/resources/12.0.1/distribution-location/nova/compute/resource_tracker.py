@@ -935,7 +935,7 @@ class ResourceTracker(object):
                 LOG.info("Using socket HTTPS client connection to attestation server with SSL certifcate verification")
                 c = HTTPSClientAuthConnection(host, port, key_file=None, cert_file=None, ca_file=CONF.trusted_computing.attestation_server_ca_file)
 
-			c.request('POST', attestation_url, jsonutils.dumps(params), headers)
+            c.request('POST', attestation_url, jsonutils.dumps(params), headers)
             res = c.getresponse()
             res_data = res.read()
             # Parse the SAML assertion to get the relevant details
