@@ -139,7 +139,7 @@ fi
 apache2MtwilsonServerCaFilePem="${OPENSTACK_DASHBOARD_LOCATION}/openstack_dashboard/conf/as-ssl.crt.pem"
 rm -f ${apache2MtwilsonServerCaFilePem}
 cp ${mtwilsonServerCaFilePem} ${apache2MtwilsonServerCaFilePem}
-chmod 644 ${mtwilsonServerCaFilePem}
+chmod 644 ${apache2MtwilsonServerCaFilePem}
 
 openstackDashboardSettingsFile="$OPENSTACK_DASHBOARD_LOCATION/openstack_dashboard/settings.py"
 if [ ! -f "$openstackDashboardSettingsFile" ]; then
