@@ -213,6 +213,7 @@ function updateNovaConf() {
   if [ -n "$propertyExists" ]; then
     openstack_update_property_in_file "$property" "$novaConfFile" "$value"
   else
+    echo -e "\n" >> "$novaConfFile"
     # insert at end of header block
     sed -e '/^\['${header}'\]/{:a;n;/^$/!ba;i\'${property}'='${value} -e '}' -i "$novaConfFile"
   fi
