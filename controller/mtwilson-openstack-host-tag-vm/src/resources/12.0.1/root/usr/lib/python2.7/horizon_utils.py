@@ -36,14 +36,14 @@ class SelectionUtils:
             # Setup the SSL context for certificate verification
 
             if  hasattr(ssl,'SSLContext') and server_ca_file:
-                LOG.info("Using SSL context HTTPS client connection to attestation server with SSL certifcate verification")
+                LOG.info("Using SSL context HTTPS client connection to attestation server with SSL certificate verification")
                 as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
                 as_context.verify_mode = ssl.CERT_REQUIRED
                 as_context.check_hostname = True
                 as_context.load_verify_locations(server_ca_file)
                 c = httplib.HTTPSConnection(host, port=port, context=as_context)
             else:
-                LOG.info("Using socket HTTPS client connection to attestation server with SSL certifcate verification")
+                LOG.info("Using socket HTTPS client connection to attestation server with SSL certificate verification")
                 c = HTTPSClientAuthConnection(host, port, key_file=None, cert_file=None, ca_file=server_ca_file)
 			
             userAndPass = b64encode(auth_blob).decode("ascii")
@@ -97,14 +97,14 @@ class SelectionUtils:
             # Setup the SSL context for certificate verification
 
             if  hasattr(ssl,'SSLContext') and server_ca_file:
-                LOG.info("Using SSL context HTTPS client connection to attestation server with SSL certifcate verification")
+                LOG.info("Using SSL context HTTPS client connection to attestation server with SSL certificate verification")
                 as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
                 as_context.verify_mode = ssl.CERT_REQUIRED
                 as_context.check_hostname = True
                 as_context.load_verify_locations(server_ca_file)
                 c = httplib.HTTPSConnection(host, port=port, context=as_context)
             else:
-                LOG.info("Using socket HTTPS client connection to attestation server with SSL certifcate verification")
+                LOG.info("Using socket HTTPS client connection to attestation server with SSL certificate verification")
                 c = HTTPSClientAuthConnection(host, port, key_file=None, cert_file=None, ca_file=server_ca_file)
 			
             userAndPass = b64encode(auth_blob).decode("ascii")
@@ -213,7 +213,7 @@ class AttestationService(object):
         self.api_url =  ASSET_TAG_SERVICE['api_url']
         self.key_file = None
         self.cert_file = None
-        self.ca_file = None
+        self.ca_file = ASSET_TAG_SERVICE['attestation_server_ca_file']
         self.request_count = 100
 
     def _do_request(self, method, action_url, params, headers):
