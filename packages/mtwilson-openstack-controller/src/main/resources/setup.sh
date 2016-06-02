@@ -113,7 +113,7 @@ rm -f ${mtwilsonServerCaFile}
 rm -f ${mtwilsonServerCaFilePem}
 
 # download mtwilson server ssl cert
-openssl s_client -showcerts -connect ${mtwilsonServer}:${mtwilsonServerPort} </dev/null 2>/dev/null | openssl x509 -outform DER > ${mtwilsonServerCaFile}
+openssl s_client -showcerts -connect ${MTWILSON_SERVER}:${MTWILSON_SERVER_PORT} </dev/null 2>/dev/null | openssl x509 -outform DER > ${mtwilsonServerCaFile}
 
 # take the sha1 of the downloaded mtwilson server ssl cert
 measured_server_tls_cert_sha1=$(sha1sum ${mtwilsonServerCaFile} 2>/dev/null | cut -f1 -d " ")
@@ -139,7 +139,7 @@ fi
 apache2MtwilsonServerCaFilePem="${OPENSTACK_DASHBOARD_LOCATION}/openstack_dashboard/conf/as-ssl.crt.pem"
 rm -f ${apache2MtwilsonServerCaFilePem}
 cp ${mtwilsonServerCaFilePem} ${apache2MtwilsonServerCaFilePem}
-chmod 644 ${mtwilsonServerCaFilePem}
+chmod 644 ${apache2MtwilsonServerCaFilePem}
 
 openstackDashboardSettingsFile="$OPENSTACK_DASHBOARD_LOCATION/openstack_dashboard/settings.py"
 if [ ! -f "$openstackDashboardSettingsFile" ]; then
