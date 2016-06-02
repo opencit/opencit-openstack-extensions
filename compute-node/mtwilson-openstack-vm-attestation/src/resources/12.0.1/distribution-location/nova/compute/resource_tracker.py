@@ -925,14 +925,14 @@ class ResourceTracker(object):
             # Setup the SSL context for certificate verification
 
             if  hasattr(ssl,'SSLContext') and CONF.trusted_computing.attestation_server_ca_file:
-                LOG.info("Using SSL context HTTPS client connection to attestation server with SSL certifcate verification")
+                LOG.info("Using SSL context HTTPS client connection to attestation server with SSL certificate verification")
                 as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
                 as_context.verify_mode = ssl.CERT_REQUIRED
                 as_context.check_hostname = True
                 as_context.load_verify_locations(CONF.trusted_computing.attestation_server_ca_file)
                 c = httplib.HTTPSConnection(host, port=port, context=as_context)
             else:
-                LOG.info("Using socket HTTPS client connection to attestation server with SSL certifcate verification")
+                LOG.info("Using socket HTTPS client connection to attestation server with SSL certificate verification")
                 c = HTTPSClientAuthConnection(host, port, key_file=None, cert_file=None, ca_file=CONF.trusted_computing.attestation_server_ca_file)
 
             c.request('POST', attestation_url, jsonutils.dumps(params), headers)
