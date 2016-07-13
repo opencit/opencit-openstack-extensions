@@ -948,7 +948,11 @@ class ResourceTracker(object):
                     help='Attestation server IP'),
                 cfg.StrOpt('attestation_server_port',
                     help='Attestation server port'),
-            ]
+                cfg.StrOpt('attestation_api_url',
+                    help='Attestation server API url'),
+                cfg.StrOpt('attestation_auth_blob',
+                    help='Attestation server authentication details'),         
+]
 
             # Read the configuration params from nova.conf
             CONF_ATTEST = cfg.CONF
