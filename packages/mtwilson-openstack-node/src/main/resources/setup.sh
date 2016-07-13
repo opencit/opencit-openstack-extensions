@@ -107,6 +107,11 @@ if [ -z "$mtwilsonServerPort" ]; then
   echo_failure "Error reading Mtwilson server port from configuration"
   exit -1
 fi
+mtwilsonServerTlsCertSha1=$(tagent config "mtwilson.tls.cert.sha1")
+if [ -z "$mtwilsonServerTlsCertSha1" ]; then
+  echo_failure "Error reading Mtwilson server TLS certificate SHA1 from configuration"
+  exit -1
+fi
 mtwilsonVmAttestationApiUsername=$(tagent config "mtwilson.api.username")
 if [ -z "$mtwilsonVmAttestationApiUsername" ]; then
   echo_failure "Error reading Mtwilson VM attestation API username from configuration"
@@ -119,6 +124,31 @@ if [ -z "$mtwilsonVmAttestationApiPassword" ]; then
 fi
 mtwilsonVmAttestationApiUrlPath="/mtwilson/v2/vm-attestations"
 mtwilsonVmAttestationAuthBlob="'$mtwilsonVmAttestationApiUsername:$mtwilsonVmAttestationApiPassword'"
+mtwilsonServerCaFile="/etc/nova/as-ssl.crt"
+mtwilsonServerCaFilePem="${mtwilsonServerCaFile}.pem"
+
+# file operations
+mkdir -p $(dirname ${mtwilsonServerCaFile})
+rm -f ${mtwilsonServerCaFile}
+rm -f ${mtwilsonServerCaFilePem}
+
+# download mtwilson server ssl cert
+openssl s_client -showcerts -connect ${mtwilsonServer}:${mtwilsonServerPort} </dev/null 2>/dev/null | openssl x509 -outform DER > ${mtwilsonServerCaFile}
+
+# take the sha1 of the downloaded mtwilson server ssl cert
+measured_server_tls_cert_sha1=$(sha1sum ${mtwilsonServerCaFile} 2>/dev/null | cut -f1 -d " ")
+
+# compare the mtwilson server measure ssl cert sha1 to the value defined in the trustagent config
+if [ "${mtwilsonServerTlsCertSha1}" != "${measured_server_tls_cert_sha1}" ]; then
+  echo "SHA1 of downloaded SSL certificate [${measured_server_tls_cert_sha1}] does not match the expected value [${mtwilsonServerTlsCertSha1}]"
+  rm -f ${mtwilsonServerCaFile}
+  rm -f ${mtwilsonServerCaFilePem}
+  exit -1
+fi
+
+# convert DER to PEM formatted cert
+openssl x509 -inform der -in ${mtwilsonServerCaFile} -out ${mtwilsonServerCaFilePem}
+chown nova:nova ${mtwilsonServerCaFilePem}
 
 function openstack_update_property_in_file() {
   local property="${1}"
@@ -183,6 +213,7 @@ function updateNovaConf() {
   if [ -n "$propertyExists" ]; then
     openstack_update_property_in_file "$property" "$novaConfFile" "$value"
   else
+    echo -e "\n" >> "$novaConfFile"
     # insert at end of header block
     sed -e '/^\['${header}'\]/{:a;n;/^$/!ba;i\'${property}'='${value} -e '}' -i "$novaConfFile"
   fi
@@ -200,6 +231,7 @@ if [ ! -f "$novaConfFile"  ]; then
 fi
 updateNovaConf "attestation_server_ip" "$mtwilsonServer" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_server_port" "$mtwilsonServerPort" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_server_ca_file" "$mtwilsonServerCaFilePem" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_api_url" "$mtwilsonVmAttestationApiUrlPath" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_auth_blob" "$mtwilsonVmAttestationAuthBlob" "trusted_computing" "$novaConfFile"
 
@@ -344,7 +376,7 @@ function applyPatches() {
 
 ### Apply patches
 if [ -z "$DEPLOYMENT_TYPE" ]
-then DEPLOYMENT_TYPE="VM"
+then DEPLOYMENT_TYPE="vm"
 fi
 
 if [ $DEPLOYMENT_TYPE = "docker" ] || [ $DEPLOYMENT_TYPE = "standalone_docker" ]
@@ -427,7 +459,7 @@ done
 # extract mtwilson-openstack-node  (mtwilson-openstack-node-zip-0.1-SNAPSHOT.zip)
 MTWILSON_OPENSTACK_ZIPFILES=""
 if [ -z "$DEPLOYMENT_TYPE" ]
-then DEPLOYMENT_TYPE="VM"
+then DEPLOYMENT_TYPE="vm"
 fi
 
 if [ $DEPLOYMENT_TYPE = "docker" ]
