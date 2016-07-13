@@ -92,6 +92,9 @@ done
 while [ -z "$MTWILSON_SERVER_PORT" ]; do
   prompt_with_default MTWILSON_SERVER_PORT "Mtwilson Server Port:" "8443"
 done
+while [ -z "$MTWILSON_TLS_CERT_SHA1" ]; do
+  prompt_with_default_password MTWILSON_TLS_CERT_SHA1 "Mtwilson Server TLS Certificate SHA1:" "$MTWILSON_TLS_CERT_SHA1"
+done
 while [ -z "$MTWILSON_ASSET_TAG_API_USERNAME" ]; do
   prompt_with_default MTWILSON_ASSET_TAG_API_USERNAME "Mtwilson Asset Tag API Username:" "tagadmin"
 done
@@ -100,11 +103,43 @@ while [ -z "$MTWILSON_ASSET_TAG_API_PASSWORD" ]; do
 done
 mtwilsonAssetTagAuthBlob="$MTWILSON_ASSET_TAG_API_USERNAME:$MTWILSON_ASSET_TAG_API_PASSWORD"
 
-# update openstack-dashboard settings.py
+# set mtwilson ca certificate paths
+mtwilsonServerCaFile="/etc/nova/as-ssl.crt"
+mtwilsonServerCaFilePem="${mtwilsonServerCaFile}.pem"
 
+# file operations
+mkdir -p $(dirname ${mtwilsonServerCaFile})
+rm -f ${mtwilsonServerCaFile}
+rm -f ${mtwilsonServerCaFilePem}
+
+# download mtwilson server ssl cert
+openssl s_client -showcerts -connect ${MTWILSON_SERVER}:${MTWILSON_SERVER_PORT} </dev/null 2>/dev/null | openssl x509 -outform DER > ${mtwilsonServerCaFile}
+
+# take the sha1 of the downloaded mtwilson server ssl cert
+measured_server_tls_cert_sha1=$(sha1sum ${mtwilsonServerCaFile} 2>/dev/null | cut -f1 -d " ")
+
+# compare the mtwilson server measure ssl cert sha1 to the value defined in the trustagent config
+if [ "${MTWILSON_TLS_CERT_SHA1}" != "${measured_server_tls_cert_sha1}" ]; then
+  echo "SHA1 of downloaded SSL certificate [${measured_server_tls_cert_sha1}] does not match the expected value [${MTWILSON_TLS_CERT_SHA1}]"
+  rm -f ${mtwilsonServerCaFile}
+  rm -f ${mtwilsonServerCaFilePem}
+  exit -1
+fi
+
+# convert DER to PEM formatted cert
+openssl x509 -inform der -in ${mtwilsonServerCaFile} -out ${mtwilsonServerCaFilePem}
+chown nova:nova ${mtwilsonServerCaFilePem}
+
+# update openstack-dashboard settings.py
 if [ "$OPENSTACK_DASHBOARD_LOCATION" == "" ]; then
  OPENSTACK_DASHBOARD_LOCATION="/usr/share/openstack-dashboard"
 fi
+
+# copy mtwilson ca certificate to path accessible by apache2 server and set ownership and permission
+apache2MtwilsonServerCaFilePem="${OPENSTACK_DASHBOARD_LOCATION}/openstack_dashboard/conf/as-ssl.crt.pem"
+rm -f ${apache2MtwilsonServerCaFilePem}
+cp ${mtwilsonServerCaFilePem} ${apache2MtwilsonServerCaFilePem}
+chmod 644 ${apache2MtwilsonServerCaFilePem}
 
 openstackDashboardSettingsFile="$OPENSTACK_DASHBOARD_LOCATION/openstack_dashboard/settings.py"
 if [ ! -f "$openstackDashboardSettingsFile" ]; then
@@ -130,7 +165,8 @@ echo "    'certificate_url': '/certificate-requests'," >> "$openstackDashboardSe
 echo "    'auth_blob': '$mtwilsonAssetTagAuthBlob'," >> "$openstackDashboardSettingsFile"
 echo "    'api_url': '/mtwilson/v2/host-attestations'," >> "$openstackDashboardSettingsFile"
 echo "    'host_url': '/mtwilson/v2/hosts'," >> "$openstackDashboardSettingsFile"
-echo "    'tags_url': '/mtwilson/v2/tag-kv-attributes.json?filter=false'" >> "$openstackDashboardSettingsFile"
+echo "    'tags_url': '/mtwilson/v2/tag-kv-attributes.json?filter=false'," >> "$openstackDashboardSettingsFile"
+echo "    'attestation_server_ca_file': '$apache2MtwilsonServerCaFilePem'" >> "$openstackDashboardSettingsFile"
 echo "}" >> "$openstackDashboardSettingsFile"
 
 function openstack_update_property_in_file() {
@@ -196,6 +232,7 @@ function updateNovaConf() {
   if [ -n "$propertyExists" ]; then
     openstack_update_property_in_file "$property" "$novaConfFile" "$value"
   else
+    echo -e "\n" >> "$novaConfFile"
     # insert at end of header block
     sed -e '/^\['${header}'\]/{:a;n;/^$/!ba;i\'${property}'='${value} -e '}' -i "$novaConfFile"
   fi
@@ -216,7 +253,7 @@ updateNovaConf "attestation_port" "$MTWILSON_SERVER_PORT" "trusted_computing" "$
 updateNovaConf "attestation_auth_blob" "$mtwilsonAssetTagAuthBlob" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_api_url" "/mtwilson/v2/host-attestations" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_host_url" "/mtwilson/v2/hosts" "trusted_computing" "$novaConfFile"
-updateNovaConf "attestation_server_ca_file" "/etc/nova/ssl.crt" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_server_ca_file" "${mtwilsonServerCaFilePem}" "trusted_computing" "$novaConfFile"
 updateNovaConf "scheduler_driver" "nova.scheduler.filter_scheduler.FilterScheduler" "DEFAULT" "$novaConfFile"
 schedulerDefaultFiltersExists=$(grep '^scheduler_default_filters=' "$novaConfFile")
 if [ -n "$schedulerDefaultFiltersExists" ]; then
