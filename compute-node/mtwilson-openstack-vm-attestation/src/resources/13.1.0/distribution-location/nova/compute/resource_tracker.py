@@ -944,23 +944,7 @@ class ResourceTracker(object):
          # Call the Intel(R) Cloud Integrity Technology server to retrieve the Trust status of the VM
     def set_instance_attestation_status(self, instance):
         try:
-
-            attestation_opts = [
-                cfg.StrOpt('attestation_server_ip',
-                    help='Attestation server IP'),
-                cfg.StrOpt('attestation_server_port',
-                    help='Attestation server port'),
-                cfg.StrOpt('attestation_api_url',
-                    help='Attestation server API url'),
-                cfg.StrOpt('attestation_auth_blob',
-                    help='Attestation server authentication details'),
-]
-
             # Read the configuration params from nova.conf
-            CONF_ATTEST = cfg.CONF
-            trust_group = cfg.OptGroup(name='trusted_computing', title='Trust parameters')
-            CONF_ATTEST.register_group(trust_group)
-            CONF_ATTEST.register_opts(attestation_opts, group=trust_group)
 
             host = CONF.trusted_computing.attestation_server_ip #'10.1.68.95'
             port = CONF.trusted_computing.attestation_server_port #'10.1.68.95'
