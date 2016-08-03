@@ -430,6 +430,18 @@ function find_patch() {
       fi
     done
   fi
+  
+  if [ -z $patch_dir ]; then
+    patch="0"
+    for i in $(seq $minor -1 0); do
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch ]; then
+        patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch
+        break
+      fi
+    done
+  fi
+
   if [ -z $patch_dir ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor ]; then
     patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor
   fi

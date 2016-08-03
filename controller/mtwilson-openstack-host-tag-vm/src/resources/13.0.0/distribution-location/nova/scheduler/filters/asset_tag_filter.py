@@ -70,31 +70,7 @@ import random
 
 LOG = logging.getLogger(__name__)
 
-trusted_opts = [
-    cfg.StrOpt('attestation_server',
-               help='attestation server http'),
-    cfg.StrOpt('attestation_server_ca_file',
-               help='attestation server Cert file for Identity verification'),
-    cfg.StrOpt('attestation_port',
-               default='8443',
-               help='attestation server port'),
-    cfg.StrOpt('attestation_api_url',
-               default='/mtwilson/v2/host-attestations',
-               help='attestation web API URL'),
-    cfg.StrOpt('attestation_host_url',
-               default='/mtwilson/v2/hosts',
-               help='attestation web API URL'),
-    cfg.StrOpt('attestation_auth_blob',
-               help='attestation authorization blob - must change'),
-    cfg.IntOpt('attestation_auth_timeout',
-               default=60,
-               help='Attestation status cache valid period length'),
-]
-
 CONF = cfg.CONF
-trust_group = cfg.OptGroup(name='trusted_computing', title='Trust parameters')
-CONF.register_group(trust_group)
-CONF.register_opts(trusted_opts, group=trust_group)
 
 class HTTPSClientAuthConnection(httplib.HTTPSConnection):
     """
@@ -215,23 +191,30 @@ class TrustAssertionFilter(filters.BaseHostFilter):
         self.compute_nodes = db.compute_node_get_all(admin)
 
 
-    def host_passes(self, host_state, filter_properties):
+    def host_passes(self, host_state, spec_obj):
         """Only return hosts with required Trust level."""
+
+        LOG.error(spec_obj.image.properties.get('mtwilson_trustpolicy_location'))
         verify_asset_tag = False
         verify_trust_status = False
 
-        spec = filter_properties.get('request_spec', {})
-        image_props = spec.get('image', {}).get('properties', {})
+        #spec = filter_properties.get('request_spec', {})
+        image_props = spec_obj.image.properties
 
-	# Get the Tag verification flag from the image properties 
-        tag_selections = image_props.get('tags') # comma seperated values
-        trust_verify = image_props.get('trust') # comma seperated values
+
+        if('trust' in image_props):
+            trust_verify = 'true'
 
         if('mtwilson_trustpolicy_location' in image_props):
             trust_verify = 'true'
-        
+
+        LOG.error(trust_verify)
+
         #if tag_selections is None or tag_selections == 'Trust':
         if trust_verify == 'true':
+	    # Get the Tag verification flag from the image properties 
+            tag_selections = image_props.get('tags') # comma seperated values
+            LOG.error(tag_selections)
             verify_trust_status = True
             if tag_selections != None and tag_selections != {} and  tag_selections != 'None':
                 verify_asset_tag = True

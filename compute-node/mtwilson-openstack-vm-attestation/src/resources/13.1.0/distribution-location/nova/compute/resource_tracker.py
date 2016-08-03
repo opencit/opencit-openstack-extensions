@@ -938,11 +938,12 @@ class ResourceTracker(object):
 			(('measurement_status' in instance['metadata']) and instance['metadata']['measurement_status'] == 'na')):
 		    self.set_instance_attestation_status(instance)
                 self._update_usage_from_instance(context, instance)
+        self.compute_node.free_ram_mb = max(0, self.compute_node.free_ram_mb)
+        self.compute_node.free_disk_gb = max(0, self.compute_node.free_disk_gb)
 
          # Call the Intel(R) Cloud Integrity Technology server to retrieve the Trust status of the VM
     def set_instance_attestation_status(self, instance):
         try:
-
             # Read the configuration params from nova.conf
 
             host = CONF.trusted_computing.attestation_server_ip #'10.1.68.95'

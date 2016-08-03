@@ -19,12 +19,7 @@ scheduler with useful information about availability through the ComputeNode
 model.
 """
 import copy
-import httplib
-import urllib
-from base64 import b64encode
-import random
 
-from lxml import etree
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
@@ -929,112 +924,10 @@ class ResourceTracker(object):
 
         for instance in instances:
             if instance.vm_state not in vm_states.ALLOW_RESOURCE_REMOVAL:
-		if(instance.vm_state != vm_states.ACTIVE and instance.vm_state != vm_states.ERROR):
-			continue
-
-		if(('measurement_policy' not in instance['metadata']) or
-			(('measurement_policy' in instance['metadata']) and instance['metadata']['measurement_policy'] == 'na') or
-			('measurement_status' not in instance['metadata']) or
-			(('measurement_status' in instance['metadata']) and instance['metadata']['measurement_status'] == 'na')):
-		    self.set_instance_attestation_status(instance)
                 self._update_usage_from_instance(context, instance)
+        self.compute_node.free_ram_mb = max(0, self.compute_node.free_ram_mb)
+        self.compute_node.free_disk_gb = max(0, self.compute_node.free_disk_gb)
 
-         # Call the Intel(R) Cloud Integrity Technology server to retrieve the Trust status of the VM
-    def set_instance_attestation_status(self, instance):
-        try:
-
-            # Read the configuration params from nova.conf
-
-            host = CONF.trusted_computing.attestation_server_ip #'10.1.68.95'
-            port = CONF.trusted_computing.attestation_server_port #'10.1.68.95'
-            attestation_url = CONF.trusted_computing.attestation_api_url# + '?hostNameEqualTo=' + CONF.my_ip + '&vmInstanceIdEqualTo=' + instance.uuid
-            auth_blob = CONF.trusted_computing.attestation_auth_blob #'admin:password'
-            c = httplib.HTTPSConnection(host + ':' + port)
-            userAndPass = b64encode(auth_blob).decode("ascii")
-
-            # Setup the header & body for the request
-            headers = { 'Authorization' : 'Basic %s' %  userAndPass, 'Accept': 'application/samlassertion+xml', 'Content-Type': 'application/json' }
-
-            params = None
-            container_id=None
-            if CONF.compute_driver == "novadocker.virt.docker.DockerDriver":
-                container_id = self.driver._get_container_id(instance)
-                params = {'host_name': instance.host, 'vm_instance_id': container_id}
-            else :
-                params = {'host_name': instance.host, 'vm_instance_id': instance.uuid}
-            c.request('POST', attestation_url, jsonutils.dumps(params), headers)
-            res = c.getresponse()
-            res_data = res.read()
-            # Parse the SAML assertion to get the relevant details
-            policy_name, policy_status = self.verify_and_parse_saml(res_data)
-
-            if policy_name == 'na':
-                if CONF.compute_driver == "novadocker.virt.docker.DockerDriver":
-                    params = {'host_name': CONF.my_ip, 'vm_instance_id': container_id}
-                else :
-                    params = {'host_name': CONF.my_ip, 'vm_instance_id': instance.uuid}
-                c.request('POST', attestation_url, jsonutils.dumps(params), headers)
-                res = c.getresponse()
-                res_data = res.read()
-                policy_name, policy_status = self.verify_and_parse_saml(res_data)
-
-            # If policy_name is not available do not try again as VM might be non-measured. Once response from CIT
-            # clearly mentions reason for failure we can add some more logic here. For now do not retry.
-            if policy_name == 'na':
-                policy_name = 'non-measured'
-
-            instance['metadata']['measurement_policy'] = policy_name
-            instance['metadata']['measurement_status'] = policy_status
-            instance.save()
-        except Exception as e:
-            LOG.error("Exception retrieving the VM attestation details")
-            LOG.error(e)
-            return ""
-
-     # Method to verify and parse the SAML assertion to et the trust polocy and status
-    def verify_and_parse_saml(self, saml_data):
-        policy_name = 'na'
-        policy_status = False
-
-        # Trust attestation service responds with a JSON in case the given host name is not found
-        # Need to update this after the mt. wilson service is updated to return consistent message formats
-        try:
-            if json.loads(saml_data):
-                return policy_name, policy_status
-        except:
-            LOG.debug("System does not exist in the Mt. Wilson portal")
-
-        ns = {'saml2p': '{urn:oasis:names:tc:SAML:2.0:protocol}',
-              'saml2': '{urn:oasis:names:tc:SAML:2.0:assertion}'}
-
-        try:
-            # xpath strings
-            xp_attributestatement = '{saml2}AttributeStatement/{saml2}Attribute'.format(**ns)
-            xp_attributevalue = '{saml2}AttributeValue'.format(**ns)
-
-            LOG.error(saml_data);
-
-            doc = etree.XML(saml_data)
-            elements = doc.findall(xp_attributestatement)
-
-            for el in elements:
-                if el.attrib['Name'].lower() == 'vm_trust_status':
-                    policy_status = el.find(xp_attributevalue).text
-                elif el.attrib['Name'].lower() == 'vm_trust_policy':
-                    policy_name = el.find(xp_attributevalue).text
-
-            LOG.error(policy_name)
-            LOG.error(policy_status)
-
-            return policy_name, policy_status
-        except:
-            LOG.error("Exception while getting VM Attestation report. This could be because of either VM is not measured or is shutdown");
-            return policy_name, policy_status
-
-
-
-    
-	
     def _find_orphaned_instances(self):
         """Given the set of instances and migrations already account for
         by resource tracker, sanity check the hypervisor to determine
