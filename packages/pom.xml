@@ -8,7 +8,6 @@
     <packaging>pom</packaging>
     
     <modules>
-        <module>mtwilson-openstack-controller</module>
         <module>mtwilson-openstack-node</module>
         <module>mtwilson-openstack-trusted-node-rhel</module>
         <module>mtwilson-openstack-trusted-node-ubuntu</module>
