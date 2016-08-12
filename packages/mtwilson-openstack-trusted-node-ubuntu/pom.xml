@@ -50,13 +50,14 @@
             <artifactId>mtwilson-openstack-node</artifactId>
             <version>${project.version}</version>
             <type>bin</type>
-        </dependency>
-	<dependency>
-            <groupId>com.intel.mtwilson.docker.packages</groupId>
-            <artifactId>mtwilson-docker</artifactId>
+		<!--
+        <dependency>
+            <groupId>com.intel.mtwilson.docker-proxy</groupId>
+            <artifactId>docker-proxy</artifactId>
             <version>${project.version}</version>
             <type>bin</type>
         </dependency>
+		-->
     </dependencies>
     
 </project>

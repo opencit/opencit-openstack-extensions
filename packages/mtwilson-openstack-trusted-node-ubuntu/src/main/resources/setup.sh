@@ -112,15 +112,15 @@ if [ -z "$DEPLOYMENT_TYPE" ]
 fi
 
 if [ $DEPLOYMENT_TYPE == "docker" ]; then
-	### INSTALL MTWILSON DOCKER
-	echo "Installing mtwilson docker..."
-	DOCKER_PACKAGE=`ls -1 mtwilson-docker-*.bin 2>/dev/null | tail -n 1`
-	if [ -z "$DOCKER_PACKAGE" ]; then
-		echo_failure "Failed to find mtwilson docker installer package"
-		exit -1
+	### INSTALL DOCKER PROXY
+	echo "Installing docker. proxy.."
+	DOCKER_PROXY_PACKAGE=`ls -1 docker-proxy-*.bin 2>/dev/null | tail -n 1`
+	if [ -z "$DOCKER_PROXY_PACKAGE" ]; then
+		echo_failure "Failed to find  docker proxy installer package"
+		#exit -1
 	fi
-	./$DOCKER_PACKAGE
-	if [ $? -ne 0 ]; then echo_failure "Failed to install mtwilson docker"; exit -1; fi
+	#./$DOCKER_PROXY_PACKAGE
+	#if [ $? -ne 0 ]; then echo_failure "Failed to install docker proxy"; exit -1; fi
 fi
 
 echo_success "Virtualized Server Installation Complete"
