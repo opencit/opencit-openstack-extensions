@@ -50,6 +50,7 @@
             <artifactId>mtwilson-openstack-node</artifactId>
             <version>${project.version}</version>
             <type>bin</type>
+		</dependency>
 		<!--
         <dependency>
             <groupId>com.intel.mtwilson.docker-proxy</groupId>
