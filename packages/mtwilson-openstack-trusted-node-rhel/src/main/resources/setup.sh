@@ -119,8 +119,8 @@ if [ $DEPLOYMENT_TYPE == "docker" ]; then
 		echo_failure "Failed to find  docker proxy installer package"
 		#exit -1
 	fi
-	#./$DOCKER_PROXY_PACKAGE
-	#if [ $? -ne 0 ]; then echo_failure "Failed to install docker proxy"; exit -1; fi
+	./$DOCKER_PROXY_PACKAGE
+	if [ $? -ne 0 ]; then echo_failure "Failed to install docker proxy"; exit -1; fi
 fi
 
 echo_success "Virtualized Server Installation Complete"
