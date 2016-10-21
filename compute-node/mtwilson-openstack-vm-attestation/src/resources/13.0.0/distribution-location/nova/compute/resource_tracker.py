@@ -23,6 +23,8 @@ import httplib
 import urllib
 from base64 import b64encode
 import random
+import socket
+import ssl
 
 from lxml import etree
 from oslo_config import cfg
@@ -949,7 +951,7 @@ class ResourceTracker(object):
             port = CONF.trusted_computing.attestation_server_port #'10.1.68.95'
             attestation_url = CONF.trusted_computing.attestation_api_url# + '?hostNameEqualTo=' + CONF.my_ip + '&vmInstanceIdEqualTo=' + instance.uuid
             auth_blob = CONF.trusted_computing.attestation_auth_blob #'admin:password'
-            c = httplib.HTTPSConnection(host + ':' + port)
+
             userAndPass = b64encode(auth_blob).decode("ascii")
 
             # Setup the header & body for the request
@@ -962,6 +964,20 @@ class ResourceTracker(object):
                 params = {'host_name': instance.host, 'vm_instance_id': container_id}
             else :
                 params = {'host_name': instance.host, 'vm_instance_id': instance.uuid}
+
+            # Setup the SSL context for certificate verification
+
+            if  hasattr(ssl,'SSLContext') and CONF.trusted_computing.attestation_server_ca_file:
+                LOG.info("Using SSL context HTTPS client connection to attestation server with SSL certificate verification")
+                as_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+                as_context.verify_mode = ssl.CERT_REQUIRED
+                as_context.check_hostname = True
+                as_context.load_verify_locations(CONF.trusted_computing.attestation_server_ca_file)
+                c = httplib.HTTPSConnection(host, port=port, context=as_context)
+            else:
+                LOG.info("Using socket HTTPS client connection to attestation server with SSL certificate verification")
+                c = HTTPSClientAuthConnection(host, port, key_file=None, cert_file=None, ca_file=CONF.trusted_computing.attestation_server_ca_file)
+
             c.request('POST', attestation_url, jsonutils.dumps(params), headers)
             res = c.getresponse()
             res_data = res.read()
@@ -1116,3 +1132,36 @@ class ResourceTracker(object):
             if key in updates:
                 usage[key] = updates[key]
         return usage
+
+
+class HTTPSClientAuthConnection(httplib.HTTPSConnection):
+    """
+    Class to make a HTTPS connection, with support for full client-based
+    SSL Authentication
+    """
+
+    def __init__(self, host, port, key_file, cert_file, ca_file, timeout=None):
+        httplib.HTTPSConnection.__init__(self, host,
+                                         key_file=key_file,
+                                         cert_file=cert_file)
+        self.host = host
+        self.port = port
+        self.key_file = key_file
+        self.cert_file = cert_file
+        self.ca_file = ca_file
+        self.timeout = timeout
+
+    def connect(self):
+        """
+        Connect to a host on a given (SSL) port.
+        If ca_file is pointing somewhere, use it to check Server Certificate.
+
+        Redefined/copied and extended from httplib.py:1105 (Python 2.6.x).
+        This is needed to pass cert_reqs=ssl.CERT_REQUIRED as parameter to
+        ssl.wrap_socket(), which forces SSL to check server certificate
+        against our client certificate.
+        """
+        sock = socket.create_connection((self.host, self.port), self.timeout)
+        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                    ca_certs=self.ca_file,
+                                    cert_reqs=ssl.CERT_REQUIRED)
