@@ -279,8 +279,8 @@ function openstackRestart() {
 	 ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
 	 nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &	
     else
-	service nova-api-metadata restart
-    	service nova-network restart
+		service nova-api-metadata restart >  /dev/null 2>&1
+    	service nova-network restart >  /dev/null 2>&1
     	service nova-compute restart
 	fi
   elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
@@ -292,8 +292,8 @@ function openstackRestart() {
          ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
          nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
     else
-        service openstack-nova-metadata-api restart
-        service openstack-nova-network restart
+        service openstack-nova-metadata-api restart >  /dev/null 2>&1
+        service openstack-nova-network restart >  /dev/null 2>&1
         service openstack-nova-compute restart
     fi
   else
