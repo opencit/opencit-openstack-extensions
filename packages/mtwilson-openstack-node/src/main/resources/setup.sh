@@ -107,8 +107,8 @@ if [ -z "$mtwilsonServerPort" ]; then
   echo_failure "Error reading Mtwilson server port from configuration"
   exit -1
 fi
-mtwilsonServerTlsCertSha1=$(tagent config "mtwilson.tls.cert.sha1")
-if [ -z "$mtwilsonServerTlsCertSha1" ]; then
+mtwilsonServerTlsCertSha256=$(tagent config "mtwilson.tls.cert.sha256")
+if [ -z "$mtwilsonServerTlsCertSha256" ]; then
   echo_failure "Error reading Mtwilson server TLS certificate SHA1 from configuration"
   exit -1
 fi
@@ -136,11 +136,11 @@ rm -f ${mtwilsonServerCaFilePem}
 openssl s_client -showcerts -connect ${mtwilsonServer}:${mtwilsonServerPort} </dev/null 2>/dev/null | openssl x509 -outform DER > ${mtwilsonServerCaFile}
 
 # take the sha1 of the downloaded mtwilson server ssl cert
-measured_server_tls_cert_sha1=$(sha1sum ${mtwilsonServerCaFile} 2>/dev/null | cut -f1 -d " ")
+measured_server_tls_cert_sha256=$(sha256sum ${mtwilsonServerCaFile} 2>/dev/null | cut -f1 -d " ")
 
 # compare the mtwilson server measure ssl cert sha1 to the value defined in the trustagent config
-if [ "${mtwilsonServerTlsCertSha1}" != "${measured_server_tls_cert_sha1}" ]; then
-  echo "SHA1 of downloaded SSL certificate [${measured_server_tls_cert_sha1}] does not match the expected value [${mtwilsonServerTlsCertSha1}]"
+if [ "${mtwilsonServerTlsCertSha256}" != "${measured_server_tls_cert_sha256}" ]; then
+  echo "SHA256 of downloaded SSL certificate [${measured_server_tls_cert_sha256}] does not match the expected value [${mtwilsonServerTlsCertSha256}]"
   rm -f ${mtwilsonServerCaFile}
   rm -f ${mtwilsonServerCaFilePem}
   exit -1
