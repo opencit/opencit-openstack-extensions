@@ -133,7 +133,7 @@ rm -f ${mtwilsonServerCaFile}
 rm -f ${mtwilsonServerCaFilePem}
 
 # download mtwilson server ssl cert
-openssl s_client -showcerts -connect ${mtwilsonServer}:${mtwilsonServerPort} </dev/null 2>/dev/null | openssl x509 -outform DER > ${mtwilsonServerCaFile}
+/opt/trustagent/share/openssl/bin/openssl s_client -showcerts -connect ${mtwilsonServer}:${mtwilsonServerPort} </dev/null 2>/dev/null | /opt/trustagent/share/openssl/bin/openssl x509 -outform DER > ${mtwilsonServerCaFile}
 
 # take the sha1 of the downloaded mtwilson server ssl cert
 measured_server_tls_cert_sha256=$(sha256sum ${mtwilsonServerCaFile} 2>/dev/null | cut -f1 -d " ")
@@ -147,7 +147,7 @@ if [ "${mtwilsonServerTlsCertSha256}" != "${measured_server_tls_cert_sha256}" ];
 fi
 
 # convert DER to PEM formatted cert
-openssl x509 -inform der -in ${mtwilsonServerCaFile} -out ${mtwilsonServerCaFilePem}
+/opt/trustagent/share/openssl/bin/openssl x509 -inform der -in ${mtwilsonServerCaFile} -out ${mtwilsonServerCaFilePem}
 chown nova:nova ${mtwilsonServerCaFilePem}
 
 function openstack_update_property_in_file() {
