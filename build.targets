@@ -1,3 +1,2 @@
 packages/mtwilson-openstack-node/target/mtwilson-openstack-node-3.1-SNAPSHOT.bin
-packages/mtwilson-openstack-trusted-node-rhel/target/mtwilson-openstack-trusted-node-rhel-3.1-SNAPSHOT.bin
-packages/mtwilson-openstack-trusted-node-ubuntu/target/mtwilson-openstack-trusted-node-ubuntu-3.1-SNAPSHOT.bin
+packages/mtwilson-openstack-trusted-node/target/mtwilson-openstack-trusted-node*.bin
