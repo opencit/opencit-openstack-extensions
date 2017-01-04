@@ -1162,7 +1162,7 @@ class HTTPSClientAuthConnection(httplib.HTTPSConnection):
         against our client certificate.
         """
         ssl_ver = ssl.PROTOCOL_SSLv23
-	    if hasattr(ssl, "PROTOCOL_TLS1_2"):
+        if hasattr(ssl, "PROTOCOL_TLS1_2"):
             ssl_ver = ssl.PROTOCOL_TLS1_2
         sock = socket.create_connection((self.host, self.port), self.timeout)
         self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
