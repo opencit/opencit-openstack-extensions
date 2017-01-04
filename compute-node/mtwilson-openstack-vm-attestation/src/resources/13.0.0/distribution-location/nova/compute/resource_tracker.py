@@ -1161,7 +1161,10 @@ class HTTPSClientAuthConnection(httplib.HTTPSConnection):
         ssl.wrap_socket(), which forces SSL to check server certificate
         against our client certificate.
         """
+		ssl_ver = ssl.PROTOCOL_SSLv23
+	    if hasattr(ssl, "PROTOCOL_TLS1_2"):
+            ssl_ver = ssl.PROTOCOL_TLS1_2
         sock = socket.create_connection((self.host, self.port), self.timeout)
         self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
                                     ca_certs=self.ca_file,
-                                    cert_reqs=ssl.CERT_REQUIRED)
+                                    cert_reqs=ssl.CERT_REQUIRED,ssl_version=ssl_ver)
