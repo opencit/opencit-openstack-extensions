@@ -79,7 +79,7 @@
 		</exec>
     </target>
 
-	   <target name="build-with-scans">
+    <target name="build-with-scans">
 	        <parallel>
         	    <exec executable="ant">
 	                <arg value="all"/>
@@ -88,5 +88,5 @@
         	        <arg value="klocwork"/>
 	            </exec>
 	        </parallel>
-	    </target>
+    </target>
 </project>
