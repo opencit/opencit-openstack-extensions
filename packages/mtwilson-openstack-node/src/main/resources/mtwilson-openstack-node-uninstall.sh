@@ -18,7 +18,8 @@
 # default settings
 # note the layout setting is used only by this script
 # and it is not saved or used by the app script
-
+COMPUTE_COMPONENTS=""
+DEPLOYMENT_TYPE=""
 export OPENSTACK_EXT_HOME=${OPENSTACK_EXT_HOME:-/opt/openstack-ext}
 OPENSTACK_EXT_LAYOUT=${OPENSTACK_EXT_LAYOUT:-home}
 
@@ -164,7 +165,16 @@ function getDistributionLocation() {
 }
 
 ### PATCH REVERSAL ###
-COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
+if [ -z "$DEPLOYMENT_TYPE" ]
+then DEPLOYMENT_TYPE="VM"
+fi
+
+if [ $DEPLOYMENT_TYPE = "docker" ] || [ $DEPLOYMENT_TYPE = "standalone_docker" ]
+then COMPUTE_COMPONENTS="mtwilson-openstack-vm-attestation"
+else COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
+fi
+
+#COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
 FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion)
@@ -199,6 +209,18 @@ function find_patch() {
       fi
     done
   fi
+  
+  if [ -z $patch_dir ]; then
+    patch="0"
+    for i in $(seq $minor -1 0); do
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch ]; then
+        patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch
+        break
+      fi
+    done
+  fi
+
   if [ -z $patch_dir ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor ]; then
     patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor
   fi

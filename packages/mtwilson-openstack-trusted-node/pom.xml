@@ -1,0 +1,236 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <groupId>com.intel.mtwilson.openstack.packages</groupId>
+    <artifactId>mtwilson-openstack-trusted-node</artifactId>
+    
+    <packaging>pom</packaging>
+    <description>Self-extracting executable that installs the Mystery Hill compute node comprehensive packages</description>
+    
+    <parent>
+        <groupId>com.intel.mtwilson.openstack.packages</groupId>
+        <artifactId>mtwilson-openstack-maven-build-packages</artifactId>
+        <version>3.1-SNAPSHOT</version>
+    </parent>
+    
+    <properties>
+        <!-- this becomes the installer filename, like ${makeself.name}.bin -->
+        <makeself.name>${project.artifactId}-${project.version}</makeself.name>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>com.intel.mtwilson.linux</groupId>
+            <artifactId>mtwilson-linux-util</artifactId>
+            <version>${project.version}</version>
+            <type>sh</type>
+        </dependency>
+        <!--
+        <dependency>
+            <groupId>com.intel.mtwilson.linux</groupId>
+            <artifactId>mtwilson-trustagent-ubuntu</artifactId>
+            <version>${project.version}</version>
+            <type>bin</type>
+        </dependency>
+        <dependency>
+            <groupId>com.intel.mtwilson.vrtm.packages</groupId>
+            <artifactId>vrtm</artifactId>
+            <version>${project.version}</version>
+            <type>bin</type>
+            <classifier>ubuntu</classifier>
+        </dependency>
+        -->
+        <dependency>
+            <groupId>com.intel.mtwilson.policyagent.packages</groupId>
+            <artifactId>mtwilson-policyagent</artifactId>
+            <version>${project.version}</version>
+            <type>bin</type>
+        </dependency>
+        <dependency>
+            <groupId>com.intel.mtwilson.openstack.packages</groupId>
+            <artifactId>mtwilson-openstack-node</artifactId>
+            <version>${project.version}</version>
+            <type>bin</type>
+		</dependency>
+        <dependency>
+            <groupId>com.intel.mtwilson.docker-proxy</groupId>
+            <artifactId>docker-proxy</artifactId>
+            <version>${project.version}</version>
+            <type>bin</type>
+        </dependency>
+    </dependencies>
+    
+    <profiles>
+        <profile>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            
+            <build>
+                <plugins>
+                    <!-- copy all dependencies (non-transitive) to the resources folder for later packaging -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/${makeself.name}</outputDirectory>
+                                    <excludeTransitive>true</excludeTransitive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    
+                    <!-- copy resources plugin -->
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>2.5</version>
+                        <executions>
+                            <execution>
+                                <id>copy-build-resources</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/build</directory>
+                                            <includes>
+                                                <include>**/*</include>
+                                            </includes>
+                                            <filtering>false</filtering>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>copy-application-directories</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/${makeself.name}</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/main/resources</directory>
+                                            <filtering>false</filtering>
+                                        </resource>
+                                    </resources>
+                                </configuration>            
+                            </execution>
+                        </executions>
+                    </plugin>
+                    
+                    <!-- get tboot and tbootxm dependencies plugin -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>get-trustagent-vrtm-dependencies</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <chmod perm="+x" file="${project.build.directory}/get-dependencies.sh"/>
+                                        <mkdir dir="${project.build.directory}/${makeself.name}"/>
+                                        <exec executable="/bin/bash" dir="${project.build.directory}/${makeself.name}" failonerror="true">
+                                            <redirector output="${project.build.directory}/get-dependencies.log" alwayslog="true"/>
+                                            <arg value="-c"/>
+                                            <arg value="../get-dependencies.sh"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>build-makeself-package</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <!-- temporary directory for creating packages -->
+                                        <mkdir dir="/tmp/makeself"/>
+                                        <chmod perm="700" dir="/tmp/makeself"/>
+                                        
+                                        <!-- package directory contains everything that should be included in the installer -->
+                                        <mkdir dir="${project.build.directory}/${makeself.name}"/>
+                                        <chmod perm="700">
+                                            <fileset dir="${project.build.directory}/${makeself.name}">
+                                                <include name="**/*.sh"/>
+                                                <include name="**/*.bin"/>
+                                                <include name="**/*.pl"/>
+                                            </fileset>
+                                        </chmod>
+                                        <exec executable="makeself" dir="${project.build.directory}" resultproperty="mavenExitMakeself">
+                                            <!-- providing the environment variable TMPDIR tells makeself where to put temporary files when extracting at install time; we keep them in user's home directory to prevent world reading and possibly writing in /tmp; problem is ~ is interpreted literally here and if we use ${user.home} it will be interpolated now and won't work during install -->
+                                            <!-- <env key="TMPDIR" value="${user.home}/.tmp"/> -->
+                                            <arg value="--follow"/>
+                                            <arg value="--nocomp"/>
+                                            <!-- <arg value=" - - n o t e m p "/>  makeself needs an option to clean up the non-/tmp dir so disabling until we have that -->
+                                            <arg value="${project.build.directory}/${makeself.name}"/>
+                                            <arg value="${project.build.directory}/${makeself.name}.bin"/>
+                                            <arg value="${makeself.name}"/>
+                                            <arg value="bash"/>
+                                            <arg value="setup.sh"/>
+                                        </exec>
+                                        
+                                        <fail message="Cannot build self-extracting installer" status="${mavenExitMakeself}">
+                                            <condition>
+                                                <not>
+                                                    <equals arg1="${mavenExitMakeself}" arg2="0"/>
+                                                </not>
+                                            </condition>
+                                        </fail>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>attach-artifact</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <loadfile property="distro" srcFile="${project.build.directory}/distro"/>
+                                        <echo>DISTRO=${distro}</echo>
+                                        <move file="${project.build.directory}/${project.artifactId}-${project.version}.bin" tofile="${project.build.directory}/${project.artifactId}-${project.version}-${distro}.bin"/>
+                                        <attachartifact file="${project.build.directory}/${project.artifactId}-${project.version}-${distro}.bin" classifier="${distro}" type="bin"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.apache.ant</groupId>
+                                <artifactId>ant</artifactId>
+                                <version>1.8.4</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>ant-contrib</groupId>
+                                <artifactId>ant-contrib</artifactId>
+                                <version>1.0b3</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    
+</project>

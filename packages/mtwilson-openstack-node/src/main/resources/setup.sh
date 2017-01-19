@@ -23,6 +23,9 @@
 # and it is not saved or used by the app script
 DISTRIBUTION_LOCATION=""
 NOVA_CONFIG_DIR_LOCATION_PATH=""
+COMPUTE_COMPONENTS=""
+DEPLOYMENT_TYPE=""
+
 export OPENSTACK_EXT_HOME=${OPENSTACK_EXT_HOME:-/opt/openstack-ext}
 OPENSTACK_EXT_LAYOUT=${OPENSTACK_EXT_LAYOUT:-home}
 
@@ -104,6 +107,11 @@ if [ -z "$mtwilsonServerPort" ]; then
   echo_failure "Error reading Mtwilson server port from configuration"
   exit -1
 fi
+mtwilsonServerTlsCertSha256=$(tagent config "mtwilson.tls.cert.sha256")
+if [ -z "$mtwilsonServerTlsCertSha256" ]; then
+  echo_failure "Error reading Mtwilson server TLS certificate SHA1 from configuration"
+  exit -1
+fi
 mtwilsonVmAttestationApiUsername=$(tagent config "mtwilson.api.username")
 if [ -z "$mtwilsonVmAttestationApiUsername" ]; then
   echo_failure "Error reading Mtwilson VM attestation API username from configuration"
@@ -116,6 +124,38 @@ if [ -z "$mtwilsonVmAttestationApiPassword" ]; then
 fi
 mtwilsonVmAttestationApiUrlPath="/mtwilson/v2/vm-attestations"
 mtwilsonVmAttestationAuthBlob="'$mtwilsonVmAttestationApiUsername:$mtwilsonVmAttestationApiPassword'"
+mtwilsonServerCaFile="/etc/nova/as-ssl.crt"
+mtwilsonServerCaFilePem="${mtwilsonServerCaFile}.pem"
+
+# file operations
+mkdir -p $(dirname ${mtwilsonServerCaFile})
+rm -f ${mtwilsonServerCaFile}
+rm -f ${mtwilsonServerCaFilePem}
+
+openssl_bin="/opt/trustagent/share/openssl/bin/openssl"
+ld_library_path_file="/opt/trustagent/env.d/trustagent-lib"
+
+if [ -f ${ld_library_path_file} ]; then
+  source ${ld_library_path_file}
+fi
+
+# download mtwilson server ssl cert
+${openssl_bin} s_client -showcerts -connect ${mtwilsonServer}:${mtwilsonServerPort} </dev/null 2>/dev/null | ${openssl_bin} x509 -outform DER > ${mtwilsonServerCaFile}
+
+# take the sha1 of the downloaded mtwilson server ssl cert
+measured_server_tls_cert_sha256=$(sha256sum ${mtwilsonServerCaFile} 2>/dev/null | cut -f1 -d " ")
+
+# compare the mtwilson server measure ssl cert sha1 to the value defined in the trustagent config
+if [ "${mtwilsonServerTlsCertSha256}" != "${measured_server_tls_cert_sha256}" ]; then
+  echo "SHA256 of downloaded SSL certificate [${measured_server_tls_cert_sha256}] does not match the expected value [${mtwilsonServerTlsCertSha256}]"
+  rm -f ${mtwilsonServerCaFile}
+  rm -f ${mtwilsonServerCaFilePem}
+  exit -1
+fi
+
+# convert DER to PEM formatted cert
+${openssl_bin} x509 -inform der -in ${mtwilsonServerCaFile} -out ${mtwilsonServerCaFilePem}
+chown nova:nova ${mtwilsonServerCaFilePem}
 
 function openstack_update_property_in_file() {
   local property="${1}"
@@ -180,6 +220,7 @@ function updateNovaConf() {
   if [ -n "$propertyExists" ]; then
     openstack_update_property_in_file "$property" "$novaConfFile" "$value"
   else
+    echo -e "\n" >> "$novaConfFile"
     # insert at end of header block
     sed -e '/^\['${header}'\]/{:a;n;/^$/!ba;i\'${property}'='${value} -e '}' -i "$novaConfFile"
   fi
@@ -197,6 +238,7 @@ if [ ! -f "$novaConfFile"  ]; then
 fi
 updateNovaConf "attestation_server_ip" "$mtwilsonServer" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_server_port" "$mtwilsonServerPort" "trusted_computing" "$novaConfFile"
+updateNovaConf "attestation_server_ca_file" "$mtwilsonServerCaFilePem" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_api_url" "$mtwilsonVmAttestationApiUrlPath" "trusted_computing" "$novaConfFile"
 updateNovaConf "attestation_auth_blob" "$mtwilsonVmAttestationAuthBlob" "trusted_computing" "$novaConfFile"
 
@@ -244,8 +286,8 @@ function openstackRestart() {
 	 ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
 	 nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &	
     else
-	service nova-api-metadata restart
-    	service nova-network restart
+		service nova-api-metadata restart >  /dev/null 2>&1
+    	service nova-network restart >  /dev/null 2>&1
     	service nova-compute restart
 	fi
   elif [ "$FLAVOUR" == "rhel" -o "$FLAVOUR" == "fedora" -o "$FLAVOUR" == "suse" ] ; then
@@ -257,8 +299,8 @@ function openstackRestart() {
          ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
          nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
     else
-        service openstack-nova-metadata-api restart
-        service openstack-nova-network restart
+        service openstack-nova-metadata-api restart >  /dev/null 2>&1
+        service openstack-nova-network restart >  /dev/null 2>&1
         service openstack-nova-compute restart
     fi
   else
@@ -340,7 +382,16 @@ function applyPatches() {
 }
 
 ### Apply patches
-COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
+if [ -z "$DEPLOYMENT_TYPE" ]
+then DEPLOYMENT_TYPE="vm"
+fi
+
+if [ $DEPLOYMENT_TYPE = "docker" ] || [ $DEPLOYMENT_TYPE = "standalone_docker" ]
+then COMPUTE_COMPONENTS="mtwilson-openstack-vm-attestation"
+else COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
+fi
+
+#COMPUTE_COMPONENTS="mtwilson-openstack-policyagent-hooks mtwilson-openstack-vm-attestation"
 FLAVOUR=$(getFlavour)
 DISTRIBUTION_LOCATION=$(getDistributionLocation)
 version=$(getOpenstackVersion)
@@ -353,6 +404,7 @@ echo "export OPENSTACK_EXT_REPOSITORY=$OPENSTACK_EXT_REPOSITORY" >> $OPENSTACK_E
 echo "export OPENSTACK_EXT_BIN=$OPENSTACK_EXT_BIN" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
 echo "export NOVA_CONFIG_DIR_LOCATION_PATH=$NOVA_CONFIG_DIR_LOCATION_PATH" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
 echo "export DISTRIBUTION_LOCATION=$DISTRIBUTION_LOCATION" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
+echo "export DEPLOYMENT_TYPE=$DEPLOYMENT_TYPE" >> $OPENSTACK_EXT_ENV/openstack-ext-layout
 
 function find_patch() {
   local component=$1
@@ -385,6 +437,18 @@ function find_patch() {
       fi
     done
   fi
+  
+  if [ -z $patch_dir ]; then
+    patch="0"
+    for i in $(seq $minor -1 0); do
+      echo "check for $OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch"
+      if [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch ]; then
+        patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$i.$patch
+        break
+      fi
+    done
+  fi
+
   if [ -z $patch_dir ] && [ -e $OPENSTACK_EXT_REPOSITORY/$component/$major.$minor ]; then
     patch_dir=$OPENSTACK_EXT_REPOSITORY/$component/$major.$minor
   fi
@@ -412,8 +476,17 @@ for component in $COMPUTE_COMPONENTS; do
 done
 
 # extract mtwilson-openstack-node  (mtwilson-openstack-node-zip-0.1-SNAPSHOT.zip)
+MTWILSON_OPENSTACK_ZIPFILES=""
+if [ -z "$DEPLOYMENT_TYPE" ]
+then DEPLOYMENT_TYPE="vm"
+fi
+
+if [ $DEPLOYMENT_TYPE = "docker" ]
+then MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-vm*.zip 2>/dev/null`
+else MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
+fi
 echo "Extracting application..."
-MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
+#MTWILSON_OPENSTACK_ZIPFILES=`ls -1 mtwilson-openstack-node-*.zip 2>/dev/null`
 for MTWILSON_OPENSTACK_ZIPFILE in $MTWILSON_OPENSTACK_ZIPFILES; do
   echo "Extract $MTWILSON_OPENSTACK_ZIPFILE"
   unzip -oq $MTWILSON_OPENSTACK_ZIPFILE -d $OPENSTACK_EXT_REPOSITORY

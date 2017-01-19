@@ -1802,6 +1802,19 @@ class ComputeManager(manager.Manager):
     def _notify_about_instance_usage(self, context, instance, event_suffix,
                                      network_info=None, system_metadata=None,
                                      extra_usage_info=None, fault=None):
+        #Intel CIT changes to update the attestaion status in horizon for container and VM integrity
+        if event_suffix in ['power_off.start', 'power_off.end', 'delete.start', 'delete.end', 'shutdown.start', 'shutdown.end', 'soft_delete.start', 'soft_delete.end','reboot.start' ]:
+        #LOG.info("Resetting measurement status for VM UUID ")
+            instance['metadata']['measurement_policy'] = 'na'
+            instance['metadata']['measurement_status'] = 'na'
+            instance.save()
+        if event_suffix in ['reboot.end']:
+            if(('measurement_policy' not in instance['metadata']) or (('measurement_policy' in instance['metadata']) and instance['metadata']['measurement_policy'] == 'na') or
+                    ('measurement_status' not in instance['metadata']) or (('measurement_status' in instance['metadata'])
+                    and instance['metadata']['measurement_status'] == 'na')):
+                rt = self._get_resource_tracker(instance.node)
+                rt.set_instance_attestation_status(instance)
+
         compute_utils.notify_about_instance_usage(
             self.notifier, context, instance, event_suffix,
             network_info=network_info,
