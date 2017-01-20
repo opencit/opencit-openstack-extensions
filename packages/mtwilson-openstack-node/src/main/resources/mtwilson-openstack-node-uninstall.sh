@@ -110,10 +110,9 @@ function openstackRestart() {
         ps aux | grep python | grep "nova-network" | awk '{print $2}' | xargs kill -9
         nohup nova-network --config-dir $NOVA_CONFIG_DIR_LOCATION_PATH >  /dev/null 2>&1 &
     else
-        service openstack-nova-metadata-api restart
-        service openstack-nova-network restart
-        service openstack-nova-compute restart
-
+        service openstack-nova-metadata-api restart  >  /dev/null 2>&1
+        service openstack-nova-network restart >  /dev/null 2>&1
+        service openstack-nova-compute restart >  /dev/null 2>&1
     fi
   else
     echo_failure "Cannot determine nova compute restart command based on linux flavor"
