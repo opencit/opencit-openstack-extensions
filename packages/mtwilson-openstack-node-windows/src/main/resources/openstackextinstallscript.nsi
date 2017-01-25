@@ -133,6 +133,9 @@ Section "openstack-extension" SEC01
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\nt_2015.1.0"
   File "repository/mtwilson-openstack-policyagent-hooks/nt_2015.1.0/distribution-location.patch"
+  
+  SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\nt_13.0.0"
+  File "repository/mtwilson-openstack-policyagent-hooks/nt_13.0.0/distribution-location.patch"
 
   # mtwilson-openstack-vm-attestation directory
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation"
@@ -161,6 +164,9 @@ Section "openstack-extension" SEC01
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_2015.1.0"
   File "repository/mtwilson-openstack-vm-attestation/nt_2015.1.0/distribution-location.patch"
+  
+  SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_13.0.0"
+  File "repository/mtwilson-openstack-vm-attestation/nt_13.0.0/distribution-location.patch"
 
   SetOutPath "$INSTDIR\pre-requisites"
 
@@ -470,6 +476,7 @@ Section Uninstall
   Delete "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2015.1.1\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2015.1.2\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\nt_2015.1.0\distribution-location.patch"
+  Delete "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\nt_13.0.0\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1.3\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1.4\distribution-location.patch"
@@ -478,6 +485,7 @@ Section Uninstall
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.2.3\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2015.1.1\distribution-location.patch"
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_2015.1.0\distribution-location.patch"
+  Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_13.0.0\distribution-location.patch"
   Delete "$INSTDIR\pre-requisites\patch-2.5.9-7-setup.exe"
   Delete "$INSTDIR\pre-requisites\Cygwin-setup-x86_64.exe"
   Delete "$SMPROGRAMS\Openstack-extension\Uninstall.lnk"
@@ -497,6 +505,7 @@ Section Uninstall
   RMDir "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2015.1.1"
   RMDir "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2015.1.2"
   RMDir "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\nt_2015.1.0"
+  RMDir "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\nt_13.0.0"
   RMDir "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks"
   RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1"
   RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1.3"
@@ -506,6 +515,7 @@ Section Uninstall
   RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.2.3"
   RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2015.1.1"
   RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_2015.1.0"
+  RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_13.0.0"
   RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation"
   RMDir "$INSTDIR\repository"
   RMDir "$INSTDIR\pre-requisites"
