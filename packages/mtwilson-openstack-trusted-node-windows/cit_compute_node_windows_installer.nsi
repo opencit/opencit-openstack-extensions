@@ -60,10 +60,10 @@ Section Install
   SetOverwrite try
   SetOutPath "$TEMP"
   File "mtwilson-trustagent-windows-installer-3.1-SNAPSHOT.exe"
-  File "mtwilson-policyagent-windows-0.1-SNAPSHOT.exe"
+  File "mtwilson-policyagent-windows-3.1-SNAPSHOT.exe"
   File "tbootxm-setup.exe"
   File "vrtm-setup.exe"
-  File "mtwilson-openstack-node-windows-0.1-SNAPSHOT.exe"
+  File "mtwilson-openstack-node-windows-3.1-SNAPSHOT.exe"
   CopyFiles $EXEDIR\system.ini $TEMP
 SectionEnd
 
@@ -83,16 +83,16 @@ SectionEnd
 
 Section InstallComponents
   ExecWait '$TEMP\mtwilson-trustagent-windows-installer-3.1-SNAPSHOT.exe'
-  ExecWait '$TEMP\mtwilson-policyagent-windows-0.1-SNAPSHOT.exe'
+  ExecWait '$TEMP\mtwilson-policyagent-windows-3.1-SNAPSHOT.exe'
   ExecWait '$TEMP\tbootxm-setup.exe'
   ExecWait '$TEMP\vrtm-setup.exe'
-  ExecWait '$TEMP\mtwilson-openstack-node-windows-0.1-SNAPSHOT.exe'
+  ExecWait '$TEMP\mtwilson-openstack-node-windows-3.1-SNAPSHOT.exe'
 
   Delete "$TEMP\mtwilson-trustagent-windows-installer-3.1-SNAPSHOT.exe"
-  Delete "$TEMP\mtwilson-policyagent-windows-0.1-SNAPSHOT.exe"
+  Delete "$TEMP\mtwilson-policyagent-windows-3.1-SNAPSHOT.exe"
   Delete "$TEMP\tbootxm-setup.exe"
   Delete "$TEMP\vrtm-setup.exe"
-  Delete "$TEMP\mtwilson-openstack-node-windows-0.1-SNAPSHOT.exe"
+  Delete "$TEMP\mtwilson-openstack-node-windows-3.1-SNAPSHOT.exe"
   Delete "$TEMP\system.ini"
 SectionEnd
 
