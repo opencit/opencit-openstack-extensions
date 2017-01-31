@@ -15,12 +15,13 @@ if [ -z "$makezip" ]; then
 fi
 
 # unzip the openstack-extension components zip 
-policyagenthooksZip="mtwilson-openstack-node-policyagent-hooks-${projectVersion}.zip"
-echo "------------------------------------------------------------------------------"
-echo $policyagenthooksZip
-vmattestationZip="mtwilson-openstack-node-vm-attestation-${projectVersion}.zip"
 cd $targetDir/${projectNameVersion}
 mkdir repository
+policyagenthooksZip=$(ls mtwilson-openstack-node-policyagent-hooks-*.zip 2>/dev/null | head -1)
+vmattestationZip=$(ls mtwilson-openstack-node-vm-attestation-*.zip 2>/dev/null | head -1)
+echo "------------------------------------------------------------------------------"
+echo $policyagenthooksZip
+#echo $vmattestationZip
 unzip ${policyagenthooksZip}
 unzip ${vmattestationZip}
 mv mtwilson-openstack-policyagent-hooks/ repository/
