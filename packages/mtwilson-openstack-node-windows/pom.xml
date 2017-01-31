@@ -3,14 +3,14 @@
     
     <groupId>com.intel.mtwilson.openstack.packages</groupId>
     <artifactId>mtwilson-openstack-node-windows</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <description>Self-extracting executable that installs the OpenStack extensions for the compute node</description>
 
     <parent>
         <groupId>com.intel.mtwilson.maven</groupId>
         <artifactId>mtwilson-maven-package-makeself</artifactId>
-        <version>3.1-SNAPSHOT</version>
+        <version>3.2-SNAPSHOT</version>
         <relativePath/>
     </parent>
   
