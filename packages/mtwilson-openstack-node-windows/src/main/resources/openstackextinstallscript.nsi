@@ -255,7 +255,7 @@ SectionEnd
 Section "updateNovaConfFile" SEC03
   # update nova.conf
   Var /GLOBAL novaConfFile
-  StrCpy $novaConfFile "C:\Program Files (x86)\Cloudbase Solutions\OpenStack\Nova\etc\nova.conf"
+  StrCpy $novaConfFile "C:\Program Files\Cloudbase Solutions\OpenStack\Nova\etc\nova.conf"
   
   IfFileExists "$novaConfFile" exists doesnotexist
   exists:
