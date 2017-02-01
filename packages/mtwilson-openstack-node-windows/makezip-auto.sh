@@ -8,11 +8,11 @@ projectNameVersion=`basename "${workspace}"`
 targetDir=`dirname "${workspace}"`
 
 # check for the makeself tool
-makezip=`which zip`
-if [ -z "$makezip" ]; then
-    echo "Missing zip tool"
-    exit 1
-fi
+#makezip=`which zip`
+#if [ -z "$makezip" ]; then
+#    echo "Missing zip tool"
+#    exit 1
+#fi
 
 # unzip the openstack-extension components zip 
 cd $targetDir/${projectNameVersion}
@@ -34,7 +34,7 @@ if [ -z "$MAKENSIS" ]; then
 fi
 
 cd $targetDir
-$MAKENSIS "${projectNameVersion}/openstackextinstallscript.nsi"
+"$MAKENSIS" "${projectNameVersion}/openstackextinstallscript.nsi"
 mv "${projectNameVersion}/Installer.exe" "${projectNameVersion}.exe"
 
 
