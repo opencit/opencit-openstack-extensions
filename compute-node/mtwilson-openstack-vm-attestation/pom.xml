@@ -67,7 +67,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <exec executable="/bin/bash" failonerror="true">
+                                <exec executable="bash" failonerror="true">
                                     <arg value="${project.build.directory}/patch-util.sh" />
                                     <arg value="create_patch" />
                                     <arg value="${project.basedir}/src" />

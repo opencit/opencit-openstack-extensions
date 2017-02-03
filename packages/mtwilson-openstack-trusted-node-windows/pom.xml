@@ -1,45 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
-    <groupId>com.intel.mtwilson.openstack.packages</groupId>
-    <artifactId>mtwilson-openstack-node-windows</artifactId>
-    <version>3.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <description>Self-extracting executable that installs the OpenStack extensions for the compute node</description>
-
     <parent>
         <groupId>com.intel.mtwilson.openstack.packages</groupId>
         <artifactId>mtwilson-openstack-maven-build-packages</artifactId>
         <version>3.1-SNAPSHOT</version>
     </parent>
-  
+    <artifactId>mtwilson-openstack-trusted-node-windows</artifactId>
+    <packaging>pom</packaging>
+
     <properties>
         <!-- this becomes the installer filename, like ${makeself.name}.bin 
         <makeself.name>${project.artifactId}-${project.version}</makeself.name> -->
         <makeself.directory>${project.build.directory}/${project.artifactId}-${project.version}</makeself.directory>
-
     </properties>
-  
+    
     <dependencies>
         <dependency>
-            <groupId>com.intel.mtwilson.openstack.computenode</groupId>
-            <artifactId>mtwilson-openstack-node-policyagent-hooks</artifactId>
+            <groupId>com.intel.mtwilson.tbootxm.packages</groupId>
+            <artifactId>tbootxm-windows</artifactId>
             <version>${project.version}</version>
-            <type>zip</type>
+            <type>exe</type>
         </dependency>
         <dependency>
-            <groupId>com.intel.mtwilson.openstack.computenode</groupId>
-            <artifactId>mtwilson-openstack-node-vm-attestation</artifactId>
+            <groupId>com.intel.mtwilson.trustagent.packages</groupId>
+            <artifactId>trustagent-windows</artifactId>
             <version>${project.version}</version>
-            <type>zip</type>
+            <type>exe</type>
+        </dependency>
+        <dependency>
+            <groupId>com.intel.mtwilson.vrtm.packages</groupId>
+            <artifactId>vrtm-windows</artifactId>
+            <version>${project.version}</version>
+            <type>exe</type>
+        </dependency>
+        <dependency>
+            <groupId>com.intel.mtwilson.policyagent.packages</groupId>
+            <artifactId>mtwilson-policyagent-windows</artifactId>
+            <version>${project.version}</version>
+            <type>exe</type>
+        </dependency>
+        <dependency>
+            <groupId>com.intel.mtwilson.openstack.packages</groupId>
+            <artifactId>mtwilson-openstack-node-windows</artifactId>
+            <version>${project.version}</version>
+            <type>exe</type>
         </dependency>
     </dependencies>
-
 
     <profiles>
         <profile>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <os>
+                    <family>windows</family>
+                </os>
             </activation>
             
             <build>
@@ -75,8 +89,7 @@
                                 </configuration>            
                             </execution>
                         </executions>
-                    </plugin>
-                            
+                    </plugin>                            
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
@@ -91,27 +104,47 @@
                                 <configuration>
                                     <artifactItems>
                                         <artifactItem>
-                                            <groupId>com.intel.mtwilson.openstack.computenode</groupId>
-                                            <artifactId>mtwilson-openstack-node-policyagent-hooks</artifactId>
+                                            <groupId>com.intel.mtwilson.tbootxm.packages</groupId>
+                                            <artifactId>tbootxm-windows</artifactId>
                                             <version>${project.version}</version>
-                                            <type>zip</type>
+                                            <type>exe</type>
                                             <outputDirectory>${makeself.directory}</outputDirectory>
                                         </artifactItem>
                                         <artifactItem>
-                                            <groupId>com.intel.mtwilson.openstack.computenode</groupId>
-                                            <artifactId>mtwilson-openstack-node-vm-attestation</artifactId>
+                                            <groupId>com.intel.mtwilson.trustagent.packages</groupId>
+                                            <artifactId>trustagent-windows</artifactId>
                                             <version>${project.version}</version>
-                                            <type>zip</type>
-                                            <outputDirectory>${makeself.directory}</outputDirectory>
-                                        </artifactItem>                                        
+                                            <type>exe</type>
+                                            <outputDirectory>${makeself.directory}</outputDirectory>            
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.intel.mtwilson.vrtm.packages</groupId>
+                                            <artifactId>vrtm-windows</artifactId>
+                                            <version>${project.version}</version>
+                                            <type>exe</type>
+                                            <outputDirectory>${makeself.directory}</outputDirectory>            
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.intel.mtwilson.policyagent.packages</groupId>
+                                            <artifactId>mtwilson-policyagent-windows</artifactId>
+                                            <version>${project.version}</version>
+                                            <type>exe</type>
+                                            <outputDirectory>${makeself.directory}</outputDirectory>            
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>com.intel.mtwilson.openstack.packages</groupId>
+                                            <artifactId>mtwilson-openstack-node-windows</artifactId>
+                                            <version>${project.version}</version>
+                                            <type>exe</type>
+                                            <outputDirectory>${makeself.directory}</outputDirectory>            
+                                        </artifactItem>                                                                                                                                                           
                                     </artifactItems>
                                     <overWriteReleases>false</overWriteReleases>
                                     <overWriteSnapshots>true</overWriteSnapshots>
                                 </configuration>
                             </execution>
                         </executions>
-                    </plugin>
-                    
+                    </plugin>                    
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
@@ -167,5 +200,5 @@
             </build>          
      </profile>
     </profiles>
-
+    
 </project>

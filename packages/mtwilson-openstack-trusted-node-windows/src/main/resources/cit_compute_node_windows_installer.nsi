@@ -59,11 +59,11 @@ ShowUnInstDetails show
 Section Install
   SetOverwrite try
   SetOutPath "$TEMP"
-  File "mtwilson-trustagent-windows-installer-3.1-SNAPSHOT.exe"
-  File "mtwilson-policyagent-windows-3.1-SNAPSHOT.exe"
-  File "tbootxm-setup.exe"
-  File "vrtm-setup.exe"
-  File "mtwilson-openstack-node-windows-3.1-SNAPSHOT.exe"
+  File "trustagent-windows*.exe"
+  File "mtwilson-policyagent-windows*.exe"
+  File "tbootxm-windows*.exe"
+  File "vrtm-windows*.exe"
+  File "mtwilson-openstack-node-windows*.exe"
   CopyFiles $EXEDIR\system.ini $TEMP
 SectionEnd
 
