@@ -9,16 +9,22 @@
     <description>Self-extracting executable that installs Linux patch utility functions.</description>
     
     <parent>
+        <groupId>com.intel.mtwilson.openstack</groupId>
+        <artifactId>mtwilson-openstack-maven-build</artifactId>
+        <version>3.1-SNAPSHOT</version>
+        <!--
         <groupId>com.intel.mtwilson.linux</groupId>
         <artifactId>mtwilson-linux</artifactId>
         <version>3.2-SNAPSHOT</version>
         <relativePath/>
+        -->
     </parent>
     
     <properties>
         <makeself.directory>${project.build.directory}/${project.artifactId}-${project.version}</makeself.directory>
     </properties>
     
+    <!--
     <build>
         <resources>
             <resource>
@@ -34,6 +40,7 @@
                     <family>unix</family>
                 </os>
             </activation>
+    -->
             <build>
                 <plugins>
                     <!-- also defined in top level pom.xml but appears to not take effect if someoen runs just this pom -->      
@@ -129,7 +136,8 @@
                 </dependency>
             </dependencies>
             -->
+    <!--
         </profile>
     </profiles>
-    
+    -->
 </project>

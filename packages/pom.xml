@@ -10,7 +10,8 @@
     <modules>
         <module>mtwilson-openstack-node</module>
         <module>mtwilson-openstack-trusted-node</module>
-		<module>mtwilson-openstack-node-windows</module>
+        <module>mtwilson-openstack-node-windows</module>
+        <module>mtwilson-openstack-trusted-node-windows</module>
     </modules>
     
 </project>
