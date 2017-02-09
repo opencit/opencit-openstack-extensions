@@ -87,9 +87,9 @@ Section "openstack-extension" SEC01
   # bin directory
   SetOutPath "$INSTDIR\bin"
   SetOverwrite try
-  File "bin/mtwilson-openstack-node-uninstall.ps1"
-  File "bin/patch-util-win.cmd"
-  File "bin/setup.ps1"
+  File "bin\mtwilson-openstack-node-uninstall.ps1"
+  File "bin\patch-util-win.cmd"
+  File "bin\setup.ps1"
   
   # env directory
   SetOutPath "$INSTDIR\env"
@@ -105,68 +105,68 @@ Section "openstack-extension" SEC01
   
   # mtwilson-openstack-policyagent-hooks patches for available openstack versions
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2014.1"
-  File "repository/mtwilson-openstack-policyagent-hooks/2014.1/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2014.1\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2014.1.3"
-  File "repository/mtwilson-openstack-policyagent-hooks/2014.1.3/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2014.1.3\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2014.1.4"
-  File "repository/mtwilson-openstack-policyagent-hooks/2014.1.4/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2014.1.4\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2014.1.5"
-  File "repository/mtwilson-openstack-policyagent-hooks/2014.1.5/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2014.1.5\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2014.1.5-0ubuntu1.2"
-  File "repository/mtwilson-openstack-policyagent-hooks/2014.1.5-0ubuntu1.2/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2014.1.5-0ubuntu1.2\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2014.2"
-  File "repository/mtwilson-openstack-policyagent-hooks/2014.2/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2014.2\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2014.2.3"
-  File "repository/mtwilson-openstack-policyagent-hooks/2014.2.4/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2014.2.4\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2015.1.1"
-  File "repository/mtwilson-openstack-policyagent-hooks/2015.1.1/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2015.1.1\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\2015.1.2"
-  File "repository/mtwilson-openstack-policyagent-hooks/2015.1.2/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\2015.1.2\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\nt_2015.1.0"
-  File "repository/mtwilson-openstack-policyagent-hooks/nt_2015.1.0/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\nt_2015.1.0\distribution-location.patch"
   
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-policyagent-hooks\nt_13.0.0"
-  File "repository/mtwilson-openstack-policyagent-hooks/nt_13.0.0/distribution-location.patch"
+  File "repository\mtwilson-openstack-policyagent-hooks\nt_13.0.0\distribution-location.patch"
 
   # mtwilson-openstack-vm-attestation directory
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation"
   
   # mtwilson-openstack-vm-attestation patches for available openstack versions
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1"
-  File "repository/mtwilson-openstack-vm-attestation/2014.1/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\2014.1\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1.3"
-  File "repository/mtwilson-openstack-vm-attestation/2014.1.3/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\2014.1.3\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1.4"
-  File "repository/mtwilson-openstack-vm-attestation/2014.1.4/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\2014.1.4\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.1.5"
-  File "repository/mtwilson-openstack-vm-attestation/2014.1.5/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\2014.1.5\distribution-location.patch"
  
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.2"
-  File "repository/mtwilson-openstack-vm-attestation/2014.2/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\2014.2\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2014.2.3"
-  File "repository/mtwilson-openstack-vm-attestation/2014.2.3/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\2014.2.3\distribution-location.patch"
  
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\2015.1.1"
-  File "repository/mtwilson-openstack-vm-attestation/2015.1.1/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\2015.1.1\distribution-location.patch"
 
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_2015.1.0"
-  File "repository/mtwilson-openstack-vm-attestation/nt_2015.1.0/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\nt_2015.1.0\distribution-location.patch"
   
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_13.0.0"
-  File "repository/mtwilson-openstack-vm-attestation/nt_13.0.0/distribution-location.patch"
+  File "repository\mtwilson-openstack-vm-attestation\nt_13.0.0\distribution-location.patch"
 
   SetOutPath "$INSTDIR\pre-requisites"
 

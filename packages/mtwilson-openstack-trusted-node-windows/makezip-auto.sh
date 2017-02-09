@@ -16,16 +16,7 @@ targetDir=`dirname "${workspace}"`
 
 # unzip the openstack-extension components zip 
 cd $targetDir/${projectNameVersion}
-mkdir repository
-policyagenthooksZip=$(ls mtwilson-openstack-node-policyagent-hooks-*.zip 2>/dev/null | head -1)
-vmattestationZip=$(ls mtwilson-openstack-node-vm-attestation-*.zip 2>/dev/null | head -1)
-echo "------------------------------------------------------------------------------"
-echo $policyagenthooksZip
-#echo $vmattestationZip
-unzip ${policyagenthooksZip}
-unzip ${vmattestationZip}
-mv mtwilson-openstack-policyagent-hooks/ repository/
-mv mtwilson-openstack-vm-attestation/ repository/
+
 # Run makensis to generate the openstack-exttension windows installer
 MAKENSIS=`which makensis`
 if [ -z "$MAKENSIS" ]; then
@@ -34,7 +25,5 @@ if [ -z "$MAKENSIS" ]; then
 fi
 
 cd $targetDir
-"$MAKENSIS" "${projectNameVersion}/openstackextinstallscript.nsi"
-mv "${projectNameVersion}/Installer.exe" "${projectNameVersion}.exe"
-
-
+"$MAKENSIS" "${projectNameVersion}/cit_compute_node_windows_installer.nsi"
+mv "${projectNameVersion}/cit-compute-node-setup.exe" "${projectNameVersion}.exe"
