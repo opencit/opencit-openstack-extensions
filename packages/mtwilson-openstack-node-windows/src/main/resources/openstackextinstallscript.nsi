@@ -416,8 +416,9 @@ Section "runUtilityScript" SEC04
 SectionEnd
   
 Section -AdditionalIcons
-  CreateDirectory "$SMPROGRAMS\"
-  CreateShortCut "$SMPROGRAMS\Openstack-extension\Uninstall.lnk" "$INSTDIR\uninst.exe"
+  CreateDirectory "$SMPROGRAMS\Intel"
+  CreateDirectory "$SMPROGRAMS\Intel\Openstack-extension"
+  CreateShortCut "$SMPROGRAMS\Intel\Openstack-extension\Uninstall.lnk" "$INSTDIR\uninst.exe"
 SectionEnd
 
 Section -Post
@@ -496,9 +497,10 @@ Section Uninstall
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_13.0.0\distribution-location.patch"
   Delete "$INSTDIR\pre-requisites\patch-2.5.9-7-setup.exe"
   Delete "$INSTDIR\pre-requisites\Cygwin-setup-x86_64.exe"
-  Delete "$SMPROGRAMS\Openstack-extension\Uninstall.lnk"
+  Delete "$SMPROGRAMS\Intel\Openstack-extension\Uninstall.lnk"
 
-  RMDir "$SMPROGRAMS\Openstack-extension"
+  RMDir "$SMPROGRAMS\Intel\Openstack-extension"
+  RMDir "$SMPROGRAMS\Intel"
   RMDir "$INSTDIR\env"
   RMDir "$INSTDIR\bin"
   RMDir "$INSTDIR\logs"
