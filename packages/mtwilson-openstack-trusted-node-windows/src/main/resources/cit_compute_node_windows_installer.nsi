@@ -82,16 +82,16 @@ Section Post
 SectionEnd
 
 Section InstallComponents
-  ExecWait '$TEMP\mtwilson-trustagent-windows-installer-3.2-SNAPSHOT.exe'
+  ExecWait '$TEMP\trustagent-windows-3.2-SNAPSHOT.exe'
   ExecWait '$TEMP\mtwilson-policyagent-windows-3.2-SNAPSHOT.exe'
-  ExecWait '$TEMP\tbootxm-setup.exe'
-  ExecWait '$TEMP\vrtm-setup.exe'
+  ExecWait '$TEMP\tbootxm-windows-3.2-SNAPSHOT.exe'
+  ExecWait '$TEMP\vrtm-windows-3.2-SNAPSHOT.exe'
   ExecWait '$TEMP\mtwilson-openstack-node-windows-3.2-SNAPSHOT.exe'
 
-  Delete "$TEMP\mtwilson-trustagent-windows-installer-3.2-SNAPSHOT.exe"
+  Delete "$TEMP\trustagent-windows-3.2-SNAPSHOT.exe"
   Delete "$TEMP\mtwilson-policyagent-windows-3.2-SNAPSHOT.exe"
-  Delete "$TEMP\tbootxm-setup.exe"
-  Delete "$TEMP\vrtm-setup.exe"
+  Delete "$TEMP\tbootxm-windows-3.2-SNAPSHOT.exe"
+  Delete "$TEMP\vrtm-windows-3.2-SNAPSHOT.exe"
   Delete "$TEMP\mtwilson-openstack-node-windows-3.2-SNAPSHOT.exe"
   Delete "$TEMP\system.ini"
 SectionEnd
