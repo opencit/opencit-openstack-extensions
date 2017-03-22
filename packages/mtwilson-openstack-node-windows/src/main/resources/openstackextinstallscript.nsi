@@ -195,6 +195,7 @@ Section "getNovaProperties" SEC02
 		goto end_of_check
     doesnotexist:
         ${LogText} "Could not find $trustagentPropertiesFile \n Mtwilson Trust Agent must be installed first"
+		MessageBox MB_OK "Could not find $trustagentPropertiesFile \n Mtwilson Trust Agent must be installed first"
 		Call Error_Log_File
     end_of_check:
 
@@ -209,6 +210,7 @@ Section "getNovaProperties" SEC02
   StrCpy $mtwilsonServer $R1
   ${If} "$mtwilsonServer" == "" 
 	${LogText} "Error reading CIT Server IP from configuration."
+	MessageBox MB_OK "Error reading CIT Server IP from configuration."
 	Call Error_Log_File
   ${EndIf} 
   
@@ -219,6 +221,7 @@ Section "getNovaProperties" SEC02
   StrCpy $mtwilsonServerPort $R1
   ${If} "$mtwilsonServerPort" == ""
 	${LogText} "Error reading CIT Server port from configuration."
+	MessageBox MB_OK "Error reading CIT Server port from configuration."
 	Call Error_Log_File
   ${EndIf} 
 
@@ -229,6 +232,7 @@ Section "getNovaProperties" SEC02
   StrCpy $mtwilsonVmAttestationApiUsername $R1
   ${If} "$mtwilsonVmAttestationApiUsername" == ""
 	${LogText} "Error reading CIT VM attestation API username from configuration."
+	MessageBox MB_OK "Error reading CIT VM attestation API username from configuration."
 	Call Error_Log_File
   ${EndIf} 
 
@@ -239,6 +243,7 @@ Section "getNovaProperties" SEC02
   StrCpy $mtwilsonVmAttestationApiPassword $R1
   ${If} "$mtwilsonVmAttestationApiPassword" == ""
 	${LogText} "Error reading CIT VM attestation API password from configuration."
+	MessageBox MB_OK "Error reading CIT VM attestation API password from configuration."
 	Call Error_Log_File
   ${EndIf} 
   
@@ -263,6 +268,7 @@ Section "updateNovaConfFile" SEC03
 	goto end_of_check
   doesnotexist:
         ${LogText} "Could not find $novaConfFile \n OpenStack compute node must be installed first."
+		MessageBox MB_OK "Could not find $novaConfFile \n OpenStack compute node must be installed first."
 		Call Error_Log_File
   end_of_check:
   
@@ -400,16 +406,19 @@ Section "runUtilityScript" SEC04
 			goto end_of_check
 		doesnotexistsetup:
 			${LogText} "Setup script does not exists"	
+			MessageBox MB_OK "Setup script does not exists"
 			Call Error_Log_File
 	doesnotexist:
         ${LogText} "Patch utility script does not exists"
+		MessageBox MB_OK "Patch utility script does not exists"
 		Call Error_Log_File
     end_of_check:
 SectionEnd
   
 Section -AdditionalIcons
-  CreateDirectory "$SMPROGRAMS\"
-  CreateShortCut "$SMPROGRAMS\Openstack-extension\Uninstall.lnk" "$INSTDIR\uninst.exe"
+  CreateDirectory "$SMPROGRAMS\Intel"
+  CreateDirectory "$SMPROGRAMS\Intel\Openstack-extension"
+  CreateShortCut "$SMPROGRAMS\Intel\Openstack-extension\Uninstall.lnk" "$INSTDIR\uninst.exe"
 SectionEnd
 
 Section -Post
@@ -488,9 +497,10 @@ Section Uninstall
   Delete "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_13.0.0\distribution-location.patch"
   Delete "$INSTDIR\pre-requisites\patch-2.5.9-7-setup.exe"
   Delete "$INSTDIR\pre-requisites\Cygwin-setup-x86_64.exe"
-  Delete "$SMPROGRAMS\Openstack-extension\Uninstall.lnk"
+  Delete "$SMPROGRAMS\Intel\Openstack-extension\Uninstall.lnk"
 
-  RMDir "$SMPROGRAMS\Openstack-extension"
+  RMDir "$SMPROGRAMS\Intel\Openstack-extension"
+  RMDir "$SMPROGRAMS\Intel"
   RMDir "$INSTDIR\env"
   RMDir "$INSTDIR\bin"
   RMDir "$INSTDIR\logs"
