@@ -21,6 +21,9 @@ InstallDir "$PROGRAMFILES\Intel"
 ShowInstDetails show
 ShowUnInstDetails show
 
+Var /Global INIFILE
+Var /Global INSTALLATIONTYPE
+
 ; ------------------------------------------------------------------
 ; ***************************** PAGES ******************************
 ; ------------------------------------------------------------------
@@ -82,11 +85,18 @@ Section Post
 SectionEnd
 
 Section InstallComponents
-  ExecWait '$TEMP\trustagent-windows-3.2-SNAPSHOT.exe'
-  ExecWait '$TEMP\mtwilson-policyagent-windows-3.2-SNAPSHOT.exe'
+  ReadINIStr $INSTALLATIONTYPE "$INIFILE" "COMMON" "INSTALLATIONTYPE"
+  ${If} $INSTALLATIONTYPE == ""
+      StrCpy "$INSTALLATIONTYPE" "VM"
+  ${EndIf}
+
   ExecWait '$TEMP\tbootxm-windows-3.2-SNAPSHOT.exe'
-  ExecWait '$TEMP\vrtm-windows-3.2-SNAPSHOT.exe'
-  ExecWait '$TEMP\mtwilson-openstack-node-windows-3.2-SNAPSHOT.exe'
+  ExecWait '$TEMP\trustagent-windows-3.2-SNAPSHOT.exe'
+  ${If} $INSTALLATIONTYPE == "VM"
+      ExecWait '$TEMP\vrtm-windows-3.2-SNAPSHOT.exe'
+	  ExecWait '$TEMP\mtwilson-policyagent-windows-3.2-SNAPSHOT.exe'
+	  ExecWait '$TEMP\mtwilson-openstack-node-windows-3.2-SNAPSHOT.exe'
+  ${EndIf}
 
   Delete "$TEMP\trustagent-windows-3.2-SNAPSHOT.exe"
   Delete "$TEMP\mtwilson-policyagent-windows-3.2-SNAPSHOT.exe"
@@ -125,6 +135,12 @@ SectionEnd
 ; ----------------------------------------------------------
 
 Function .onInit
+  ; Start Code to specify ini file path
+  StrCpy "$INIFILE" "$EXEDIR\system.ini"
+  IfFileExists "$INIFILE" +3
+  MessageBox MB_OK "System Configuration file doesn't exists in installer folder"
+  Abort
+
   SetRebootFlag true
   ReadRegStr $R0 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString"
   StrCmp $R0 "" done
