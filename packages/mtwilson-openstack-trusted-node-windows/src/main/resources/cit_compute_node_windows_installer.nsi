@@ -1,7 +1,7 @@
 ; MUI 1.67 compatible ------
 !include "MUI.nsh"
 
-!define PRODUCT_NAME "CIT-compute-node"
+!define PRODUCT_NAME "CIT-Compute-Node"
 !define PRODUCT_VERSION "1.0"
 !define PRODUCT_PUBLISHER "Intel Corporation"
 !define PRODUCT_WEB_SITE "http://www.intel.com"
@@ -90,14 +90,26 @@ Section InstallComponents
       StrCpy "$INSTALLATIONTYPE" "VM"
   ${EndIf}
 
+  ClearErrors
   ExecWait '$TEMP\tbootxm-windows-3.1-SNAPSHOT.exe'
+  IfErrors abort_installation
   ExecWait '$TEMP\trustagent-windows-3.1-SNAPSHOT.exe'
+  IfErrors abort_installation
   ${If} $INSTALLATIONTYPE == "VM"
       ExecWait '$TEMP\vrtm-windows-3.1-SNAPSHOT.exe'
+	  IfErrors abort_installation
 	  ExecWait '$TEMP\mtwilson-policyagent-windows-3.1-SNAPSHOT.exe'
+	  IfErrors abort_installation
 	  ExecWait '$TEMP\mtwilson-openstack-node-windows-3.1-SNAPSHOT.exe'
+	  IfErrors abort_installation
   ${EndIf}
+  Goto done
 
+  abort_installation:
+  MessageBox MB_OK "Failed to complete compute node installation!"
+  Abort
+
+  done:
   Delete "$TEMP\trustagent-windows-3.1-SNAPSHOT.exe"
   Delete "$TEMP\mtwilson-policyagent-windows-3.1-SNAPSHOT.exe"
   Delete "$TEMP\tbootxm-windows-3.1-SNAPSHOT.exe"
@@ -111,11 +123,11 @@ SectionEnd
 ; ----------------------------------------------------------------------------------
 
 Section Uninstall
-  ExecWait '$INSTDIR\Openstack-extension\uninst.exe'
-  ExecWait '$INSTDIR\vRTM\uninst.exe'
-  ExecWait '$INSTDIR\tbootxm\uninst.exe'
-  ExecWait '$INSTDIR\Policy Agent\uninst.exe'
-  ExecWait '$INSTDIR\TrustAgent\Uninstall.exe'
+  ExecWait '$INSTDIR\Openstack-Extensions\uninst.exe'
+  ExecWait '$INSTDIR\Vrtm\uninst.exe'
+  ExecWait '$INSTDIR\Tbootxm\uninst.exe'
+  ExecWait '$INSTDIR\Policyagent\uninst.exe'
+  ExecWait '$INSTDIR\Trustagent\Uninstall.exe'
 
   Delete "$INSTDIR\uninst.exe"
   Delete "$SMPROGRAMS\Intel\Uninstall.lnk"
@@ -135,19 +147,19 @@ SectionEnd
 ; ----------------------------------------------------------
 
 Function .onInit
-  ; Start Code to specify ini file path
-  StrCpy "$INIFILE" "$EXEDIR\system.ini"
-  IfFileExists "$INIFILE" +3
-  MessageBox MB_OK "System Configuration file doesn't exists in installer folder"
-  Abort
-
   SetRebootFlag true
   ReadRegStr $R0 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString"
   StrCmp $R0 "" done
   MessageBox MB_ICONEXCLAMATION|MB_OKCANCEL|MB_DEFBUTTON2 "$(^Name) is already installed. $\n$\nClick `OK` to remove the previous version or `Cancel` to cancel this upgrade." IDOK +2
   Abort
-  Exec $INSTDIR\uninst.exe
+  ExecWait $INSTDIR\uninst.exe
+
   done:
+  ; Start Code to specify ini file path
+  StrCpy "$INIFILE" "$EXEDIR\system.ini"
+  IfFileExists "$INIFILE" +3
+  MessageBox MB_OK "System Configuration file doesn't exists in installer folder"
+  Abort
 FunctionEnd
 
 Function un.onInit
