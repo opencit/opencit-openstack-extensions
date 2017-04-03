@@ -190,7 +190,7 @@ SectionEnd
 Section "getNovaProperties" SEC02
   # read variables from trustagent configuration to input to nova.conf
   Var /GLOBAL trustagentHomeDir
-  StrCpy $trustagentHomeDir "C:\Program Files (x86)\Intel\TrustAgent"
+  StrCpy $trustagentHomeDir "C:\Program Files (x86)\Intel\Trustagent"
   
   Var /GLOBAL trustagentConfDir
   StrCpy $trustagentConfDir "$trustagentHomeDir\configuration"

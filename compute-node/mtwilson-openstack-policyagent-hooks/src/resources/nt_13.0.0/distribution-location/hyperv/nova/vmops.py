@@ -715,7 +715,7 @@ class VMOps(object):
                            constants.HYPERV_VM_STATE_DISABLED)
         if 'mtwilson_trustpolicy_location' in instance['metadata']:
             #Call PA to invoke vrtm for measurement
-            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'invoke_vrtm', instance.image_ref, instance.name)
+            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policyagent\\bin\policyagent.py", 'invoke_vrtm', instance.image_ref, instance.name)
         self._set_vm_state(instance,
                            constants.HYPERV_VM_STATE_ENABLED)
 
@@ -811,7 +811,7 @@ class VMOps(object):
         if 'mtwilson_trustpolicy_location' in instance['metadata']:
             #Call PA to invoke vrtm for measurement
             LOG.error("Inside power_on method. before calling invoke_vrtm")			
-            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'invoke_vrtm', instance.image_ref, instance.name)
+            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policyagent\\bin\policyagent.py", 'invoke_vrtm', instance.image_ref, instance.name)
         LOG.debug("Power on instance", instance=instance)
 
         if block_device_info:
