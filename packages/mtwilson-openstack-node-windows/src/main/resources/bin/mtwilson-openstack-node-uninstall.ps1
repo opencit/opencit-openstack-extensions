@@ -1,6 +1,6 @@
-$OPENSTACK_EXT_REPOSITORY="C:\Program Files (x86)\Intel\Openstack-extension\repository"
-$PATCH_UTILS="C:\Program Files (x86)\Intel\Openstack-extension\bin\patch-util-win.cmd"
-$log_file="C:\Program Files (x86)\Intel\Openstack-extension\logs\patchUninstallLog.txt"
+$OPENSTACK_EXT_REPOSITORY="C:\Program Files (x86)\Intel\Openstack-Extensions\repository"
+$PATCH_UTILS="C:\Program Files (x86)\Intel\Openstack-Extensions\bin\patch-util-win.cmd"
+$log_file="C:\Program Files (x86)\Intel\Openstack-Extensions\logs\patchUninstallLog.txt"
 $seperator="\"
 $components = @(
     "mtwilson-openstack-policyagent-hooks";
