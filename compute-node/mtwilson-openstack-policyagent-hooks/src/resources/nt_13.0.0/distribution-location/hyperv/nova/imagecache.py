@@ -134,7 +134,7 @@ class ImageCache(imagecache.ImageCacheManager):
                                  instance.project_id)
                     LOG.info("BASE IMAGE PATH : " + base_image_path)
                     if 'mtwilson_trustpolicy_location' in instance['metadata']:
-                        output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'prepare_trusted_image', base_image_path, image_id, instance.name, instance['metadata']['mtwilson_trustpolicy_location'], instance.root_gb)
+                        output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policyagent\\bin\policyagent.py", 'prepare_trusted_image', base_image_path, image_id, instance.name, instance['metadata']['mtwilson_trustpolicy_location'], instance.root_gb)
                     if image_type == 'iso':
                         format_ext = 'iso'
                     else:
@@ -146,7 +146,7 @@ class ImageCache(imagecache.ImageCacheManager):
                     with excutils.save_and_reraise_exception():
                         if self._pathutils.exists(base_image_path):
                             self._pathutils.remove(base_image_path)
-            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policy Agent\\bin\policyagent.py", 'create_instance_directory_symlink', instance.image_ref, instance.name)
+            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policyagent\\bin\policyagent.py", 'create_instance_directory_symlink', instance.image_ref, instance.name)
             return image_path
 
         image_path = fetch_image_if_not_existing()
