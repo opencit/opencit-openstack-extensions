@@ -175,8 +175,6 @@ Section "openstack-extension" SEC01
   SetOutPath "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_13.0.0"
   File "repository\mtwilson-openstack-vm-attestation\nt_13.0.0\distribution-location.patch"
 
-  SetOutPath "$INSTDIR\pre-requisites"
-
   SetOutPath "$INSTDIR"
 
   # Create System Environment Variable - OPENSTACK_EXT_HOME
@@ -190,7 +188,7 @@ SectionEnd
 Section "getNovaProperties" SEC02
   # read variables from trustagent configuration to input to nova.conf
   Var /GLOBAL trustagentHomeDir
-  StrCpy $trustagentHomeDir "C:\Program Files (x86)\Intel\TrustAgent"
+  StrCpy $trustagentHomeDir "C:\Program Files (x86)\Intel\Trustagent"
   
   Var /GLOBAL trustagentConfDir
   StrCpy $trustagentConfDir "$trustagentHomeDir\configuration"
@@ -409,6 +407,10 @@ Section "runUtilityScript" SEC04
 			${PowerShellExec} "& '$INSTDIR\bin\setup.ps1'"
 			Pop $R1
 			${LogText} "Powershell executing output is: $R1"
+			${If} $R1 == "Failed$\r$\n"
+				MessageBox mb_ok "Unable to apply patches. Aborting installation."
+				Abort
+			${EndIf}
 			${LogText} "Setup script executed successfully"
 			goto end_of_check
 		doesnotexistsetup:
@@ -465,7 +467,11 @@ Section Uninstall
 		FileOpen $0 "$INSTDIR\logs\patchUninstallLog.txt" a 
 		FileSeek $0 0 END
 		FileWrite $0 "Powershell executing output is: Error : $0"
-		FileWrite $0 "Patches uninstallated successfully."
+		${If} $0 == "Failed$\r$\n"
+			MessageBox mb_ok "Unable to revert patches. Aborting uninstallation."
+			Abort
+		${EndIf}
+		FileWrite $0 "Patches uninstalled successfully."
 		FileClose $0 
 		goto end_of_check_uninst
 	doesnotexistuninst:
@@ -533,7 +539,6 @@ Section Uninstall
   RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation\nt_13.0.0"
   RMDir "$INSTDIR\repository\mtwilson-openstack-vm-attestation"
   RMDir "$INSTDIR\repository"
-  RMDir "$INSTDIR\pre-requisites"
   RMDir "$INSTDIR\"
 
  # Remove system environment variable OPENSTACK_EXT_HOME
