@@ -190,7 +190,7 @@ SectionEnd
 Section "getNovaProperties" SEC02
   # read variables from trustagent configuration to input to nova.conf
   Var /GLOBAL trustagentHomeDir
-  StrCpy $trustagentHomeDir "C:\Program Files (x86)\Intel\TrustAgent"
+  StrCpy $trustagentHomeDir "C:\Program Files (x86)\Intel\Trustagent"
   
   Var /GLOBAL trustagentConfDir
   StrCpy $trustagentConfDir "$trustagentHomeDir\configuration"
@@ -405,7 +405,7 @@ Section "runUtilityScript" SEC04
 		IfFileExists "$INSTDIR\bin\setup.ps1" existssetup doesnotexistsetup
 		existssetup:
 			${LogText} "Executing setup script."
-			${LogText} "Note: If proper uninstallation is not done previously then applying patches might fail. To successfully apply patches please do proper uninstallation before installing Openstack-extension"
+			${LogText} "Note: If proper uninstallation is not done previously then applying patches might fail. To successfully apply patches please do proper uninstallation before installing Openstack-Extensions"
 			${PowerShellExec} "& '$INSTDIR\bin\setup.ps1'"
 			Pop $R1
 			${LogText} "Powershell executing output is: $R1"
