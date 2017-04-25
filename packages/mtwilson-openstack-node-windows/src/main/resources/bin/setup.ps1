@@ -35,26 +35,33 @@ Function findPatchDir ($component, $version)
 }
 
 $distribution_location = getDistributionLocation 
-echo "The distribution location is : $distribution_location\" 
 
 $openstack_version = getOpenstackVersion
-echo "The openstack version is : $openstack_version" 
 
 foreach ($component in $components)
 {
 	$patch_dir = findPatchDir $component $openstack_version 
-	#$args = "revert_patch ""$distribution_location"" ""$patch_dir\distribution-location.patch"" 1"
-	#Start-Process $PATCH_UTILS $args -PassThru | Wait-Process
 	$args = "apply_patch ""$distribution_location"" ""$patch_dir\distribution-location.patch"" 1"
-	echo "Applying patches ..........."
-	$proc_apply = Start-Process $PATCH_UTILS $args -PassThru | Wait-Process
-	if ($proc_apply.ExitCode -gt 0 ) {
-		echo "$_ exited with status code $($proc_apply.ExitCode)" 
+	Try {
+		$proc_apply = Start-Process $PATCH_UTILS $args -PassThru | Wait-Process
+		if ($proc_apply.ExitCode -gt 0 ) {
+			echo "$_ exited with status code $($proc_apply.ExitCode)" 
+		}
+	}
+	Catch {
+		echo "Failed"
+		exit
 	}
 }
 
-$service_restart = Start-Process $PATCH_UTILS openstackrestart -PassThru | Wait-Process
-if ($service_restart.ExitCode -gt 0 ) {
-                echo "$_ exited with status code $($service_restart.ExitCode)"
+Try {
+	$service_restart = Start-Process $PATCH_UTILS openstackrestart -PassThru | Wait-Process
+	if ($service_restart.ExitCode -gt 0 ) {
+        echo "$_ exited with status code $($service_restart.ExitCode)"
+	}
+}
+Catch {
+	echo "Failed"
+	exit
 }
 
