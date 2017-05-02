@@ -146,7 +146,8 @@ class ImageCache(imagecache.ImageCacheManager):
                     with excutils.save_and_reraise_exception():
                         if self._pathutils.exists(base_image_path):
                             self._pathutils.remove(base_image_path)
-            output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policyagent\\bin\policyagent.py", 'create_instance_directory_symlink', instance.image_ref, instance.name)
+            if 'mtwilson_trustpolicy_location' in instance['metadata']:
+			    output, ret = utils.execute('python', "C:\Program Files (x86)\Intel\Policyagent\\bin\policyagent.py", 'create_instance_directory_symlink', instance.image_ref, instance.name)
             return image_path
 
         image_path = fetch_image_if_not_existing()
