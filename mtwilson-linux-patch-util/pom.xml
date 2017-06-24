@@ -12,12 +12,6 @@
         <groupId>com.intel.mtwilson.openstack</groupId>
         <artifactId>mtwilson-openstack-maven-build</artifactId>
         <version>3.2.1-SNAPSHOT</version>
-        <!--
-        <groupId>com.intel.mtwilson.linux</groupId>
-        <artifactId>mtwilson-linux</artifactId>
-        <version>3.2-SNAPSHOT</version>
-        <relativePath/>
-        -->
     </parent>
     
     <properties>
