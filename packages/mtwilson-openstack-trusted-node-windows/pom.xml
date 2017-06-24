@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.intel.mtwilson.openstack.packages</groupId>
         <artifactId>mtwilson-openstack-maven-build-packages</artifactId>
-        <version>3.2-SNAPSHOT</version>
+        <version>3.2.1-SNAPSHOT</version>
     </parent>
     <artifactId>mtwilson-openstack-trusted-node-windows</artifactId>
     <packaging>pom</packaging>

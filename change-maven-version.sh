@@ -43,5 +43,7 @@ if [ $? -ne 0 ]; then echo "Failed to change maven version on \"packages\" folde
 (cd packages  && $changeParentVersionCommand)
 if [ $? -ne 0 ]; then echo "Failed to change maven parent versions in \"packages\" folder" >&2; exit 3; fi
 
+sed -i 's/\(CIT_VERSION="\).*\("\)/\1'${version}'\2/g' packages/mtwilson-openstack-trusted-node/src/build/get-dependencies.sh
+if [ $? -ne 0 ]; then echo "Failed to change version in \"packages/mtwilson-openstack-trusted-node/src/build/get-dependencies.sh\"" >&2; exit 3; fi
 sed -i 's/\-[0-9\.]*\(\-SNAPSHOT\|\(\-\|\.zip$\|\.bin$\|\.jar$\)\)/-'${version}'\2/g' build.targets
 if [ $? -ne 0 ]; then echo "Failed to change versions in \"build.targets\" file" >&2; exit 3; fi

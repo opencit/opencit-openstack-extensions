@@ -3,7 +3,7 @@
     
     <groupId>com.intel.mtwilson.openstack</groupId>
     <artifactId>mtwilson-openstack-maven-root</artifactId>
-    <version>3.2-SNAPSHOT</version>
+    <version>3.2.1-SNAPSHOT</version>
     
     <packaging>pom</packaging>
     <description>Mystery Hill OpenStack Extensions</description>

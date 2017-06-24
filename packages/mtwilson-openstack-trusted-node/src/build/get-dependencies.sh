@@ -1,5 +1,5 @@
 #!/bin/bash
-CIT_VERSION="3.2-SNAPSHOT"
+CIT_VERSION="3.2.1-SNAPSHOT"
 
 
 yum_detect() {

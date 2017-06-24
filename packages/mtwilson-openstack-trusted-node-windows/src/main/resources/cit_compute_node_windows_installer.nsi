@@ -92,16 +92,16 @@ Section InstallComponents
   ${EndIf}
 
   ClearErrors
-  ExecWait '$TEMP\tbootxm-windows-3.2-SNAPSHOT.exe'
+  ExecWait '$TEMP\tbootxm-windows-3.2.1-SNAPSHOT.exe'
   IfErrors abort_installation
-  ExecWait '$TEMP\trustagent-windows-3.2-SNAPSHOT.exe'
+  ExecWait '$TEMP\trustagent-windows-3.2.1-SNAPSHOT.exe'
   IfErrors abort_installation
   ${If} $INSTALLATIONTYPE == "VM"
-      ExecWait '$TEMP\vrtm-windows-3.2-SNAPSHOT.exe'
+      ExecWait '$TEMP\vrtm-windows-3.2.1-SNAPSHOT.exe'
 	  IfErrors abort_installation
-	  ExecWait '$TEMP\mtwilson-policyagent-windows-3.2-SNAPSHOT.exe'
+	  ExecWait '$TEMP\mtwilson-policyagent-windows-3.2.1-SNAPSHOT.exe'
 	  IfErrors abort_installation
-	  ExecWait '$TEMP\mtwilson-openstack-node-windows-3.2-SNAPSHOT.exe'
+	  ExecWait '$TEMP\mtwilson-openstack-node-windows-3.2.1-SNAPSHOT.exe'
 	  IfErrors abort_installation
   ${EndIf}
   Goto done
@@ -111,11 +111,11 @@ Section InstallComponents
   Abort
 
   done:
-  Delete "$TEMP\trustagent-windows-3.2-SNAPSHOT.exe"
-  Delete "$TEMP\mtwilson-policyagent-windows-3.2-SNAPSHOT.exe"
-  Delete "$TEMP\tbootxm-windows-3.2-SNAPSHOT.exe"
-  Delete "$TEMP\vrtm-windows-3.2-SNAPSHOT.exe"
-  Delete "$TEMP\mtwilson-openstack-node-windows-3.2-SNAPSHOT.exe"
+  Delete "$TEMP\trustagent-windows-3.2.1-SNAPSHOT.exe"
+  Delete "$TEMP\mtwilson-policyagent-windows-3.2.1-SNAPSHOT.exe"
+  Delete "$TEMP\tbootxm-windows-3.2.1-SNAPSHOT.exe"
+  Delete "$TEMP\vrtm-windows-3.2.1-SNAPSHOT.exe"
+  Delete "$TEMP\mtwilson-openstack-node-windows-3.2.1-SNAPSHOT.exe"
   Delete "$TEMP\system.ini"
 SectionEnd
 
