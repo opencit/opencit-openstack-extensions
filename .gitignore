@@ -3,6 +3,8 @@ target
 .project
 .classpath
 pom.xml.versionsBackup
+<<<<<<< HEAD
 pom.xml.releaseBackup
 ~*
 *.tmp
+pom.xml.releaseBackup
